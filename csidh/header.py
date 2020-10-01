@@ -196,9 +196,9 @@ for i in range(len(r_out)):
     R_string = "static uint8_t W%d[] " % (i)
     S_string = "static uint8_t S%d[] " % (i)
     
-    printl(L_string, [ L.index(l_i) for l_i in L_out[i]][::-1], len(L_out[i]) // k + 1)
+    printl(L_string, [ L.index(l_i) for l_i in L_out[i]], len(L_out[i]) // k + 1)
     if(R_out[i] != []):
-        printl(R_string, [ L.index(r_i) for r_i in R_out[i]][::-1], len(R_out[i]) // k + 1)
+        printl(R_string, [ L.index(r_i) for r_i in R_out[i]], len(R_out[i]) // k + 1)
     else:
         print(R_string +  " = {};")
     if(S_out[i] != []):
@@ -250,7 +250,7 @@ print(tmp_round)
 
 print("")
 print("// Maximum number of degree-(l_i) isogeny constructions")
-printl("static uint8_t B[]", [ m[L[::-1].index(l)] for l in L ], n // k + 1)
+printl("static uint8_t M[]", [ m[L[::-1].index(l)] for l in L ], n // k + 1)
 
 STYLE_NAME = {'wd2':'OAYT-style', 'wd1':'MCR-style', 'df':'dummy-free-style'}[setting.style]
 print("\n#endif /* required framework for the strategies to be used in CSIDH-%s using %s */" % (setting.prime[1:], STYLE_NAME) )
