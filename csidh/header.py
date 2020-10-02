@@ -250,7 +250,7 @@ print(tmp_round)
 
 print("")
 print("// Maximum number of degree-(l_i) isogeny constructions")
-printl("static uint8_t M[]", [ m[L[::-1].index(l)] for l in L ], n // k + 1)
+printl("static uint8_t M[]", m, n // k + 1)
 
 STYLE_NAME = {'wd2':'OAYT-style', 'wd1':'MCR-style', 'df':'dummy-free-style'}[setting.style]
 print("\n#endif /* required framework for the strategies to be used in CSIDH-%s using %s */" % (setting.prime[1:], STYLE_NAME) )
