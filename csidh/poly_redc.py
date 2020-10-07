@@ -4,9 +4,8 @@ from csidh.poly_mul import *
 def reciprocal(f, flen, n):
 
     if flen < n:
-        # truncate reciprocal
-        r, a = reciprocal(f, flen, flen)
-        return r + [0] * (n - flen), a
+        # truncated reciprocal
+        return reciprocal(f + [ 0 ]*(n - flen), n, n)
 
     if n == 0:
         # Super special base case
