@@ -182,6 +182,11 @@ except IOError:
 
     f.close()
 
+if (len(set(m)) == 1) or ((len(set(m)) == 2) and (0 in set(m))):
+    L_out = list([ L_out[0] ])
+    R_out = list([ R_out[0] ])
+    S_out = list([ S_out[0] ])
+    r_out = list([ r_out[0] ])
 # ---
 k = 3   # Number of rows (format of the list)
 # ---

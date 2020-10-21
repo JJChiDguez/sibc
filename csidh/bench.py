@@ -212,10 +212,10 @@ for main_i in range(setting.benchmark):
 
     e = random_key(m)
         
-    if len(tmp) == 1:
+    if (len(tmp) == 1) or ((len(tmp) == 2) and (0 in tmp)):
         
         set_zero_ops()
-        B = GAE(B, e, [L_out[0]], [ [] ], [S_out[0]], tmp, m)
+        B = GAE(B, e, [L_out[0]], [R_out[0]], [S_out[0]], [tmp[-1]], m)
         SAMPLE[main_i] = get_ops()
             
     else:

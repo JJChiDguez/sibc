@@ -138,7 +138,8 @@ else:
 
 # ==========================================================================
 
-if len(set(m)) > 1:
+temporal_m = list(set(m))
+if len(temporal_m) > 1:
     # Maximum number of degree-(l_i) isogeny constructions is m_i (different for each l_i)
     LABEL_m = 'different_bounds'
 else:
@@ -210,9 +211,6 @@ print("// ----------------------------------------------------------------------
 print("// Public Key Generation")
 print("// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n")
 
-temporal_m = list(set(m))
-T_p, T_m = full_torsion_points(A)
-
 # ------------------------------------------------------------------------- Alice
 set_zero_ops()
 public_validation = validate(A)
@@ -229,16 +227,8 @@ print("// Public key corresponding to Alice")
 print("// public key validation cost  :\t%2.3fM + %2.3fS + %2.3fa = %2.3fM," % (RUNNING_TIME[0] / (10.0**6), RUNNING_TIME[1] / (10.0**6), RUNNING_TIME[2] / (10.0**6), measure(RUNNING_TIME) / (10.0**6)) )
 
 set_zero_ops()
-if len(temporal_m) == 1:
-    if temporal_m[0] > 1:
-        a_public = GAE(A, a_private, [L_out[0]], [ [] ], [S_out[0]], temporal_m, m)
-    else:
-        if setting.style == 'wd1':
-            # ONE torsion  point required
-            a_public, m_tmp, a_tmp = evaluate_strategy(A, T_p, L_out[0], S_out[0], n, m, a_private)
-        else:
-            # TWO torsion points required
-            a_public, m_tmp, a_tmp = evaluate_strategy(A, list([list(T_m), list(T_p)]), L_out[0], S_out[0], n, m, a_private)
+if (len(temporal_m) == 1) or ((len(temporal_m) == 2) and (0 in temporal_m)):
+    a_public = GAE(A, a_private, [L_out[0]], [R_out[0]], [S_out[0]], [temporal_m[-1]], m)
 else:
     a_public = GAE(A, a_private, L_out, R_out, S_out, r_out, m)
     
@@ -263,16 +253,8 @@ print("// Public key corresponding to Bob")
 print("// public key validation cost  :\t%2.3fM + %2.3fS + %2.3fa = %2.3fM," % (RUNNING_TIME[0] / (10.0**6), RUNNING_TIME[1] / (10.0**6), RUNNING_TIME[2] / (10.0**6), measure(RUNNING_TIME) / (10.0**6)) )
 
 set_zero_ops()
-if len(temporal_m) == 1:
-    if temporal_m[0] > 1:
-        b_public = GAE(A, b_private, [L_out[0]], [ [] ], [S_out[0]], temporal_m, m)
-    else:
-        if setting.style == 'wd1':
-            # ONE torsion  point required
-            b_public, m_tmp, b_tmp = evaluate_strategy(A, T_p, L_out[0], S_out[0], n, m, b_private)
-        else:
-            # TWO torsion points required
-            b_public, m_tmp, b_tmp = evaluate_strategy(A, list([list(T_m), list(T_p)]), L_out[0], S_out[0], n, m, b_private)
+if (len(temporal_m) == 1) or ((len(temporal_m) == 2) and (0 in temporal_m)):
+    b_public = GAE(A, b_private, [L_out[0]], [R_out[0]], [S_out[0]], [temporal_m[-1]], m)
 else:
     b_public = GAE(A, b_private, L_out, R_out, S_out, r_out, m)
     
@@ -292,18 +274,9 @@ RUNNING_TIME = get_ops()
 print("// Secret sharing corresponding to Alice")
 print("// public key validation cost  :\t%2.3fM + %2.3fS + %2.3fa = %2.3fM," % (RUNNING_TIME[0] / (10.0**6), RUNNING_TIME[1] / (10.0**6), RUNNING_TIME[2] / (10.0**6), measure(RUNNING_TIME) / (10.0**6)) )
 
-Tp_b, Tm_b = full_torsion_points(b_public)
 set_zero_ops()
-if len(temporal_m) == 1:
-    if temporal_m[0] > 1:
-        ss_a = GAE(b_public, a_private, [L_out[0]], [ [] ], [S_out[0]], temporal_m, m)
-    else:
-        if setting.style == 'wd1':
-            # ONE torsion  point required
-            ss_a, m_tmp, a_tmp = evaluate_strategy(b_public, Tp_b, L_out[0], S_out[0], n, m, a_private)
-        else:
-            # TWO torsion points required
-            ss_a, m_tmp, a_tmp = evaluate_strategy(b_public, list([list(Tm_b), list(Tp_b)]), L_out[0], S_out[0], n, m, a_private)
+if (len(temporal_m) == 1) or ((len(temporal_m) == 2) and (0 in temporal_m)):
+    ss_a = GAE(b_public, a_private, [L_out[0]], [R_out[0]], [S_out[0]], [temporal_m[-1]], m)
 else:
     ss_a = GAE(b_public, a_private, L_out, R_out, S_out, r_out, m)
     
@@ -320,18 +293,9 @@ RUNNING_TIME = get_ops()
 print("// Secret sharing corresponding to Bob")
 print("// public key validation cost  :\t%2.3fM + %2.3fS + %2.3fa = %2.3fM," % (RUNNING_TIME[0] / (10.0**6), RUNNING_TIME[1] / (10.0**6), RUNNING_TIME[2] / (10.0**6), measure(RUNNING_TIME) / (10.0**6)) )
 
-Tp_a, Tm_a = full_torsion_points(a_public)
 set_zero_ops()
-if len(temporal_m) == 1:
-    if temporal_m[0] > 1:
-        ss_b = GAE(a_public, b_private, [L_out[0]], [ [] ], [S_out[0]], temporal_m, m)
-    else:
-        if setting.style == 'wd1':
-            # ONE torsion  point required
-            ss_b, m_tmp, b_tmp = evaluate_strategy(a_public, Tp_a, L_out[0], S_out[0], n, m, b_private)
-        else:
-            # TWO torsion points required
-            ss_b, m_tmp, b_tmp = evaluate_strategy(a_public, list([list(Tm_a), list(Tp_a)]), L_out[0], S_out[0], n, m, b_private)
+if (len(temporal_m) == 1) or ((len(temporal_m) == 2) and (0 in temporal_m)):
+    ss_b = GAE(a_public, b_private, [L_out[0]], [R_out[0]], [S_out[0]], [temporal_m[-1]], m)
 else:
     ss_b = GAE(a_public, b_private, L_out, R_out, S_out, r_out, m)
     
