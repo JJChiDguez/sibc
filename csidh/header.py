@@ -205,11 +205,11 @@ for i in range(len(r_out)):
     if(R_out[i] != []):
         printl(R_string, [ L.index(r_i) for r_i in R_out[i]], len(R_out[i]) // k + 1)
     else:
-        print(R_string +  " = {};")
+        print("static uint8_t W%d[1];" % i)
     if(S_out[i] != []):
         printl(S_string, S_out[i], len(S_out[i]) // k + 1)
     else:
-        print(S_string +  " = {};")
+        print("static uint8_t S%d[1];" % i)
     
 
 print("\n")
