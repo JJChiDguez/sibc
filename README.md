@@ -120,13 +120,17 @@ python3 print-strategy.py -p b5 -f svelu -a bsidh
 python3 print-strategy.py -p b2 -f hvelu -a bsidh -v
 ```
 
-Additionally, one can created files with extension `.h` that includes all the required variables in a the strategy evaluation (at least for CSIDH implementations).
+Additionally, one can created files with extension `.h` that includes all the required variables in a the sdacs, strategies, and velusqrt (at least for CSIDH implementations).
 
 ```bash
-# CSIDH
-python3 header.py -p p512 -f tvelu -a csidh -s wd2
-python3 header.py -p p1024 -f svelu -a csidh -s wd1 -v
-python3 header.py -p p1792 -f hvelu -a csidh -s df -v
+# Suitable bounds with m = 5
+python3 bounds.py -a csidh -p p512 -s wd2 -f hvelu -b 5
+# Strategies also with m = 5
+python3 header.py -a csidh -p p512 -s wd2 -f hvelu -v -b 5
+# SDACs (the flag -s doesn't affects the output)
+python3 sdacs.py -a csidh -p p512 -s wd2 -f hvelu -v
+# Optimal sizes of I, J, and K required in velusqrt (the flag -s doesn't affects the output)
+python3 ijk.py -a csidh -p p512 -s wd2 -f hvelu -v
 ```
 
 ## Remarks
