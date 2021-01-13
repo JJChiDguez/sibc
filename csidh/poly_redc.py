@@ -213,7 +213,11 @@ def scaled_remainder_tree(g, glen, f, flen, ptree_f, n):
     if n == 0:
         return [ [1] ]
 
-    fg = poly_mul_middle(f, flen, g, glen)
+    #fg = poly_mul_middle(f, flen, g, glen)
+    if flen == n and glen == n and n > 1:
+        fg = list(g)
+    else:
+        fg = poly_mul_middle(f, flen, g, glen)
 
     if n == 1:
         # The last coefficient should be the desire modular reduction with linear modulus
