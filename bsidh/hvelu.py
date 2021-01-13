@@ -23,7 +23,7 @@ sK = None
 # An extra global variable which is used in xISOG and xEVAL
 XZJ4 = None
 
-SCALED_REMAINDER_TREE = False
+SCALED_REMAINDER_TREE = True
 
 ''' -------------------------------------------------------------------------
     yDBL()
@@ -445,19 +445,19 @@ def xISOG_s(A, i):
    
     if not SCALED_REMAINDER_TREE:
         # Remainder tree computation
-        remainders_EJ_0 = remainders(poly_EJ_0, 2*sJ + 1,  ptree_hI, sI)
-        remainders_EJ_1 = remainders(poly_EJ_1, 2*sJ + 1,  ptree_hI, sI)
+        remainders_EJ_0 = multieval_unscaled(poly_EJ_0, 2*sJ + 1,  ptree_hI, sI)
+        remainders_EJ_1 = multieval_unscaled(poly_EJ_1, 2*sJ + 1,  ptree_hI, sI)
 
     else:
         # Approach using scaled remainder trees
         if ptree_hI != None:
             poly_EJ_0 = poly_redc(poly_EJ_0, 2*sJ + 1, ptree_hI)
             fg_0 = poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_0[::-1], sI)
-            remainders_EJ_0 = scaled_remainder_tree(fg_0[::-1], sI, [[1,0]] + [[0,0]]*(sI - 1), sI, ptree_hI, sI)
+            remainders_EJ_0 = multieval_scaled(fg_0[::-1], sI, [[1,0]] + [[0,0]]*(sI - 1), sI, ptree_hI, sI)
     
             poly_EJ_1 = poly_redc(poly_EJ_1, 2*sJ + 1, ptree_hI)
             fg_1 = poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_1[::-1], sI)
-            remainders_EJ_1 = scaled_remainder_tree(fg_1[::-1], sI, [[1,0]] + [[0,0]]*(sI - 1), sI, ptree_hI, sI)
+            remainders_EJ_1 = multieval_scaled(fg_1[::-1], sI, [[1,0]] + [[0,0]]*(sI - 1), sI, ptree_hI, sI)
         else:
             remainders_EJ_0 = []
             remainders_EJ_1 = []
@@ -590,19 +590,19 @@ def xEVAL_s(P, A):
 
     if not SCALED_REMAINDER_TREE:
         # Remainder tree computation
-        remainders_EJ_0 = remainders(poly_EJ_0, 2*sJ + 1,  ptree_hI, sI)
-        remainders_EJ_1 = remainders(poly_EJ_1, 2*sJ + 1,  ptree_hI, sI)
+        remainders_EJ_0 = multieval_unscaled(poly_EJ_0, 2*sJ + 1,  ptree_hI, sI)
+        remainders_EJ_1 = multieval_unscaled(poly_EJ_1, 2*sJ + 1,  ptree_hI, sI)
 
     else:
         # Approach using scaled remainder trees
         if ptree_hI != None:
             poly_EJ_0 = poly_redc(poly_EJ_0, 2*sJ + 1, ptree_hI)
             fg_0 = poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_0[::-1], sI)
-            remainders_EJ_0 = scaled_remainder_tree(fg_0[::-1], sI, [[1,0]] + [[0,0]]*(sI - 1), sI, ptree_hI, sI)
+            remainders_EJ_0 = multieval_scaled(fg_0[::-1], sI, [[1,0]] + [[0,0]]*(sI - 1), sI, ptree_hI, sI)
     
             poly_EJ_1 = poly_redc(poly_EJ_1, 2*sJ + 1, ptree_hI)
             fg_1 = poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_1[::-1], sI)
-            remainders_EJ_1 = scaled_remainder_tree(fg_1[::-1], sI, [[1,0]] + [[0,0]]*(sI - 1), sI, ptree_hI, sI)
+            remainders_EJ_1 = multieval_scaled(fg_1[::-1], sI, [[1,0]] + [[0,0]]*(sI - 1), sI, ptree_hI, sI)
         else:
             remainders_EJ_0 = []
             remainders_EJ_1 = []

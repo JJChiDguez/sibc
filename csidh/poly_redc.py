@@ -187,7 +187,7 @@ def reciprocal_tree(r, glen, ptree_f, n):
             'a':A}
 
 # Next function computes g(x) mod f_1(x), ..., g(x) mod f_n(x)
-def remainders(g, glen, ptree_f, n):
+def multieval_unscaled(g, glen, ptree_f, n):
 
     if n == 0:
         return [ [1] ]
@@ -203,12 +203,12 @@ def remainders(g, glen, ptree_f, n):
 
         m = n - (n // 2)
         # Reducing g(x) modulo the current node polynomial
-        left = remainders(g_mod, ptree_f['deg'], ptree_f['left'], m )
-        right = remainders(g_mod, ptree_f['deg'], ptree_f['right'], n - m )
+        left = multieval_unscaled(g_mod, ptree_f['deg'], ptree_f['left'], m )
+        right = multieval_unscaled(g_mod, ptree_f['deg'], ptree_f['right'], n - m )
         return left + right 
 
 # Next functions computes the scaled remainder tree
-def scaled_remainder_tree(g, glen, f, flen, ptree_f, n):
+def multieval_scaled(g, glen, f, flen, ptree_f, n):
 
     if n == 0:
         return [ [1] ]
@@ -227,6 +227,6 @@ def scaled_remainder_tree(g, glen, f, flen, ptree_f, n):
             return [ [1] ]
 
     m = n - (n//2)
-    left = scaled_remainder_tree(fg, flen, ptree_f['right']['poly'], ptree_f['right']['deg'] + 1, ptree_f['left'] , m)
-    right= scaled_remainder_tree(fg, flen, ptree_f['left']['poly'] ,  ptree_f['left']['deg'] + 1, ptree_f['right'], n - m)
+    left = multieval_scaled(fg, flen, ptree_f['right']['poly'], ptree_f['right']['deg'] + 1, ptree_f['left'] , m)
+    right= multieval_scaled(fg, flen, ptree_f['left']['poly'] ,  ptree_f['left']['deg'] + 1, ptree_f['right'], n - m)
     return left + right
