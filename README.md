@@ -6,21 +6,25 @@ At a combined computational expense of about *6l* field operations, Velu's formu
 
 ## Compilation
 
-The syntax compilation can be viewed by running one of the following three commands
+Install the `sidh` module which provides the `sidh` program:
+```
+sudo python3 setup.py install
+```
 
+The syntax compilation can be viewed by running one of the following three commands:
 ```bash
 # Corresponding with the key-exchange protocol
-python3 main.py -h or python3 main.py --help
+sidh --help
 # Corresponding with benchmarking (only for CSIDH, which has a variable running-time cost independent from the key)
-python3 main.py -h or python3 bench.py --help
+sidh-bench --help
 # Corresponding with the costs of KPs (Kernel Point computation), xISOG (isogeny construction), and xEVAL (isogeny evaluation)
-python3 main.py -h or python3 test.py --help
+sidh-test --help
 ```
 
 and any of the above commands should show:
 
 ```bash
-usage: main.py [-h] -p PRIME -f FORMULAES -a ALGORITHM [-s STYLE] [-b BENCHMARK] [-v]
+usage: sidh [-h] -p PRIME -f FORMULAES -a ALGORITHM [-s STYLE] [-b BENCHMARK] [-v]
 
 Parses command.
 
@@ -43,18 +47,14 @@ Notice, `csidh`  option requires the use of the flag `-s` (or `--style`). The ve
 
 ```bash
 # CSIDH
-./autosearch.sh p csidh
-sh autosearch.sh p csidh
-bash autosearch.sh p csidh
+sidh-autosearch p512 csidh
 # BSIDH
-./autosearch.sh p bsidh
-sh autosearch.sh p bsidh
-bash autosearch.sh p bsidh
+sidh-autosearch b2 bsidh
 ```
 
 ## Adding new primes
 
-The field characteristic `p` should be stored in directory `sop/`, and CSIDH and BSIDH have different structures (see below):
+The field characteristic `p` should be stored in directory `data/sop/`, and CSIDH and BSIDH have different structures (see below):
 
 ```bash
 # CSIDH format (here p = 2^c * l_1 * .... l_n - 1)
@@ -83,26 +83,26 @@ We summarize some examples of runs as follows
 
 ```bash
 # CSIDH
-python3 main.py -p p1024 -f tvelu -a csidh -s df
-python3 main.py -p p512 -f svelu -a csidh -s wd2
-python3 main.py -p p1792 -f hvelu -a csidh -s wd1 -v
+sidh -p p1024 -f tvelu -a csidh -s df
+sidh -p p512 -f svelu -a csidh -s wd2
+sidh -p p1792 -f hvelu -a csidh -s wd1 -v
 
-python3 bench.py -p p512 -f hvelu -a csidh -s wd2 -b 1024 -v
-python3 bench.py -p p512 -f hvelu -a csidh -s wd1 -b 1024 -v
-python3 bench.py -p p512 -f hvelu -a csidh -s df -b 1024 -v
+sidh-bench -p p512 -f hvelu -a csidh -s wd2 -b 1024 -v
+sidh-bench -p p512 -f hvelu -a csidh -s wd1 -b 1024 -v
+sidh-bench -p p512 -f hvelu -a csidh -s df -b 1024 -v
 
-python3 test.py -p p1792 -f tvelu -a csidh
-python3 test.py -p p1792 -f svelu -a csidh
-python3 test.py -p p1792 -f hvelu -a csidh
+sidh-test -p p1792 -f tvelu -a csidh
+sidh-test -p p1792 -f svelu -a csidh
+sidh-test -p p1792 -f hvelu -a csidh
 
 # BSIDH
-python3 main.py -p b6 -f tvelu -a bsidh
-python3 main.py -p b5 -f svelu -a bsidh
-python3 main.py -p b2 -f hvelu -a bsidh -v
+sidh -p b6 -f tvelu -a bsidh
+sidh -p b5 -f svelu -a bsidh  <!- data missing for this ( /usr/share/python3-sidh/data/strategies/bsidh-b5-svelu-classical )
+sidh -p b2 -f hvelu -a bsidh -v
 
-python3 test.py -p b6 -f tvelu -a bsidh
-python3 test.py -p b6 -f svelu -a bsidh
-python3 test.py -p b6 -f hvelu -a bsidh
+sidh-test -p b6 -f tvelu -a bsidh
+sidh-test -p b6 -f svelu -a bsidh
+sidh-test -p b6 -f hvelu -a bsidh
 
 ```
 
@@ -110,27 +110,27 @@ Remark, our implementation allows us to plot each optimal strategy required:
 
 ```bash
 # CSIDH
-python3 print-strategy.py -p p1024 -f tvelu -a csidh -s df
-python3 print-strategy.py -p p512 -f svelu -a csidh -s wd2
-python3 print-strategy.py -p p1792 -f hvelu -a csidh -s wd1 -v
+sidh-print-strategy -p p1024 -f tvelu -a csidh -s df
+sidh-print-strategy -p p512 -f svelu -a csidh -s wd2
+sidh-print-strategy -p p1792 -f hvelu -a csidh -s wd1 -v
 
 # BSIDH
-python3 print-strategy.py -p b6 -f tvelu -a bsidh
-python3 print-strategy.py -p b5 -f svelu -a bsidh
-python3 print-strategy.py -p b2 -f hvelu -a bsidh -v
+sidh-print-strategy -p b6 -f tvelu -a bsidh
+sidh-print-strategy -p b5 -f svelu -a bsidh <! data missing for this ( /usr/share/python3-sidh/data/strategies/bsidh-b5-svelu-classical )
+sidh-print-strategy -p b2 -f hvelu -a bsidh -v
 ```
 
 Additionally, one can created files with extension `.h` that includes all the required variables in a the sdacs, strategies, and velusqrt (at least for CSIDH implementations).
 
 ```bash
 # Suitable bounds with m = 5
-python3 bounds.py -a csidh -p p512 -s wd2 -f hvelu -b 5
+sidh-bounds -a csidh -p p512 -s wd2 -f hvelu -b 5
 # Strategies also with m = 5
-python3 header.py -a csidh -p p512 -s wd2 -f hvelu -v -b 5
+sidh-header -a csidh -p p512 -s wd2 -f hvelu -v -b 5
 # SDACs (the flag -s doesn't affects the output)
-python3 sdacs.py -a csidh -p p512 -s wd2 -f hvelu -v
+sidh-sdacs -a csidh -p p512 -s wd2 -f hvelu -v
 # Optimal sizes of I, J, and K required in velusqrt (the flag -s doesn't affects the output)
-python3 ijk.py -a csidh -p p512 -s wd2 -f hvelu -v
+sidh-ijk -a csidh -p p512 -s wd2 -f hvelu -v
 ```
 
 ## Remarks

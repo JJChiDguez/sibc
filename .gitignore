@@ -5,3 +5,6 @@ prime-filter.sh
 prime-search.sh
 prime-search.py
 more/*
+build/
+dist/
+sidh.egg-info/
