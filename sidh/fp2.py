@@ -2,11 +2,13 @@ from sidh.fp import *
 
 # Addition in the quadratic extension field of fp
 def fp2_add(a, b):
-    return [ fp_add(a[0], b[0]), fp_add(a[1], b[1]) ]
+    return [fp_add(a[0], b[0]), fp_add(a[1], b[1])]
+
 
 # Substraction in the quadratic extension field of fp
 def fp2_sub(a, b):
-    return [ fp_sub(a[0], b[0]), fp_sub(a[1], b[1]) ]
+    return [fp_sub(a[0], b[0]), fp_sub(a[1], b[1])]
+
 
 # Product in the quadratic extension field of fp
 def fp2_mul(a, b):
@@ -24,6 +26,7 @@ def fp2_mul(a, b):
     c[1] = fp_sub(c[1], z3)
     return c
 
+
 # Squaring in the quadratic extension field of fp
 def fp2_sqr(a):
 
@@ -31,10 +34,11 @@ def fp2_sqr(a):
     z1 = fp_add(a[0], a[1])
     z2 = fp_sub(a[0], a[1])
 
-    b = [0,0]
+    b = [0, 0]
     b[0] = fp_mul(z1, z2)
     b[1] = fp_mul(z0, a[1])
     return b
+
 
 # Inverse in the quadratic extension field of fp
 def fp2_inv(a):
@@ -51,6 +55,7 @@ def fp2_inv(a):
     b[1] = fp_mul(S1, S2)
     return b
 
+
 # Exponentiation in the quadratic extension field of fp
 def fp2_exp(a, e):
 
@@ -61,10 +66,11 @@ def fp2_exp(a, e):
     for j in range(1, bits_of_e + 1):
 
         tmp_a = fp2_sqr(tmp_a)
-        if( ( (e >> (bits_of_e - j)) & 1 ) != 0 ):
+        if ((e >> (bits_of_e - j)) & 1) != 0:
             tmp_a = fp2_mul(tmp_a, a)
 
     return tmp_a
+
 
 # Sqrt (if exists) in the quadratic extension field of fp
 def fp2_issquare(a):
@@ -92,10 +98,13 @@ def fp2_issquare(a):
         b = fp2_mul(b, x0)
         return True, b
 
+
 def fp2_cswap(x, y, b):
     z0, w0 = fp_cswap(x[0], y[0], b)
     z1, w1 = fp_cswap(x[1], y[1], b)
     return [z0, z1], [w0, w1]
+
+
 """
 # Tests
 print("p := 0x%X;" % p)

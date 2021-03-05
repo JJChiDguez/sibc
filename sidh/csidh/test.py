@@ -14,7 +14,7 @@ total_cost = [0, 0, 0]
 print("\n")
 print("p := 0x%X;" % p)
 print("fp := GF(p);")
-print("P<x> := PolynomialRing(fp);");
+print("P<x> := PolynomialRing(fp);")
 
 A = [2, 4]
 print("E := EllipticCurve(x^3 + 0x%X * x^2 + x);" % coeff(A))
@@ -31,8 +31,10 @@ else:
     # T_p belongs to E[pi + 1]
     T_m, T_p = full_torsion_points(A)
 
-assert(len(L) == n)
-print("// Now, we proceed by performing xISOG with input curve equals the output curve of the previous one experiment.")
+assert len(L) == n
+print(
+    "// Now, we proceed by performing xISOG with input curve equals the output curve of the previous one experiment."
+)
 for idx in range(0, n, 1):
 
     # -------------------------------------------------------------
@@ -57,8 +59,8 @@ for idx in range(0, n, 1):
                 b = 0
                 c = 0
             else:
-                b = int(floor( sqrt(global_L[idx] - 1) / 2.0) )
-                c = int(floor( (global_L[idx] - 1.0) / (4.0*b) ))
+                b = int(floor(sqrt(global_L[idx] - 1) / 2.0))
+                c = int(floor((global_L[idx] - 1.0) / (4.0 * b)))
 
             set_parameters_velu(b, c, idx)
 
@@ -69,7 +71,7 @@ for idx in range(0, n, 1):
     set_zero_ops()
     KPs(Tp, A, idx)
     show_ops("Kps", 1.0, 0.0, False)
-    t = get_ops();
+    t = get_ops()
     total_cost[0] += t[0]
     total_cost[1] += t[1]
     total_cost[2] += t[2]
@@ -79,7 +81,7 @@ for idx in range(0, n, 1):
     set_zero_ops()
     B = xISOG(A, idx)
     show_ops("xISOG", 1.0, 0.0, False)
-    t = get_ops();
+    t = get_ops()
     total_cost[0] += t[0]
     total_cost[1] += t[1]
     total_cost[2] += t[2]
@@ -87,38 +89,48 @@ for idx in range(0, n, 1):
     # -------------------------------------------------------------
     # xEVAL: kernel point determined by the next isogeny evaluation
     set_zero_ops()
-    if setting.formulaes == 'tvelu' or (setting.formulaes == 'hvelu' and global_L[idx] <= HYBRID_BOUND) :
+    if setting.formulaes == 'tvelu' or (
+        setting.formulaes == 'hvelu' and global_L[idx] <= HYBRID_BOUND
+    ):
         T_p = xEVAL(T_p, idx)
     else:
         T_p = xEVAL(T_p, A)
 
     # xEVAL bench
     set_zero_ops()
-    if setting.formulaes == 'tvelu' or (setting.formulaes == 'hvelu' and global_L[idx] <= HYBRID_BOUND) :
+    if setting.formulaes == 'tvelu' or (
+        setting.formulaes == 'hvelu' and global_L[idx] <= HYBRID_BOUND
+    ):
         T_m = xEVAL(T_m, idx)
     else:
         T_m = xEVAL(T_m, A)
 
     show_ops("xEVAL", 1.0, 0.0, False)
-    t = get_ops();
+    t = get_ops()
     total_cost[0] += t[0]
     total_cost[1] += t[1]
     total_cost[2] += t[2]
-    print("|| cost: %7d" % (total_cost[0] + total_cost[1]), end=" " )
-    print("|| ratio: %1.3f" % ((total_cost[0] + total_cost[1]) / (global_L[idx] + 2.0)) )
+    print("|| cost: %7d" % (total_cost[0] + total_cost[1]), end=" ")
+    print(
+        "|| ratio: %1.3f"
+        % ((total_cost[0] + total_cost[1]) / (global_L[idx] + 2.0))
+    )
 
-    #assert(validate(B))
+    # assert(validate(B))
     A = list(B)
 
-    #print("B := EllipticCurve(x^3 + 0x%X * x^2 + x);" % coeff(A))
-    #print("assert(Random(B) * (p + 1) eq B!0);")
-    #print("BOOL, Q := IsPoint(B, fp!%d/%d);" % (T_m[0], T_m[1]))
-    #print("assert(BOOL);")
+    # print("B := EllipticCurve(x^3 + 0x%X * x^2 + x);" % coeff(A))
+    # print("assert(Random(B) * (p + 1) eq B!0);")
+    # print("BOOL, Q := IsPoint(B, fp!%d/%d);" % (T_m[0], T_m[1]))
+    # print("assert(BOOL);")
 
-print("\n// All the l_i's have been processed, output of xISOG corresponds with the given below")
+print(
+    "\n// All the l_i's have been processed, output of xISOG corresponds with the given below"
+)
 print("B := EllipticCurve(x^3 + 0x%X * x^2 + x);" % coeff(A))
 print("assert(Random(B) * (p + 1) eq B!0);")
 
-print("\n\"If no errors were showed using magma calculator, then all experiments were successful passed!\";")
+print(
+    "\n\"If no errors were showed using magma calculator, then all experiments were successful passed!\";"
+)
 print("// copy and paste it at http://magma.maths.usyd.edu.au/calc/\n")
-

@@ -1,10 +1,20 @@
 from sidh.bsidh.montgomery import *
 
-cEVAL = lambda l: numpy.array( [2.0*(l - 1.0), 2.0, (l + 1.0)] )
-cISOG = lambda l: numpy.array( [(3.0*l + 2.0*hamming_weight(l) - 9.0 + isequal[l == 3]*4.0), (l + 2.0*bitlength(l) + 1.0 + isequal[l == 3]*2.0), (3.0*l - 7.0 + isequal[l == 3]*6.0)] )
+cEVAL = lambda l: numpy.array([2.0 * (l - 1.0), 2.0, (l + 1.0)])
+cISOG = lambda l: numpy.array(
+    [
+        (3.0 * l + 2.0 * hamming_weight(l) - 9.0 + isequal[l == 3] * 4.0),
+        (l + 2.0 * bitlength(l) + 1.0 + isequal[l == 3] * 2.0),
+        (3.0 * l - 7.0 + isequal[l == 3] * 6.0),
+    ]
+)
 
-C_xEVAL = list(map(cEVAL, global_L))   # list of the costs of each degree-l isogeny evaluation
-C_xISOG = list(map(cISOG, global_L))   # list of the costs of each degree-l isogeny construction
+C_xEVAL = list(
+    map(cEVAL, global_L)
+)  # list of the costs of each degree-l isogeny evaluation
+C_xISOG = list(
+    map(cISOG, global_L)
+)  # list of the costs of each degree-l isogeny construction
 
 K = None
 
@@ -15,17 +25,20 @@ K = None
             where E : y^2 = x^3 + (A/C)*x^2 + x
     output: the projective Twisted Edwards y-coordinate point y([2]P)
     ------------------------------------------------------------------------- '''
+
+
 def yDBL(P, A):
 
     t_0 = fp2_sqr(P[0])
     t_1 = fp2_sqr(P[1])
-    Z = fp2_mul(A[1], t_0);
-    X = fp2_mul(Z, t_1);
-    t_1 = fp2_sub(t_1, t_0);
-    t_0 = fp2_mul(A[0], t_1);
-    Z = fp2_add(Z, t_0);
-    Z = fp2_mul(Z, t_1);
-    return [fp2_sub(X,Z), fp2_add(X,Z)]
+    Z = fp2_mul(A[1], t_0)
+    X = fp2_mul(Z, t_1)
+    t_1 = fp2_sub(t_1, t_0)
+    t_0 = fp2_mul(A[0], t_1)
+    Z = fp2_add(Z, t_0)
+    Z = fp2_mul(Z, t_1)
+    return [fp2_sub(X, Z), fp2_add(X, Z)]
+
 
 ''' -------------------------------------------------------------------------
     yADD()
@@ -33,6 +46,8 @@ def yDBL(P, A):
             y(Q) := YQ/WQ, and y(P-Q) := YPQ/QPQ
     output: the projective Twisted Edwards y-coordinate point y(P+Q)
     ------------------------------------------------------------------------- '''
+
+
 def yADD(P, Q, PQ):
 
     a = fp2_mul(P[1], Q[0])
@@ -46,7 +61,8 @@ def yADD(P, Q, PQ):
     zD = fp2_sub(PQ[1], PQ[0])
     X = fp2_mul(zD, c)
     Z = fp2_mul(xD, d)
-    return [fp2_sub(X,Z), fp2_add(X,Z)]
+    return [fp2_sub(X, Z), fp2_add(X, Z)]
+
 
 ''' -------------------------------------------------------------------------
     KPs()
@@ -56,23 +72,26 @@ def yADD(P, Q, PQ):
     output: the list of projective Twisted Edwards y-coordinate points y(P),
             y([2]P), y([3]P), ..., and y([d_i]P) where l_i = 2 * d_i + 1
     ------------------------------------------------------------------------- '''
+
+
 def KPs_t(P, A, i):
 
-    assert(isinfinity(P) == False)
+    assert isinfinity(P) == False
     global K
     d = (global_L[i] - 1) // 2
 
-    K = [ [[0, 0], [0,0]] for j in range(d + 1) ]
-    K[0] = list([fp2_sub(P[0], P[1]), fp2_add(P[0],P[1])])  # 2a
+    K = [[[0, 0], [0, 0]] for j in range(d + 1)]
+    K[0] = list([fp2_sub(P[0], P[1]), fp2_add(P[0], P[1])])  # 2a
     if global_L[i] == 3:
-        K[1] = list([ list(K[0]), list(K[1]) ])
+        K[1] = list([list(K[0]), list(K[1])])
     else:
-        K[1] = yDBL(K[0], A)                                # 4M + 2S + 4a
+        K[1] = yDBL(K[0], A)  # 4M + 2S + 4a
 
     for j in range(2, d, 1):
-        K[j] = yADD(K[j - 1], K[0], K[j - 2])               # 4M + 2S + 6a
+        K[j] = yADD(K[j - 1], K[0], K[j - 2])  # 4M + 2S + 6a
 
-    return K                                                # 2(l - 3)M + (l - 3)S + 3(l - 3)a
+    return K  # 2(l - 3)M + (l - 3)S + 3(l - 3)a
+
 
 ''' ------------------------------------------------------------------------------
     xISOG()
@@ -83,12 +102,14 @@ def KPs_t(P, A, i):
     output: the projective Montgomery constants a24:= a + 2c and c24:=4c where
             E': y^2 = x^3 + (a/c)*x^2 + x is a degree-(l_i) isogenous curve to E
     ------------------------------------------------------------------------------ '''
+
+
 def xISOG_t(A, i):
 
     global K
-    l = global_L[i]             # l
-    bits_of_l = bitlength(l)    # Number of bits of L[i]
-    d = (l - 1) // 2            # Here, l = 2d + 1
+    l = global_L[i]  # l
+    bits_of_l = bitlength(l)  # Number of bits of L[i]
+    d = (l - 1) // 2  # Here, l = 2d + 1
 
     By = K[0][0]
     Bz = K[0][1]
@@ -98,7 +119,7 @@ def xISOG_t(A, i):
         Bz = fp2_mul(Bz, K[j][1])
 
     bits_of_l -= 1
-    constant_d_edwards = fp2_sub(A[0], A[1])     # 1a
+    constant_d_edwards = fp2_sub(A[0], A[1])  # 1a
 
     tmp_a = A[0]
     tmp_d = constant_d_edwards
@@ -107,7 +128,7 @@ def xISOG_t(A, i):
 
         tmp_a = fp2_sqr(tmp_a)
         tmp_d = fp2_sqr(tmp_d)
-        if( ( (l >> (bits_of_l - j)) & 1 ) != 0 ):
+        if ((l >> (bits_of_l - j)) & 1) != 0:
 
             tmp_a = fp2_mul(tmp_a, A[0])
             tmp_d = fp2_mul(tmp_d, constant_d_edwards)
@@ -121,7 +142,8 @@ def xISOG_t(A, i):
     C1 = fp2_mul(tmp_d, By)
     C1 = fp2_sub(C0, C1)
 
-    return [C0, C1]                             # (l - 1 + 2*HW(l) - 2)M + 2(|l|_2 + 1)S + 2a
+    return [C0, C1]  # (l - 1 + 2*HW(l) - 2)M + 2(|l|_2 + 1)S + 2a
+
 
 ''' ------------------------------------------------------------------------------
     xEVAL()
@@ -132,10 +154,12 @@ def xISOG_t(A, i):
     output: the projective Montgomery constants a24:= a + 2c and c24:=4c where
             E': y^2 = x^3 + (a/c)*x^2 + x is a degree-(l_i) isogenous curve to E
     ------------------------------------------------------------------------------ '''
+
+
 def xEVAL_t(P, i):
 
     global K
-    d = (global_L[i] - 1) // 2                  # Here, l = 2d + 1
+    d = (global_L[i] - 1) // 2  # Here, l = 2d + 1
 
     Q0 = fp2_add(P[0], P[1])
     Q1 = fp2_sub(P[0], P[1])
@@ -151,13 +175,14 @@ def xEVAL_t(P, i):
     X = fp2_mul(P[0], R0)
     Z = fp2_mul(P[1], R1)
 
-    return [X, Z]                               # 2(l - 1)M + 2S + (l + 1)a
+    return [X, Z]  # 2(l - 1)M + 2S + (l + 1)a
+
 
 # Degree-4 isogeny construction
 def xISOG_4(P):
 
     global K
-    K = [ [0,0], [0,0], [0,0] ]
+    K = [[0, 0], [0, 0], [0, 0]]
 
     K[1] = fp2_sub(P[0], P[1])
     K[2] = fp2_add(P[0], P[1])
@@ -165,21 +190,22 @@ def xISOG_4(P):
     K[0] = fp2_add(K[0], K[0])
 
     C24 = fp2_sqr(K[0])
-    K[0]= fp2_add(K[0], K[0])
+    K[0] = fp2_add(K[0], K[0])
     A24 = fp2_sqr(P[0])
     A24 = fp2_add(A24, A24)
     A24 = fp2_sqr(A24)
     return [A24, C24]
+
 
 # Degree-4 isogeny evaluation
 def xEVAL_4(Q):
 
     t0 = fp2_add(Q[0], Q[1])
     t1 = fp2_sub(Q[0], Q[1])
-    XQ = fp2_mul(t0, K[1]) 
+    XQ = fp2_mul(t0, K[1])
     ZQ = fp2_mul(t1, K[2])
-    t0 = fp2_mul(t0, t1) 
-    t0 = fp2_mul(t0, K[0]) 
+    t0 = fp2_mul(t0, t1)
+    t0 = fp2_mul(t0, K[0])
     t1 = fp2_add(XQ, ZQ)
     ZQ = fp2_sub(XQ, ZQ)
     t1 = fp2_sqr(t1)
@@ -191,11 +217,13 @@ def xEVAL_4(Q):
 
     return [XQ, ZQ]
 
-#"""
+
+# """
 def KPs(P, A, i):
 
     if global_L[i] != 4:
         return KPs_t(P, A, i)
+
 
 def xISOG(A, i):
 
@@ -205,13 +233,16 @@ def xISOG(A, i):
         # A should corresponds with an order-4 point
         return xISOG_4(A)
 
+
 def xEVAL(P, i):
 
     if global_L[i] != 4:
         return xEVAL_t(P, i)
     else:
         return xEVAL_4(P)
-#"""
+
+
+# """
 
 # Get cost of the isogeny constructions and evaluations
 def cISOG_and_cEVAL():
@@ -221,23 +252,23 @@ def cISOG_and_cEVAL():
 
     # E[p + 1]
     # First, we look for a full torsion point
-    A = [ [0x8, 0x0], [0x4, 0x0] ]
+    A = [[0x8, 0x0], [0x4, 0x0]]
 
     # Reading public generators points
     f = open(gen_data + setting.prime)
     # x(PA), x(QA) and x(PA - QA)
     PQA = f.readline()
-    PQA = [ int(x, 16) for x in PQA.split() ]
-    PA  = [list(PQA[0:2]), [0x1,0x0]]
-    QA  = [list(PQA[2:4]), [0x1,0x0]]
-    PQA = [list(PQA[4:6]), [0x1,0x0]]
+    PQA = [int(x, 16) for x in PQA.split()]
+    PA = [list(PQA[0:2]), [0x1, 0x0]]
+    QA = [list(PQA[2:4]), [0x1, 0x0]]
+    PQA = [list(PQA[4:6]), [0x1, 0x0]]
 
     # x(PB), x(QB) and x(PB - QB)
     PQB = f.readline()
-    PQB = [ int(x, 16) for x in PQB.split() ]
-    PB  = [list(PQB[0:2]), [0x1,0x0]]
-    QB  = [list(PQB[2:4]), [0x1,0x0]]
-    PQB = [list(PQB[4:6]), [0x1,0x0]]
+    PQB = [int(x, 16) for x in PQB.split()]
+    PB = [list(PQB[0:2]), [0x1, 0x0]]
+    QB = [list(PQB[2:4]), [0x1, 0x0]]
+    PQB = [list(PQB[4:6]), [0x1, 0x0]]
 
     f.close()
 
@@ -245,7 +276,7 @@ def cISOG_and_cEVAL():
 
         PA = xMUL(PA, A, 0)
         QA = xMUL(QA, A, 0)
-        PQA= xMUL(PQA, A, 0)
+        PQA = xMUL(PQA, A, 0)
 
     # Random kernels for counting the
     T_p = Ladder3pt(random.randint(0, p - 1), PA, QA, PQA, A)
@@ -270,7 +301,7 @@ def cISOG_and_cEVAL():
         set_zero_ops()
         KPs(Tp, A, i)
         t = get_ops()
-        C_xISOG[i] = numpy.array( [ t[0] * 1.0, t[1] * 1.0, t[2] * 1.0] )
+        C_xISOG[i] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
 
         set_zero_ops()
         Tp[0], A[0] = fp2_cswap(Tp[0], A[0], global_L[i] == 4)
@@ -279,7 +310,7 @@ def cISOG_and_cEVAL():
         Tp[0], A[0] = fp2_cswap(Tp[0], A[0], global_L[i] == 4)
         Tp[1], A[1] = fp2_cswap(Tp[1], A[1], global_L[i] == 4)
         t = get_ops()
-        C_xISOG[i] += numpy.array( [ t[0] * 1.0, t[1] * 1.0, t[2] * 1.0] )
+        C_xISOG[i] += numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
 
         # xEVAL: kernel point determined by the next isogeny evaluation
         set_zero_ops()
@@ -289,14 +320,14 @@ def cISOG_and_cEVAL():
         set_zero_ops()
         T_m = xEVAL(T_m, i)
         t = get_ops()
-        C_xEVAL[i] = numpy.array( [ t[0] * 1.0, t[1] * 1.0, t[2] * 1.0] )
+        C_xEVAL[i] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
 
         # Updating the new next curve
         A = list(B)
 
     # E[p - 1]
     # First, we look for a full torsion point
-    A = [ [0x8, 0x0], [0x4, 0x0] ]
+    A = [[0x8, 0x0], [0x4, 0x0]]
     T_m = Ladder3pt(random.randint(0, p - 1), PA, QA, PQA, A)
     T_p = Ladder3pt(random.randint(0, p - 1), PB, QB, PQB, A)
 
@@ -311,12 +342,12 @@ def cISOG_and_cEVAL():
         set_zero_ops()
         KPs(Tp, A, i)
         t = get_ops()
-        C_xISOG[i] = numpy.array( [ t[0] * 1.0, t[1] * 1.0, t[2] * 1.0] )
+        C_xISOG[i] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
 
         set_zero_ops()
         B = xISOG(A, i)
         t = get_ops()
-        C_xISOG[i] += numpy.array( [ t[0] * 1.0, t[1] * 1.0, t[2] * 1.0] )
+        C_xISOG[i] += numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
 
         # xEVAL: kernel point determined by the next isogeny evaluation
         set_zero_ops()
@@ -326,13 +357,13 @@ def cISOG_and_cEVAL():
         set_zero_ops()
         T_m = xEVAL(T_m, i)
         t = get_ops()
-        C_xEVAL[i] = numpy.array( [ t[0] * 1.0, t[1] * 1.0, t[2] * 1.0] )
+        C_xEVAL[i] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
 
         # Updating the new next curve
         A = list(B)
     set_zero_ops()
     return None
 
+
 # Now, we proceed to store all the correct costs
 cISOG_and_cEVAL()
-
