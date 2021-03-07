@@ -58,6 +58,7 @@ setuptools.setup(
             "sidh-header=sidh.header:main",
             "sidh-sdacs=sidh.sdacs:main",
             "sidh-ijk=sidh.ijk:main",
+            "sidh-csidh-util=sidh.csidh.util:main",
         ]
     },
     zip_safe=False,
