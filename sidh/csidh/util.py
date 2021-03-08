@@ -373,12 +373,30 @@ def compute_strategy():
     default='df',
 )
 @click.option(
+    "-e",
+    "--exponent",
+    type=click.Choice(['2', '3']),
+    default='2',
+)
+@click.option(
+    "-m",
+    "--multievaluation",
+    type=click.Choice(['???', '????']),
+    default='???',
+)
+@click.option(
+    "-c",
+    "--curvemodel",
+    type=click.Choice(['edwards', 'montgomery']),
+    default='montgomery',
+)
+@click.option(
     "-v",
     "--verbose",
     is_flag=True,
     help="Not the kind of verbosity you might expect",
 )
-def main(prime, formula, algorithm, style, verbose):
+def main(prime, formula, algorithm, style, exponent, verbose, multievaluation, curvemodel):
     """
     sidh-csidh-util with reasonable defaults
 
@@ -386,11 +404,8 @@ def main(prime, formula, algorithm, style, verbose):
 
     """
     if formula == 'hvelu':
-        from sidh.csidh._gae_df import *
-
+        from sidh.csidh._gae_df import gae_df
         gae = Gae_df(prime, style, verbose)
-
-
 #    csidh_dh(pk, sk)
     raise Exit(0)
 

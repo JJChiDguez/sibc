@@ -141,7 +141,7 @@ class F_p(object):
         # left-to-right method for computing a^e
         for j in range(1, bits_of_e + 1):
 
-            tmp_a = fp_sqr(tmp_a)
+            tmp_a = self.fp_sqr(tmp_a)
             if ((e >> (bits_of_e - j)) & 1) != 0:
                 tmp_a = self.fp_mul(tmp_a, a)
 
