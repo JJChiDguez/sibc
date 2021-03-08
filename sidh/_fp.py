@@ -2,21 +2,12 @@ from functools import reduce
 from .constants import sop_data, parameters
 from ._math import bitlength
 
-L = None
-n = None
-exponent_of_two = None
-p = None
-p_minus_one_halves = None
-validation_stop = None
-
 class F_p(object):
     def __init__(self, algorithm, prime):
-        global L
-        global n
-        global exponent_of_two
-        global p
-        global p_minus_one_halves
-        global validation_stop
+        # counters for field operations performed
+        self.fpadd = 0
+        self.fpsqr = 0
+        self.fpmul = 0
 
         if algorithm == 'csidh':
             L = parameters['csidh'][prime]['L']
@@ -33,7 +24,7 @@ class F_p(object):
 
             # The prime to be used
             p = f.readline()
-            p = int(p, 16)
+            self.p = int(p, 16)
 
             # List corresponding (p + 1)
             Lp = f.readline()
@@ -80,107 +71,81 @@ class F_p(object):
                 print("// Case p = 1 mod 4 is not implemented yet!")
                 exit(-1)
 
-            p_minus_one_halves = (p - 1) // 2
+            self.p_minus_one_halves = (p - 1) // 2
             p_minus_3_quarters = (p - 3) // 4
 
 
-# counters for field operations performed
-fpadd = 0
-fpsqr = 0
-fpmul = 0
+    def set_zero_ops(self):
 
-def set_zero_ops():
-
-    global fpadd
-    global fpsqr
-    global fpmul
-    fpadd -= fpadd
-    fpsqr -= fpsqr
-    fpmul -= fpmul
+        self.fpadd -= self.fpadd
+        self.fpsqr -= self.fpsqr
+        self.fpmul -= self.fpmul
 
 
-def show_ops(label, a, b, flag):
+    def show_ops(label, a, b, flag):
 
-    global fpadd
-    global fpsqr
-    global fpmul
+        print("| %s: %7dM + %7dS + %7da" % (label, self.fpmul, self.fpsqr, self.fpadd), end="\t")
 
-    print("| %s: %7dM + %7dS + %7da" % (label, fpmul, fpsqr, fpadd), end="\t")
+        return None
 
-    return None
+    def get_ops(self):
+        return [self.fpmul, self.fpsqr, self.fpadd]
 
-def get_ops():
-
-    global fpadd
-    global fpsqr
-    global fpmul
-
-    return [fpmul, fpsqr, fpadd]
-
-# Modular inverse
-def fp_inv(a):
-
-    g, x, y = xgcd(a, p)
-    # if g != 1:
-    # 	raise ValueError
-    return x % p
+    # Modular inverse
+    def fp_inv(self, a):
+        g, x, y = xgcd(a, self.p)
+        # if g != 1:
+        # 	raise ValueError
+        return x % self.p
 
 
-# Modular addition
-def fp_add(a, b):
-
-    global fpadd
-    fpadd += 1
-    return (a + b) % p
+    # Modular addition
+    def fp_add(self, a, b):
+        self.fpadd += 1
+        return (a + b) % self.p
 
 
-# Modular substraction
-def fp_sub(a, b):
-
-    global fpadd
-    fpadd += 1
-    return (a - b) % p
+    # Modular substraction
+    def fp_sub(self, a, b):
+        self.fpadd += 1
+        return (a - b) % self.p
 
 
-# Modular multiplication
-def fp_mul(a, b):
-
-    global fpmul
-    fpmul += 1
-    return (a * b) % p
+    # Modular multiplication
+    def fp_mul(self, a, b):
+        self.fpmul += 1
+        return (a * b) % self.p
 
 
-# Modular squaring
-def fp_sqr(a):
-
-    global fpsqr
-    fpsqr += 1
-    # print(fpsqr)
-    return (a ** 2) % p
+    # Modular squaring
+    def fp_sqr(self, a):
+        self.fpsqr += 1
+        # print(fpsqr)
+        return (a ** 2) % self.p
 
 
-# constant-time swap
-def fp_cswap(x, y, b):
+    # constant-time swap
+    def fp_cswap(self, x, y, b):
 
-    z = list([x, y])
-    z = list(z[:: (1 - 2 * b)])
-    return z[0], z[1]
+        z = list([x, y])
+        z = list(z[:: (1 - 2 * b)])
+        return z[0], z[1]
 
 
-# Modular exponentiation
-def fp_exp(a, e):
+    # Modular exponentiation
+    def fp_exp(self, a, e):
 
-    bits_of_e = bitlength(e)
-    bits_of_e -= 1
-    tmp_a = a
-    # left-to-right method for computing a^e
-    for j in range(1, bits_of_e + 1):
+        bits_of_e = bitlength(e)
+        bits_of_e -= 1
+        tmp_a = a
+        # left-to-right method for computing a^e
+        for j in range(1, bits_of_e + 1):
 
-        tmp_a = fp_sqr(tmp_a)
-        if ((e >> (bits_of_e - j)) & 1) != 0:
-            tmp_a = fp_mul(tmp_a, a)
+            tmp_a = fp_sqr(tmp_a)
+            if ((e >> (bits_of_e - j)) & 1) != 0:
+                tmp_a = self.fp_mul(tmp_a, a)
 
-    return tmp_a
+        return tmp_a
 
 
 # Jacobi symbol used for checking if an integer has square-root in fp
