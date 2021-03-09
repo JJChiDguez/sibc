@@ -1,10 +1,32 @@
-# finite field and elliptic curve point aritmethics libraries
-from sidh.csidh.montgomery import *
-
 # Next library is used for printing polynomials
-from sympy import *
+from sympy import symbols, floor, sqrt, sign
 
 x = symbols('x')
+
+fp = None
+def poly_mul_init(curve):
+    ML = curve
+    global global_L
+    global_L = ML.L
+    global fp
+    fp = ML.fp
+    # ----------------------------------------------------------------------------------
+    # Table of 2 raised to a negative power
+    inverse_of_two = fp.fp_inv(2)
+    max_exp = 2 * int(floor(sqrt(global_L[-1])))
+    negative_powers_of_two = dict()
+    negative_powers_of_two[1] = 1
+
+    j = 1
+    j_next = 1
+    for i in range(0, max_exp, 1):
+        j_next *= 2
+        negative_powers_of_two[j_next] = fp.fp_mul(
+            negative_powers_of_two[j], inverse_of_two
+        )
+        j = j_next
+    # ----------------------------------------------------------------------------------
+    return ML
 
 # Here, a polynomial is represented as a list of integers.
 def print_poly(h, lenh):
@@ -14,8 +36,10 @@ def print_poly(h, lenh):
     return None
 
 
-# Karatsuba style multiplication of two polynomials
 def karatsuba_mul(f, flen, g, glen):
+    """
+    Karatsuba style multiplication of two polynomials
+    """
 
     if flen < glen:
         return poly_mul(g, glen, f, flen)
@@ -29,7 +53,7 @@ def karatsuba_mul(f, flen, g, glen):
     if glen == 1:
 
         # Multipication by a constant
-        return [fp_mul(f[i], g[0]) for i in range(0, flen, 1)]
+        return [fp.fp_mul(f[i], g[0]) for i in range(0, flen, 1)]
 
     # At this step, we ensure flen >= glen >= 2
     if flen == 2:
@@ -38,13 +62,13 @@ def karatsuba_mul(f, flen, g, glen):
         # Thus c(x) = (a * b)(x) is a quadratic polynomial
         c = list([0, 0, 0])
 
-        c[0] = fp_mul(f[0], g[0])  # coeff of x^0
-        c[2] = fp_mul(f[1], g[1])  # coeff of x^2
-        f01 = fp_add(f[0], f[1])
-        g01 = fp_add(g[0], g[1])
-        c[1] = fp_mul(f01, g01)
-        c[1] = fp_sub(c[1], c[0])
-        c[1] = fp_sub(c[1], c[2])  # coeff of x^1
+        c[0] = fp.fp_mul(f[0], g[0])  # coeff of x^0
+        c[2] = fp.fp_mul(f[1], g[1])  # coeff of x^2
+        f01 = fp.fp_add(f[0], f[1])
+        g01 = fp.fp_add(g[0], g[1])
+        c[1] = fp.fp_mul(f01, g01)
+        c[1] = fp.fp_sub(c[1], c[0])
+        c[1] = fp.fp_sub(c[1], c[2])  # coeff of x^1
         return c
 
     if flen == 3:
@@ -57,16 +81,16 @@ def karatsuba_mul(f, flen, g, glen):
                 [0, 0, 0, 0]
             )  # Thus c(x) = (f * g)(x) is a cubic polynomial
 
-            c[0] = fp_mul(f[0], g[0])  # coeff of x^0
-            c[2] = fp_mul(f[1], g[1])
-            f01 = fp_add(f[0], f[1])
-            g01 = fp_add(g[0], g[1])
-            c[1] = fp_mul(f01, g01)
-            c[1] = fp_sub(c[1], c[0])
-            c[1] = fp_sub(c[1], c[2])  # coeff of x^1
-            c[3] = fp_mul(f[2], g[1])  # coeff of x^3
-            f2g0 = fp_mul(f[2], g[0])
-            c[2] = fp_add(c[2], f2g0)  # coeff of x^2
+            c[0] = fp.fp_mul(f[0], g[0])  # coeff of x^0
+            c[2] = fp.fp_mul(f[1], g[1])
+            f01 = fp.fp_add(f[0], f[1])
+            g01 = fp.fp_add(g[0], g[1])
+            c[1] = fp.fp_mul(f01, g01)
+            c[1] = fp.fp_sub(c[1], c[0])
+            c[1] = fp.fp_sub(c[1], c[2])  # coeff of x^1
+            c[3] = fp.fp_mul(f[2], g[1])  # coeff of x^3
+            f2g0 = fp.fp_mul(f[2], g[0])
+            c[2] = fp.fp_add(c[2], f2g0)  # coeff of x^2
             return c
 
         if glen == 3:
@@ -81,19 +105,19 @@ def karatsuba_mul(f, flen, g, glen):
             )  # multiplication of two linear polynomials
 
             # Middle part
-            f_01 = fp_add(f[0], f[1])
-            f_02 = fp_add(f[0], f[2])
-            g_01 = fp_add(g[0], g[1])
-            g_02 = fp_add(g[0], g[2])
+            f_01 = fp.fp_add(f[0], f[1])
+            f_02 = fp.fp_add(f[0], f[2])
+            g_01 = fp.fp_add(g[0], g[1])
+            g_02 = fp.fp_add(g[0], g[2])
 
-            t_01 = fp_mul(f_01, g_01)
-            t_02 = fp_mul(f_02, g_02)
+            t_01 = fp.fp_mul(f_01, g_01)
+            t_02 = fp.fp_mul(f_02, g_02)
 
-            l_coeff = fp_sub(t_01, karatsuba_0[0])
-            l_coeff = fp_sub(l_coeff, karatsuba_1[0])
-            q_coeff = fp_sub(t_02, karatsuba_0[0])
-            q_coeff = fp_sub(q_coeff, karatsuba_1[2])
-            q_coeff = fp_add(q_coeff, karatsuba_1[0])
+            l_coeff = fp.fp_sub(t_01, karatsuba_0[0])
+            l_coeff = fp.fp_sub(l_coeff, karatsuba_1[0])
+            q_coeff = fp.fp_sub(t_02, karatsuba_0[0])
+            q_coeff = fp.fp_sub(q_coeff, karatsuba_1[2])
+            q_coeff = fp.fp_add(q_coeff, karatsuba_1[0])
 
             return list(karatsuba_0 + [l_coeff, q_coeff] + karatsuba_1[1:])
 
@@ -111,7 +135,7 @@ def karatsuba_mul(f, flen, g, glen):
             c1 = karatsuba_mul(f_high, mf, g[:glen], glen)
             return (
                 c0[:nf]
-                + [fp_add(c0[nf + i], c1[i]) for i in range(0, glen - 1, 1)]
+                + [fp.fp_add(c0[nf + i], c1[i]) for i in range(0, glen - 1, 1)]
                 + c1[(glen - 1) :]
             )
 
@@ -120,7 +144,7 @@ def karatsuba_mul(f, flen, g, glen):
         g_high = g[nf:glen]
 
         f_mid = [
-            fp_add(f_low[i], f_high[i]) for i in range(0, nf, 1)
+            fp.fp_add(f_low[i], f_high[i]) for i in range(0, nf, 1)
         ] + f_high[nf:]
 
         fg_low = karatsuba_mul(f_low, nf, g_low, nf)
@@ -129,49 +153,31 @@ def karatsuba_mul(f, flen, g, glen):
         if mg < mf:
 
             g_mid = [
-                fp_add(g_low[i], g_high[i]) for i in range(0, mg, 1)
+                fp.fp_add(g_low[i], g_high[i]) for i in range(0, mg, 1)
             ] + g_low[mg:]
             fg_mid = poly_mul(f_mid, mf, g_mid, nf)
 
         else:
 
             g_mid = [
-                fp_add(g_low[i], g_high[i]) for i in range(0, nf, 1)
+                fp.fp_add(g_low[i], g_high[i]) for i in range(0, nf, 1)
             ] + g_high[nf:]
             fg_mid = poly_mul(f_mid, mf, g_mid, mg)
 
         fg_mid = [
-            fp_sub(fg_mid[i], fg_high[i]) for i in range(0, mf + mg - 1, 1)
+            fp.fp_sub(fg_mid[i], fg_high[i]) for i in range(0, mf + mg - 1, 1)
         ] + fg_mid[(mf + mg - 1) :]
         fg_mid = [
-            fp_sub(fg_mid[i], fg_low[i]) for i in range(0, 2 * nf - 1, 1)
+            fp.fp_sub(fg_mid[i], fg_low[i]) for i in range(0, 2 * nf - 1, 1)
         ] + fg_mid[(2 * nf - 1) :]
 
         return (
             fg_low[:nf]
-            + [fp_add(fg_low[nf + i], fg_mid[i]) for i in range(0, nf - 1, 1)]
+            + [fp.fp_add(fg_low[nf + i], fg_mid[i]) for i in range(0, nf - 1, 1)]
             + [fg_mid[nf - 1]]
-            + [fp_add(fg_mid[nf + i], fg_high[i]) for i in range(0, mf - 1)]
+            + [fp.fp_add(fg_mid[nf + i], fg_high[i]) for i in range(0, mf - 1)]
             + fg_high[(mf - 1) :]
         )
-
-
-# ----------------------------------------------------------------------------------
-# Table of 2 raised to a negative power
-inverse_of_two = fp_inv(2)
-max_exp = 2 * int(floor(sqrt(global_L[-1])))
-negative_powers_of_two = dict()
-negative_powers_of_two[1] = 1
-
-j = 1
-j_next = 1
-for i in range(0, max_exp, 1):
-    j_next *= 2
-    negative_powers_of_two[j_next] = fp_mul(
-        negative_powers_of_two[j], inverse_of_two
-    )
-    j = j_next
-# ----------------------------------------------------------------------------------
 
 
 def qring_mul(f, g, e):
@@ -189,7 +195,7 @@ def qring_mul(f, g, e):
         h_1 = h[m:]
         h_1 = h_1 + [0] * (len(h_0) - len(h_1))
 
-        return [[fp_sub(h_0[i], h_1[i]) for i in range(0, m, 1)]]
+        return [[fp.fp_sub(h_0[i], h_1[i]) for i in range(0, m, 1)]]
 
     elif (n == 1) and (m > 8):
 
@@ -227,13 +233,13 @@ def qring_mul(f, g, e):
         # Next, we recursively multiply F and G but now in B[y]/(y^n2+1) = B[y]/(y^n2-x^m2)
         H = qring_mul(F, G, m2)
         # At this point, H is equal to  n2*F*G, so we need to divide by n2
-        # in2 =  fp_inv(n2)   # This inverse can be omited (we only care about polynomials with the same roots)
+        # in2 =  fp.fp_inv(n2)   # This inverse can be omited (we only care about polynomials with the same roots)
 
         # H lives in B[y]/(y^n2+1), 'contained' in Fp[x,y]/(y^n2+1), so to recover
         # the corresponding element h in Fp[x][x^m+1], in H we substitute y by x^hm2.
         h = list([0] * m)
         degy = 0
-        fp_op = {0: fp_add, 1: fp_sub}
+        fp.fp_op = {0: fp.fp_add, 1: fp.fp_sub}
         for j in range(0, n2, 1):
 
             deg = degy
@@ -244,16 +250,16 @@ def qring_mul(f, g, e):
                 # deg = l*hm2 + k. Sometimes we have deg>m-1, this is why case we have to
                 # take residues (deg mod m) and also flip the sign of H(l,k) when deg>m-1
                 q, r = divmod(deg, m)
-                # (-1)^q determines if fp_add or fp_sub will be needed
+                # (-1)^q determines if fp.fp_add or fp.fp_sub will be needed
                 hr = H[j][i]
-                h[r] = fp_op[q % 2](h[r], hr)
+                h[r] = fp.fp_op[q % 2](h[r], hr)
                 deg += 1
 
             degy += hm2
 
-        # return [ [fp_mul(h[i], in2) for i in range(0, m, 1)] ]
+        # return [ [fp.fp_mul(h[i], in2) for i in range(0, m, 1)] ]
         return [
-            [fp_mul(h[i], negative_powers_of_two[n2]) for i in range(0, m, 1)]
+            [fp.fp_mul(h[i], negative_powers_of_two[n2]) for i in range(0, m, 1)]
         ]
         # return [list(h)]
 
@@ -269,10 +275,10 @@ def qring_mul(f, g, e):
 
         F1, F2 = [], []
         G1, G2 = [], []
-        fp_op = {
-            0: fp_add,
-            1: fp_sub,
-        }  # (-1)^q determines if fp_add or fp_sub will be needed
+        fp.fp_op = {
+            0: fp.fp_add,
+            1: fp.fp_sub,
+        }  # (-1)^q determines if fp.fp_add or fp.fp_sub will be needed
         for j in range(0, n2, 1):
 
             Fj1, Fj2 = [], []
@@ -306,7 +312,7 @@ def qring_mul(f, g, e):
                 q, r = divmod(i - m + e2, m)
                 sgn = q % 2
                 h1j.append(fp_add(H1[j][i], H2[j][i]))
-                h2j.append(fp_op[1 - sgn](0, fp_sub(H1[j][r], H2[j][r])))
+                h2j.append(fp_op[1 - sgn](0, fp.fp_sub(H1[j][r], H2[j][r])))
 
             h1.append(h1j)
             h2.append(h2j)
@@ -328,7 +334,7 @@ def poly_mul(f, flen, g, glen):
             [ff + [0] * (n - hlen)], [gg + [0] * (n - hlen)], 0
         )
 
-        # return [ fp_mul(fg_qring[0][i], in2) for i in range(0, flen + glen, 1) ]
+        # return [ fp.fp_mul(fg_qring[0][i], in2) for i in range(0, flen + glen, 1) ]
         return fg_qring[0][: (flen + glen - 1)]
 
     else:
@@ -336,8 +342,11 @@ def poly_mul(f, flen, g, glen):
         return karatsuba_mul(f, flen, g, glen)
 
 
-# Next function computes f*g mod x^n but using the same idea from the C-code implementation of https://eprint.iacr.org/2020/341
 def poly_mul_modxn(n, f, flen, g, glen):
+    """
+    Next function computes f*g mod x^n but using the same idea from the C-code
+    implementation of https://eprint.iacr.org/2020/341
+    """
 
     if flen < glen:
         return poly_mul_modxn(n, g, glen, f, flen)
@@ -363,7 +372,7 @@ def poly_mul_modxn(n, f, flen, g, glen):
 
     if n == 1:
         # Only the constant coefficients are required
-        return [fp_mul(f[0], g[0])]
+        return [fp.fp_mul(f[0], g[0])]
 
     if n >= (flen + glen - 1):
 
@@ -373,52 +382,52 @@ def poly_mul_modxn(n, f, flen, g, glen):
     # At this step we ensure n <  (flen + glen - 1)
     if glen == 1:
 
-        return [fp_mul(f[i], g[0]) for i in range(0, n, 1)]
+        return [fp.fp_mul(f[i], g[0]) for i in range(0, n, 1)]
 
     # Here, flen >= glen >= 2
     if n == 2:
 
         # Multiplication of two linear polynomials modulo x^2
         # And thus, the cuadratic coefficient is not required
-        f0g0 = fp_mul(f[0], g[0])
-        f0g1 = fp_mul(f[0], g[1])
-        f1g0 = fp_mul(f[1], g[0])
-        return [f0g0, fp_add(f0g1, f1g0)]
+        f0g0 = fp.fp_mul(f[0], g[0])
+        f0g1 = fp.fp_mul(f[0], g[1])
+        f1g0 = fp.fp_mul(f[1], g[0])
+        return [f0g0, fp.fp_add(f0g1, f1g0)]
 
     if n == 3:
 
         if glen == 2:
 
             # Multiplication modulo x^3 of a linear polynomial with another of degree at least 2
-            f0g0 = fp_mul(f[0], g[0])
-            f1g1 = fp_mul(f[1], g[1])
+            f0g0 = fp.fp_mul(f[0], g[0])
+            f1g1 = fp.fp_mul(f[1], g[1])
 
-            f01 = fp_add(f[0], f[1])
-            g01 = fp_add(g[0], g[1])
-            t01 = fp_mul(f01, g01)
-            t01 = fp_sub(t01, f0g0)
-            t01 = fp_sub(t01, f1g1)
+            f01 = fp.fp_add(f[0], f[1])
+            g01 = fp.fp_add(g[0], g[1])
+            t01 = fp.fp_mul(f01, g01)
+            t01 = fp.fp_sub(t01, f0g0)
+            t01 = fp.fp_sub(t01, f1g1)
 
-            f2g0 = fp_mul(f[2], g[0])
-            return [f0g0, t01, fp_add(f1g1, f2g0)]
+            f2g0 = fp.fp_mul(f[2], g[0])
+            return [f0g0, t01, fp.fp_add(f1g1, f2g0)]
 
         if glen == 3:
-            c00 = fp_mul(f[0], g[0])  # coeff of x^0
+            c00 = fp.fp_mul(f[0], g[0])  # coeff of x^0
 
-            c11 = fp_mul(f[1], g[1])
-            f01 = fp_add(f[0], f[1])
-            g01 = fp_add(g[0], g[1])
-            c01 = fp_mul(f01, g01)
-            c01 = fp_sub(c01, c00)
-            c01 = fp_sub(c01, c11)
+            c11 = fp.fp_mul(f[1], g[1])
+            f01 = fp.fp_add(f[0], f[1])
+            g01 = fp.fp_add(g[0], g[1])
+            c01 = fp.fp_mul(f01, g01)
+            c01 = fp.fp_sub(c01, c00)
+            c01 = fp.fp_sub(c01, c11)
 
-            f02 = fp_add(f[0], f[2])
-            g02 = fp_add(g[0], g[2])
-            c02 = fp_mul(f02, g02)
-            c22 = fp_mul(f[2], g[2])
-            c02 = fp_sub(c02, c00)
-            c02 = fp_sub(c02, c22)
-            c02 = fp_add(c02, c11)
+            f02 = fp.fp_add(f[0], f[2])
+            g02 = fp.fp_add(g[0], g[2])
+            c02 = fp.fp_mul(f02, g02)
+            c22 = fp.fp_mul(f[2], g[2])
+            c02 = fp.fp_sub(c02, c00)
+            c02 = fp.fp_sub(c02, c22)
+            c02 = fp.fp_add(c02, c11)
             return [c00, c01, c02]
 
     if n == 4 and glen == 4:
@@ -433,25 +442,25 @@ def poly_mul_modxn(n, f, flen, g, glen):
         nc = -(-n // 2)  # Ceiling of n/2
 
         for i in range(0, n, 1):
-            c[i] = fp_mul(f[i], g[i])
+            c[i] = fp.fp_mul(f[i], g[i])
         k = n
         for i in range(0, nf, 1):
             for j in range(0, n - 2 * i - 1, 1):
-                c[k] = fp_mul(
-                    fp_add(f[i], f[i + j + 1]), fp_add(g[i], g[i + j + 1])
+                c[k] = fp.fp_mul(
+                    fp.fp_add(f[i], f[i + j + 1]), fp.fp_add(g[i], g[i + j + 1])
                 )
-                c[k] = fp_sub(c[k], fp_add(c[i], c[i + j + 1]))
+                c[k] = fp.fp_sub(c[k], fp.fp_add(c[i], c[i + j + 1]))
                 k = k + 1
 
         c[n - 1] = c[0]
         for i in range(1, nf, 1):
             for j in range(1, n - 2 * i, 1):
-                c[n + 2 * i - 1 + j] = fp_add(
+                c[n + 2 * i - 1 + j] = fp.fp_add(
                     c[n + 2 * i - 1 + j], c[(1 + i) * n - i ** 2 - 1 + j]
                 )
 
         for i in range(1, nc, 1):
-            c[n + 2 * i - 1] = fp_add(c[n + 2 * i - 1], c[i])
+            c[n + 2 * i - 1] = fp.fp_add(c[n + 2 * i - 1], c[i])
 
         delta = n - 1
         return c[delta : (n + delta)]
@@ -474,8 +483,8 @@ def poly_mul_modxn(n, f, flen, g, glen):
     g1 = [g[2 * i + 1] for i in range(0, g1len, 1)]
 
     # Middle part like karatsuba
-    f01 = [fp_add(f0[i], f1[i]) for i in range(0, f1len, 1)] + f0[f1len:]
-    g01 = [fp_add(g0[i], g1[i]) for i in range(0, g1len, 1)] + g0[g1len:]
+    f01 = [fp.fp_add(f0[i], f1[i]) for i in range(0, f1len, 1)] + f0[f1len:]
+    g01 = [fp.fp_add(g0[i], g1[i]) for i in range(0, g1len, 1)] + g0[g1len:]
 
     # product f0 * g0 must has degree at most x^l0
     n0 = f0len + g0len - 1
@@ -496,8 +505,8 @@ def poly_mul_modxn(n, f, flen, g, glen):
     fg_1 = poly_mul_modxn(n1, f1, f1len, g1, g1len)
 
     # Computing the middle part
-    fg_01 = [fp_sub(fg_01[i], fg_0[i]) for i in range(0, n01, 1)] + fg_01[n01:]
-    fg_01 = [fp_sub(fg_01[i], fg_1[i]) for i in range(0, n1, 1)] + fg_01[n1:]
+    fg_01 = [fp.fp_sub(fg_01[i], fg_0[i]) for i in range(0, n01, 1)] + fg_01[n01:]
+    fg_01 = [fp.fp_sub(fg_01[i], fg_1[i]) for i in range(0, n1, 1)] + fg_01[n1:]
 
     # Unifying the computations
     fg = [0] * n
@@ -508,18 +517,23 @@ def poly_mul_modxn(n, f, flen, g, glen):
         fg[2 * i + 1] = fg_01[i]
 
     for i in range(0, n1 - 1, 1):
-        fg[2 * i + 2] = fp_add(fg[2 * i + 2], fg_1[i])
+        fg[2 * i + 2] = fp.fp_add(fg[2 * i + 2], fg_1[i])
 
     if 2 * n1 < n:
-        fg[2 * n1] = fp_add(fg[2 * n1], fg_1[n1 - 1])
+        fg[2 * n1] = fp.fp_add(fg[2 * n1], fg_1[n1 - 1])
 
     return fg
 
 
-# Next funtion computes the central part polynomial of f * g mod (x^m - 1)
-# Next two functions are based on the work title "The Middle Product Algorithm, I." by G. Hanrot. M. Quercia, and P. Zimmermann
 def quasi_poly_mul_middle(g, glen, f, flen):
+    """
+    Next function computes the central part polynomial of f * g mod (x^m - 1)
+    Next two functions are based on the work title "The Middle Product
+    Algorithm, I." by G. Hanrot. M. Quercia, and P. Zimmermann
+    """
 
+#    if not glen == len(g):
+#        import pdb; pdb.set_trace();
     assert glen == len(g)
     assert flen == len(f)
 
@@ -527,7 +541,7 @@ def quasi_poly_mul_middle(g, glen, f, flen):
         return []
 
     if glen == 1:
-        return [fp_mul(g[0], f[0])]
+        return [fp.fp_mul(g[0], f[0])]
 
     glen0 = glen // 2  # floor(glen / 2)
     glen1 = glen - glen0  # ceil(glen / 2)
@@ -535,13 +549,13 @@ def quasi_poly_mul_middle(g, glen, f, flen):
     A = poly_mul_middle(
         g[glen0:],
         glen1,
-        [fp_add(f[i], f[i + glen1]) for i in range(0, 2 * glen1 - 1, 1)],
+        [fp.fp_add(f[i], f[i + glen1]) for i in range(0, 2 * glen1 - 1, 1)],
         2 * glen1 - 1,
     )
 
     if glen % 2 == 0:
         B = poly_mul_middle(
-            [fp_sub(g[glen1 + i], g[i]) for i in range(0, glen0, 1)],
+            [fp.fp_sub(g[glen1 + i], g[i]) for i in range(0, glen0, 1)],
             glen0,
             f[glen1 : (3 * glen1 - 1)],
             2 * glen1 - 1,
@@ -549,7 +563,7 @@ def quasi_poly_mul_middle(g, glen, f, flen):
     else:
         B = poly_mul_middle(
             [g[glen0]]
-            + [fp_sub(g[glen1 + i], g[i]) for i in range(0, glen0, 1)],
+            + [fp.fp_sub(g[glen1 + i], g[i]) for i in range(0, glen0, 1)],
             glen1,
             f[glen1 : (3 * glen1 - 1)],
             2 * glen1 - 1,
@@ -559,7 +573,7 @@ def quasi_poly_mul_middle(g, glen, f, flen):
         g[:glen0],
         glen0,
         [
-            fp_add(f[glen1 + i], f[2 * glen1 + i])
+            fp.fp_add(f[glen1 + i], f[2 * glen1 + i])
             for i in range(0, 2 * glen0 - 1, 1)
         ],
         2 * glen0 - 1,
@@ -568,14 +582,16 @@ def quasi_poly_mul_middle(g, glen, f, flen):
     assert len(A) == glen1
     assert len(B) == glen1
     assert len(C) == glen0
-    return [fp_sub(A[i], B[i]) for i in range(0, glen1, 1)] + [
-        fp_add(C[i], B[i]) for i in range(0, glen0, 1)
+    return [fp.fp_sub(A[i], B[i]) for i in range(0, glen1, 1)] + [
+        fp.fp_add(C[i], B[i]) for i in range(0, glen0, 1)
     ]
 
 
-# Next funtion computes the central part polynomial of f * g mod (x^m - 1)
-# This functions is an extension of quasi_poly_mul_middle()
 def poly_mul_middle(g, glen, f, flen):
+    """
+    Next function computes the central part polynomial of f * g mod (x^m - 1)
+    This functions is an extension of quasi_poly_mul_middle()
+    """
 
     if (glen == (flen // 2)) and (flen % 2 == 0):
         # Here deg(f) = 2d - 1 and deg(g) = d - 1
@@ -609,39 +625,40 @@ def poly_mul_middle(g, glen, f, flen):
         fg_high = poly_mul_modxn(glen, F1, glen, g, glen)
 
         return [
-            fp_add(fg_low[i], fg_high[i]) for i in range(0, glen - 1, 1)
+            fp.fp_add(fg_low[i], fg_high[i]) for i in range(0, glen - 1, 1)
         ] + [fg_high[glen - 1]]
 
 
-# Next function computes the product of two polynomials g(x) annd f(x) such that
-# g(x) = x^dg * g(1/x) and f(x) = x^df * f(1/x) where deg g = dg, and deg f = df
 def poly_mul_selfreciprocal(g, glen, f, flen):
-
+    """
+    Next function computes the product of two polynomials g(x) annd f(x) such that
+    g(x) = x^dg * g(1/x) and f(x) = x^df * f(1/x) where deg g = dg, and deg f = df
+    """
     if glen == 0 and flen == 0:
         return []
 
     if glen == 1 and flen == 1:
-        return [fp_mul(g[0], f[0])]
+        return [fp.fp_mul(g[0], f[0])]
 
     if glen == 2 and flen == 2:
 
         h = [0] * 3
-        h[0] = fp_mul(g[0], f[0])
-        h[1] = fp_add(h[0], h[0])
+        h[0] = fp.fp_mul(g[0], f[0])
+        h[1] = fp.fp_add(h[0], h[0])
         h[2] = h[0]
         return h
 
     if glen == 3 and flen == 3:
 
         h = [0] * 5
-        h[0] = fp_mul(g[0], f[0])
-        h[2] = fp_mul(g[1], f[1])
-        g01 = fp_add(g[0], g[1])
-        f01 = fp_add(f[0], f[1])
-        h[1] = fp_mul(g01, f01)
-        h[2] = fp_add(h[2], h[0])
-        h[1] = fp_sub(h[1], h[2])
-        h[2] = fp_add(h[2], h[0])
+        h[0] = fp.fp_mul(g[0], f[0])
+        h[2] = fp.fp_mul(g[1], f[1])
+        g01 = fp.fp_add(g[0], g[1])
+        f01 = fp.fp_add(f[0], f[1])
+        h[1] = fp.fp_mul(g01, f01)
+        h[2] = fp.fp_add(h[2], h[0])
+        h[1] = fp.fp_sub(h[1], h[2])
+        h[2] = fp.fp_add(h[2], h[0])
         h[3] = h[1]
         h[4] = h[0]
         return h
@@ -649,15 +666,15 @@ def poly_mul_selfreciprocal(g, glen, f, flen):
     if glen == 4 and flen == 4:
 
         h = [0] * 7
-        h[0] = fp_mul(g[0], f[0])
-        h[3] = fp_mul(g[1], f[1])
-        g01 = fp_add(g[0], g[1])
-        f01 = fp_add(f[0], f[1])
-        h[2] = fp_mul(g01, f01)
-        h[2] = fp_sub(h[2], h[0])
-        h[1] = fp_sub(h[2], h[3])
-        h[3] = fp_add(h[3], h[0])
-        h[3] = fp_add(h[3], h[3])
+        h[0] = fp.fp_mul(g[0], f[0])
+        h[3] = fp.fp_mul(g[1], f[1])
+        g01 = fp.fp_add(g[0], g[1])
+        f01 = fp.fp_add(f[0], f[1])
+        h[2] = fp.fp_mul(g01, f01)
+        h[2] = fp.fp_sub(h[2], h[0])
+        h[1] = fp.fp_sub(h[2], h[3])
+        h[3] = fp.fp_add(h[3], h[0])
+        h[3] = fp.fp_add(h[3], h[3])
         h[4] = h[2]
         h[5] = h[1]
         h[6] = h[0]
@@ -666,29 +683,29 @@ def poly_mul_selfreciprocal(g, glen, f, flen):
     if glen == 5 and flen == 5:
 
         h = [0] * 9
-        g10 = fp_sub(g[1], g[0])
-        f01 = fp_sub(f[0], f[1])
-        h[1] = fp_mul(g10, f01)
-        g20 = fp_sub(g[2], g[0])
-        f02 = fp_sub(f[0], f[2])
-        h[2] = fp_mul(g20, f02)
-        g21 = fp_sub(g[2], g[1])
-        f12 = fp_sub(f[1], f[2])
-        h[3] = fp_mul(g21, f12)
+        g10 = fp.fp_sub(g[1], g[0])
+        f01 = fp.fp_sub(f[0], f[1])
+        h[1] = fp.fp_mul(g10, f01)
+        g20 = fp.fp_sub(g[2], g[0])
+        f02 = fp.fp_sub(f[0], f[2])
+        h[2] = fp.fp_mul(g20, f02)
+        g21 = fp.fp_sub(g[2], g[1])
+        f12 = fp.fp_sub(f[1], f[2])
+        h[3] = fp.fp_mul(g21, f12)
 
-        h[0] = fp_mul(g[0], f[0])
-        g1f1 = fp_mul(g[1], f[1])
-        g2f2 = fp_mul(g[2], f[2])
+        h[0] = fp.fp_mul(g[0], f[0])
+        g1f1 = fp.fp_mul(g[1], f[1])
+        g2f2 = fp.fp_mul(g[2], f[2])
 
-        t = fp_add(g1f1, h[0])
-        h[1] = fp_add(h[1], t)
-        h[3] = fp_add(h[3], h[1])
-        h[4] = fp_add(t, g2f2)
-        h[4] = fp_add(h[4], t)
-        h[2] = fp_add(h[2], t)
-        h[2] = fp_add(h[2], g2f2)
-        h[3] = fp_add(h[3], g1f1)
-        h[3] = fp_add(h[3], g2f2)
+        t = fp.fp_add(g1f1, h[0])
+        h[1] = fp.fp_add(h[1], t)
+        h[3] = fp.fp_add(h[3], h[1])
+        h[4] = fp.fp_add(t, g2f2)
+        h[4] = fp.fp_add(h[4], t)
+        h[2] = fp.fp_add(h[2], t)
+        h[2] = fp.fp_add(h[2], g2f2)
+        h[3] = fp.fp_add(h[3], g1f1)
+        h[3] = fp.fp_add(h[3], g2f2)
 
         h[5] = h[3]
         h[6] = h[2]
@@ -724,33 +741,33 @@ def poly_mul_selfreciprocal(g, glen, f, flen):
 
         # ---
         for i in range(0, len1, 1):
-            g0[i] = fp_add(g0[i], g1[i])
-            f0[i] = fp_add(f0[i], f1[i])
+            g0[i] = fp.fp_add(g0[i], g1[i])
+            f0[i] = fp.fp_add(f0[i], f1[i])
 
         for i in range(0, len1, 1):
-            g0[i + 1] = fp_add(g0[i + 1], g1[i])
-            f0[i + 1] = fp_add(f0[i + 1], f1[i])
+            g0[i + 1] = fp.fp_add(g0[i + 1], g1[i])
+            f0[i + 1] = fp.fp_add(f0[i + 1], f1[i])
 
         h01 = poly_mul_selfreciprocal(g0, len0, f0, len0)
 
         # Mixing the computations
         for i in range(0, 2 * len0 - 1, 1):
-            h01[i] = fp_sub(h01[i], h0[i])
+            h01[i] = fp.fp_sub(h01[i], h0[i])
 
         for i in range(0, 2 * len1 - 1, 1):
-            h01[i] = fp_sub(h01[i], h1[i])
+            h01[i] = fp.fp_sub(h01[i], h1[i])
 
         for i in range(0, 2 * len1 - 1, 1):
-            h01[i + 1] = fp_sub(h01[i + 1], h1[i])
+            h01[i + 1] = fp.fp_sub(h01[i + 1], h1[i])
 
         for i in range(0, 2 * len1 - 1, 1):
-            h01[i + 1] = fp_sub(h01[i + 1], h1[i])
+            h01[i + 1] = fp.fp_sub(h01[i + 1], h1[i])
 
         for i in range(0, 2 * len1 - 1, 1):
-            h01[i + 2] = fp_sub(h01[i + 2], h1[i])
+            h01[i + 2] = fp.fp_sub(h01[i + 2], h1[i])
 
         for i in range(1, 2 * len0 - 1, 1):
-            h01[i] = fp_sub(h01[i], h01[i - 1])
+            h01[i] = fp.fp_sub(h01[i], h01[i - 1])
 
         # Unifying the computations
         hlen = 2 * glen - 1
@@ -763,7 +780,7 @@ def poly_mul_selfreciprocal(g, glen, f, flen):
             h[2 * i + 1] = h01[i]
 
         for i in range(0, 2 * len1 - 1, 1):
-            h[2 * i + 2] = fp_add(h[2 * i + 2], h1[i])
+            h[2 * i + 2] = fp.fp_add(h[2 * i + 2], h1[i])
 
         return h
 
@@ -777,16 +794,16 @@ def poly_mul_selfreciprocal(g, glen, f, flen):
 
         h = [0] * (2 * glen - 1)
         for i in range(0, glen - 1, 1):
-            h[i] = fp_add(h[i], h0[i])
+            h[i] = fp.fp_add(h[i], h0[i])
 
         for i in range(0, glen - 1, 1):
-            h[2 * glen - 2 - i] = fp_add(h[2 * glen - 2 - i], h0[i])
+            h[2 * glen - 2 - i] = fp.fp_add(h[2 * glen - 2 - i], h0[i])
 
         for i in range(0, glen - 1, 1):
-            h[half + i] = fp_add(h[half + i], h1[i])
+            h[half + i] = fp.fp_add(h[half + i], h1[i])
 
         for i in range(0, glen - 1, 1):
-            h[glen + half - 2 - i] = fp_add(h[glen + half - 2 - i], h1[i])
+            h[glen + half - 2 - i] = fp.fp_add(h[glen + half - 2 - i], h1[i])
 
         return h
 
@@ -801,8 +818,10 @@ def poly_mul_selfreciprocal(g, glen, f, flen):
     return h
 
 
-# Product tree of given list of polynomials
 def product_tree(f, n):
+    """
+    Product tree of given list of polynomials
+    """
 
     if n == 0:
         return {'left': None, 'right': None, 'poly': [1], 'deg': 0}
@@ -832,8 +851,10 @@ def product_tree(f, n):
         }
 
 
-# Product tree of given list of self reciprocal polynomials
 def product_selfreciprocal_tree(f, n):
+    """
+    Product tree of given list of self reciprocal polynomials
+    """
 
     if n == 0:
         return {'left': None, 'right': None, 'poly': [1], 'deg': 0}
@@ -876,6 +897,6 @@ def product(list_g_mod_f, n):
     out = list_g_mod_f[0][0]
     for j in range(1, n, 1):
 
-        out = fp_mul(out, list_g_mod_f[j][0])
+        out = fp.fp_mul(out, list_g_mod_f[j][0])
 
     return out

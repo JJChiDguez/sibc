@@ -1,9 +1,9 @@
 #x = dict(df=gae_df, wd1=gae_wd1, wd2=gae_wd2)
-from sidh.csidh._gae_df import Gae_df
-from sidh.csidh._gae_wd1 import Gae_wd1
-from sidh.csidh._hvelu import Hvelu
-from sidh.csidh._tvelu import Tvelu
-from sidh.csidh._montgomery import MontgomeryLadder
+from sidh.csidh.gae_df import Gae_df
+from sidh.csidh.gae_wd1 import Gae_wd1
+from sidh.csidh.hvelu import Hvelu
+from sidh.csidh.tvelu import Tvelu
+from sidh.csidh.montgomery import MontgomeryLadder
 
 class CSIDH(object):
     """
