@@ -46,9 +46,9 @@ def MontgomeryLadder(prime, style):
     fp = F_p('csidh', prime)
     L = L = parameters['csidh'][prime]['L']
     A = parameters['csidh']['A']
-    print("// Shortest Differential Addition Chains (SDAC) for each l_i;")
+    #print("// Shortest Differential Addition Chains (SDAC) for each l_i;")
     # List of Small odd primes, L := [l_0, ..., l_{n-1}]
-    print("// SDAC's to be read from a file")
+    #print("// SDAC's to be read from a file")
     path = sdacs_data + prime
     SDACS = filename_to_list_of_lists_of_ints(path)
     if len(SDACS) == 0:

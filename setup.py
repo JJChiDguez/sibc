@@ -49,15 +49,15 @@ setuptools.setup(
     python_requires=">=3.7",
     entry_points={
         "console_scripts": [
-            "sidh=sidh.main:main",
-            "sidh-bench=sidh.bench:main",
-            "sidh-test=sidh.test:main",
+            "sidh=sidh.__main__:main",
+            "sidh-bench=sidh.csidh.bench:main",
+            "sidh-test=sidh.csidh.test:main",
             "sidh-print-strategy=sidh.printstrategy:main",
-            "sidh-parameters=sidh.parameters:main",
-            "sidh-bounds=sidh.bounds:main",
-            "sidh-header=sidh.header:main",
-            "sidh-sdacs=sidh.sdacs:main",
-            "sidh-ijk=sidh.ijk:main",
+            "sidh-parameters=sidh.csidh.parameters:main",
+            "sidh-bounds=sidh.csidh.bounds:main",
+            "sidh-header=sidh.csidh.header:main",
+            "sidh-sdacs=sidh.csidh.sdacs:main",
+            "sidh-ijk=sidh.csidh.ijk:main",
             "sidh-csidh-util=sidh.csidh.util:main",
         ]
     },
