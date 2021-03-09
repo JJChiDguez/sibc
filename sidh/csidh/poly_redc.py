@@ -105,7 +105,7 @@ def poly_redc(h, hlen, f):
 
         t0 =fp.fp_mul(h[0], f['poly'][1])  # h0 * f1
         t1 =fp.fp_mul(h[1], f['poly'][0])  # h1 * f0
-        return [fp_sub(t0, t1)]  # f1 * (h0 + h1*x) mod (f0 + f1*x)
+        return [fp.fp_sub(t0, t1)]  # f1 * (h0 + h1*x) mod (f0 + f1*x)
 
     elif flen == 2 and hlen == 3:
 

@@ -3,6 +3,7 @@ from sidh.csidh.gae_df import Gae_df
 from sidh.csidh.gae_wd1 import Gae_wd1
 from sidh.csidh.hvelu import Hvelu
 from sidh.csidh.tvelu import Tvelu
+from sidh.csidh.svelu import Svelu
 from sidh.csidh.montgomery import MontgomeryLadder
 
 class CSIDH(object):
@@ -67,8 +68,8 @@ class CSIDH(object):
             self.formula = Hvelu(self.curve, verbose)
         elif formula == 'tvelu':
             self.formula = Tvelu(self.curve)
-        else:
-            self.formula = NotImplemented
+        elif formula == 'svelu':
+            self.formula = Svelu(self.curve, verbose)
 
         # Side channel protection styles
         if self.style == 'df':

@@ -9,20 +9,7 @@ from functools import reduce
 
 from sidh.constants import sdacs_data, bitlength, parameters
 from sidh.math import hamming_weight
-
-class attrdict(dict):
-    """
-    Dictionary which provides attribute access to its keys.
-    """
-    #FIXME move to a common module
-
-    def __getattr__(self, key):
-        if key in self:
-            return self[key]
-        else:
-            raise AttributeError(
-                "%r object has no attribute %r" % (type(self).__name__, key)
-            )
+from sidh.common import attrdict
 
 def filename_to_list_of_lists_of_ints(path):
     res = []
@@ -44,7 +31,7 @@ def MontgomeryLadder(prime, style):
     style = style
     prime = prime
     fp = F_p('csidh', prime)
-    L = L = parameters['csidh'][prime]['L']
+    L = parameters['csidh'][prime]['L']
     A = parameters['csidh']['A']
     #print("// Shortest Differential Addition Chains (SDAC) for each l_i;")
     # List of Small odd primes, L := [l_0, ..., l_{n-1}]

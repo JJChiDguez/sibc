@@ -1,21 +1,6 @@
-#from sidh.csidh.montgomery import *
 import numpy
 from sidh.math import hamming_weight, isequal, bitlength
-
-class attrdict(dict):
-    """
-    Dictionary which provides attribute access to its keys.
-    """
-
-    #FIXME move to a common module
-
-    def __getattr__(self, key):
-        if key in self:
-            return self[key]
-        else:
-            raise AttributeError(
-                "%r object has no attribute %r" % (type(self).__name__, key)
-            )
+from sidh.common import attrdict
 
 
 def Tvelu(curve):
