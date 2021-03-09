@@ -18,10 +18,10 @@ def Gae_wd2(prime, verbose, curve, formula):
     random_key = lambda: [random.randint(-m_i, m_i) for m_i in m]
 
     '''
-        security()
-        inputs : the list M of maximum number of degree-(l_i) isogeny constructions
-                 to be performed, and the length of M
-        output : bits of security that M brings
+    security()
+    inputs : the list M of maximum number of degree-(l_i) isogeny constructions
+             to be performed, and the length of M
+    output : bits of security that M brings
     '''
     security = lambda M, n: sum(list([log(2 * M[i] + 1, 2) for i in range(n)]))
 

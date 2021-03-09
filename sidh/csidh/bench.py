@@ -1,9 +1,19 @@
 import click
 from sidh.csidh import CSIDH
+from sidh.common import attrdict
 
 @click.command()
 @click.pass_context
 def main(ctx):
+
+    setting = attr(ctx.meta['sidh.kwargs'])
+    self = setting['algo']
+
+#    m = self.params.m
+#    L = self.params.L
+
+    m = self.gae.m
+    L = self.curve.L
 
     if len(set(m)) > 1:
         # Maximum number of degree-(l_i) isogeny constructions is m_i (different for each l_i)
@@ -20,8 +30,8 @@ def main(ctx):
     try:
 
         # List of Small Odd Primes, L := [l_0, ..., l_{n-1}]
-        m_prime = [geometric_serie(m[k], L[k]) for k in range(n)]
-        r_out, L_out, R_out = rounds(m_prime[::-1], n)
+        m_prime = [self.gae.geometric_serie(m[k], L[k]) for k in range(n)]
+        r_out, L_out, R_out = self.gae.rounds(m_prime[::-1], n)
         for j in range(0, len(r_out), 1):
 
             R_out[j] = list([L[::-1][k] for k in R_out[j]])
