@@ -517,4 +517,4 @@ def Gae_wd1(prime, verbose, curve, formula):
 
       return C_e, L_out, R_out, S_out, tmp_r
 
-  return attrdict(name='wd1', **locals())
+    return attrdict(name='wd1', **locals())

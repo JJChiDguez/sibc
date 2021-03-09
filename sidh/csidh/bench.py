@@ -1,19 +1,19 @@
 import click
+from sidh.constants import strategy_data
 from sidh.csidh import CSIDH
-from sidh.common import attrdict
 
 @click.command()
 @click.pass_context
-def main(ctx):
+def bench(ctx):
 
-    setting = attr(ctx.meta['sidh.kwargs'])
+    "Bench command"
+
+    setting = ctx.meta['sidh.kwargs']
     self = setting['algo']
 
-#    m = self.params.m
-#    L = self.params.L
-
-    m = self.gae.m
-    L = self.curve.L
+    n = self.params.n
+    m = self.params.m
+    L = self.params.L
 
     if len(set(m)) > 1:
         # Maximum number of degree-(l_i) isogeny constructions is m_i (different for each l_i)
@@ -45,7 +45,7 @@ def main(ctx):
             + '-'
             + setting.style
             + '-'
-            + setting.formulaes
+            + setting.formula
             + '-'
             + LABEL_m
             + verb
@@ -63,7 +63,7 @@ def main(ctx):
     except IOError:
 
         print("// Strategies to be computed")
-        C_out, L_out, R_out, S_out, r_out = strategy_block_cost(L[::-1], m[::-1])
+        C_out, L_out, R_out, S_out, r_out = self.gae.strategy_block_cost(L[::-1], m[::-1])
         f = open(
             strategy_data
             + setting.algorithm
@@ -72,7 +72,7 @@ def main(ctx):
             + '-'
             + setting.style
             + '-'
-            + setting.formulaes
+            + setting.formula
             + '-'
             + LABEL_m
             + verb,

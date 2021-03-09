@@ -2,6 +2,7 @@ from logging import getLogger
 import click
 from click.exceptions import Exit
 from .constants import parameters
+from sidh.csidh.bench import bench
 from sidh.csidh.bounds import bounds
 from sidh.common import attrdict
 
@@ -83,10 +84,12 @@ def main(ctx, **kwargs):
 @main.command()
 @click.pass_context
 def genkey(ctx):
+    "Generate a secret key"
     algo = ctx.meta['sidh.kwargs']['algo']
     click.echo(algo.random_key())
 
 main.add_command(bounds)
+main.add_command(bench)
 
 if __name__ == '__main__':
     main()
