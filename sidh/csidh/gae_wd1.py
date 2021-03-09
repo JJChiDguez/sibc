@@ -4,20 +4,8 @@ from sympy import symbols, floor, sqrt, sign
 
 from sidh.math import isequal, bitlength, hamming_weight
 from sidh.constants import parameters
+from sidh.common import attrdict
 
-class attrdict(dict):
-    """
-    Dictionary which provides attribute access to its keys.
-    """
-    #FIXME move to a common module
-
-    def __getattr__(self, key):
-        if key in self:
-            return self[key]
-        else:
-            raise AttributeError(
-                "%r object has no attribute %r" % (type(self).__name__, key)
-            )
 
 def Gae_wd1(prime, verbose, curve, formula):
 
