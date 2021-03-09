@@ -7,6 +7,8 @@ class attrdict(dict):
     Dictionary which provides attribute access to its keys.
     """
 
+    #FIXME move to a common module
+
     def __getattr__(self, key):
         if key in self:
             return self[key]

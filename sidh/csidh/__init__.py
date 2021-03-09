@@ -1,5 +1,6 @@
 #x = dict(df=gae_df, wd1=gae_wd1, wd2=gae_wd2)
 from sidh.csidh._gae_df import Gae_df
+from sidh.csidh._gae_wd1 import Gae_wd1
 from sidh.csidh._hvelu import Hvelu
 from sidh.csidh._tvelu import Tvelu
 from sidh.csidh._montgomery import MontgomeryLadder
@@ -14,10 +15,14 @@ class CSIDH(object):
     >>> sk_b = [ 3,-16,-10,  1, 15, 20,-20,-22,-16,-22,  0,-19,  6, -4, -9, 13,-11, 13,-13, -1, 23, 21, -5, 13, -4, -2, 12, 15, -4,-10, -5,  0, 11,  1, -1, -1,  7,  1, -3,  6,  0,  2, -4, -5,  0,  2, -4, -2, -4, -5,  6,  2, -6, -4,  5, -5,  5, -3,  1,  3, -1, -5,  3, -5, -4,  2,  4,  2,  2,  4,  0, -2, 0, -3 ]
     >>> pk_b = [ 0x5e2fd48334e49b47bb754f88b3345c77d604eb1fadc29b35b931724459143abde2f22346b595e3b161d80f3659870f16d4983bfa58f5f2f9718d3b375c21d65c, 0x314b346a927c21051052b790809d895627ed8fbe4f008408d361223a97556ec0e6d3b544b0898daffcdbff5c5b409ccb5cc9e2edc95504fca54318071e28e054 ]
     >>> ss = 0x1ADB783878BA330BB2A842E7F8B3392329A2CD3B407900E4CF6A8F13B744BFFEFF617BDE2CEBBB9CE97D32BC6FC1BCE2D88381B03B3E13CFF0651EEA82D02937
-    >>> csidh = CSIDH('montgomery', 'p512', 'tvelu', 'df', False, 2)
+    >>> csidh = CSIDH('montgomery', 'p512', 'hvelu', 'df', False, 2)
     // Shortest Differential Addition Chains (SDAC) for each l_i;
     // SDAC's to be read from a file
-    >>> csidh.dh(sk_a, pk_b) == csidh.dh(sk_b, pk_a) == ss
+    >>> ss_a = csidh.dh(sk_a, pk_b)
+    >>> ss_b = csidh.dh(sk_b, pk_a)
+    >>> ss_a == ss_b
+    True
+    >>> ss_a == ss
     True
     >>> coeff, affine_to_projective = csidh.curve.coeff, csidh.curve.affine_to_projective
     >>> hex(coeff(pk_a)).upper()[2:]
@@ -30,6 +35,16 @@ class CSIDH(object):
     True
     >>> list(map(hex,affine_to_projective(coeff(pk_a))))
     ['0x27ad85ddc08bf510f08a8562ba4909803675536a0bce6250e3bed4a9401ac123fe75c18866625e9fcfcaf03d0927ed46665e153e786244daaac9a83075060c84', '0x4']
+
+
+    Again with wd1 and tvelu:
+    >>> csidh_tvelu_wd1 = CSIDH('montgomery', 'p512', 'tvelu', 'wd1', False, 2)
+    // Shortest Differential Addition Chains (SDAC) for each l_i;
+    // SDAC's to be read from a file
+    >>> sk_a, sk_b = csidh_tvelu_wd1.random_key(), csidh_tvelu_wd1.random_key(), 
+    >>> pk_a, pk_b = csidh_tvelu_wd1.pubkey(sk_a), csidh_tvelu_wd1.pubkey(sk_b)
+    >>> csidh_tvelu_wd1.dh(sk_a, pk_b) == csidh_tvelu_wd1.dh(sk_b, pk_a)
+    True
     """
 
     def __init__(self, curvemodel, prime, formula, style, verbose, exponent):
@@ -57,12 +72,17 @@ class CSIDH(object):
 
         # Side channel protection styles
         if self.style == 'df':
-            self.gae = Gae_df(prime, style, verbose, self.curve, self.formula)
+            self.gae = Gae_df(prime, verbose, self.curve, self.formula)
+        elif self.style == 'wd1':
+            self.gae = Gae_wd1(prime, verbose, self.curve, self.formula)
         else:
-            self.gae = None
+            self.gae = NotImplemented
 
     def dh(self, sk, pk):
         return self.gae.dh(sk, pk)
+
+    def random_key(self):
+        return self.gae.random_key()
 
     def pubkey(self, sk):
         return self.gae.pubkey(sk)

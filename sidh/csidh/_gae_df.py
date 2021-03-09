@@ -1,3 +1,4 @@
+import random
 import numpy
 from sympy import symbols, floor, sqrt, sign
 
@@ -8,16 +9,14 @@ from sidh.constants import parameters
 S = {1: {}}  # Initialization of each strategy
 C = {1: {}}  # Initialization of the costs: 0.
 L = None
-n = None
 basis = None
 C_xMUL = None
 
 class Gae_df(object):
-    def __init__(self, prime, style, verbose, curve, formula):
+    def __init__(self, prime, verbose, curve, formula):
         global S
         global C
         global L
-        global n
         global basis
         global C_xMUL
         self.curve = curve
@@ -27,8 +26,9 @@ class Gae_df(object):
         self.fp = self.curve.fp
         self.verbose = verbose
         self.L = L = parameters['csidh'][prime]['L']
-        self.n = n = parameters['csidh'][prime]['n']
+        self.m = parameters['csidh'][prime]['df']['m']
         C_xMUL = self.curve.C_xMUL
+        n = parameters['csidh'][prime]['n']
         for i in range(n):
             S[1][tuple([L[i]])] = []
             # Strategy with a list with only one element (a small odd prime number l_i)
@@ -40,14 +40,13 @@ class Gae_df(object):
         ######################################################################################################################
         # Next functions are used for computing optimal bounds
         #self.basis = basis = numpy.eye(n, dtype=int)
-        self.m = parameters['csidh'][prime]['df']['m']
-        self.temporal_m = list(set(self.m))
 
     def pubkey(self, sk):
         pass
 
     def dh(self, sk, pk):
         assert self.curve.validate(pk), "public key does not validate"
+        temporal_m = list(set(self.m))
         C_out, L_out, R_out, S_out, r_out = self.strategy_block_cost(L[::-1], self.m[::-1])
         ss = self.GAE(
             pk,
@@ -55,16 +54,16 @@ class Gae_df(object):
             [L_out[0]],
             [R_out[0]],
             [S_out[0]],
-            [self.temporal_m[-1]],
-            parameters['csidh'][self.prime]['df']['m'],
+            [temporal_m[-1]],
+            self.m,
         )
         return self.curve.coeff(ss)
 
-    def random_key(self, m):
+    def random_key(self):
         """
         random_key(m) implements an uniform random sample from S(m_1) x S(m_2) x ... x S(m_n)
         """
-        return [2 * (random.randint(0, m_i) - (m_i // 2)) - (m_i % 2) for m_i in m ]
+        return [2 * (random.randint(0, m_i) - (m_i // 2)) - (m_i % 2) for m_i in self.m ]
 
     def security(self, M, n):
         """
