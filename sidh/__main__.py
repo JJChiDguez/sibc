@@ -29,12 +29,12 @@ from .constants import parameters
     type=click.Choice(['wd1', 'wd2', 'df']),
     default='df',
 )
-#   @click.option(
-#       "-e",
-#       "--exponent",
-#       type=click.Choice(['2', '3']),
-#       default='2',
-#   )
+@click.option(
+   "-e",
+   "--exponent",
+   type=click.Choice(['2', '3']),
+   default='2',
+)
 #   @click.option(
 #       "-m",
 #       "--multievaluation",
@@ -58,23 +58,25 @@ def main(ctx, **kwargs):
     """
     sidh main stub
     """
+    algo_args = kwargs.copy()
+    algorithm = algo_args.pop('algorithm')
+    if algorithm == 'csidh':
+        from sidh.csidh import CSIDH
+        algo = CSIDH(**algo_args)
+    elif algorithm == 'bsidh':
+        click.echo('BSIDH not yet implemented; try again later')
+        raise Exit(1)
+    else:
+        click.echo('algorithm not implemented')
+        raise Exit(1)
+    kwargs['algo'] = algo
     ctx.meta['sidh.kwargs'] = kwargs
 
 @main.command()
 @click.pass_context
 def genkey(ctx):
-    kwargs = dict(ctx.meta['sidh.kwargs'])
-    algorithm = kwargs.pop('algorithm')
-    _ = kwargs.pop('multievaluation')
-    if algorithm == 'bsidh':
-        click.echo('BSIDH not yet implemented; try again later')
-        raise Exit(1)
-    elif algorithm == 'csidh':
-        from sidh.csidh import CSIDH as algo
-    else:
-        click.echo('algorithm not implemented')
-        raise Exit(1)
-    click.echo(algo(**kwargs).random_key())
+    algo = ctx.meta['sidh.kwargs']['algo']
+    click.echo(algo.random_key())
 
 
 if __name__ == '__main__':
