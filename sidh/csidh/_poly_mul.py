@@ -10,7 +10,7 @@ fp = None
 def poly_mul_init(curve):
     ML = curve
     global global_L
-    global_L = ML.global_L
+    global_L = ML.L
     global fp
     fp = ML.fp
     # ----------------------------------------------------------------------------------

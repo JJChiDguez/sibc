@@ -21,7 +21,7 @@ class attrdict(dict):
 def Tvelu(curve):
 
     fp = curve.fp
-    global_L = curve.global_L
+    global_L = curve.L
 
     cEVAL = lambda l: numpy.array([2.0 * (l - 1.0), 2.0, (l + 1.0)])
     cISOG = lambda l: numpy.array(

@@ -9,23 +9,9 @@ from sidh._fp import *
 from sidh.constants import sdacs_data, bitlength, parameters
 from sidh._math import hamming_weight
 
-SDACS = None
-SDACS_LENGTH = None
-current_prime = None
-C_xMUL = None
-global_L = None
-style = None
-
 class MontgomeryLadder(object):
-    def __init__(self, prime, _style):
-        global global_L
-        global SDACS
-        global SDACS_LENGTH
-        global current_prime
-        global global_L
-        global C_xMUL
-        global style
-        style = _style
+    def __init__(self, prime, style):
+        self.style = style
         self.prime = prime
         self.fp = F_p('csidh', prime)
         self.L = L = parameters['csidh'][prime]['L']
@@ -33,27 +19,23 @@ class MontgomeryLadder(object):
         print("// Shortest Differential Addition Chains (SDAC) for each l_i;")
         # List of Small odd primes, L := [l_0, ..., l_{n-1}]
         print("// SDAC's to be read from a file")
-        if current_prime != prime:
-            path = sdacs_data + prime
-            SDACS = self.filename_to_list_of_lists_of_ints(path)
-            if len(SDACS) == 0:
-                print("// SDAC's to be computed")
-                SDACS = generate_sdacs(L)
-                print("// Storing SDAC's in a file")
-                write_list_of_lists_of_ints_to_file(path, SDACS)
-            SDACS_LENGTH = list(map(len, SDACS))
+        path = sdacs_data + prime
+        self.SDACS = self.filename_to_list_of_lists_of_ints(path)
+        if len(self.SDACS) == 0:
+            print("// SDAC's to be computed")
+            self.SDACS = generate_sdacs(L)
+            print("// Storing SDAC's in a file")
+            write_list_of_lists_of_ints_to_file(path, self.SDACS)
+        self.SDACS_LENGTH = list(map(len, self.SDACS))
 
-            global_L = list(L)
-            cMUL = lambda l: numpy.array(
-                [
-                    4.0 * (SDACS_LENGTH[L.index(l)] + 2),
-                    2.0 * (SDACS_LENGTH[L.index(l)] + 2),
-                    6.0 * (SDACS_LENGTH[L.index(l)] + 2) - 2.0,
-                ]
-            )
-            self.C_xMUL = C_xMUL = list(map(cMUL, global_L))  # list of the costs of each [l]P
-
-        self.global_L = global_L
+        cMUL = lambda l: numpy.array(
+            [
+                4.0 * (self.SDACS_LENGTH[L.index(l)] + 2),
+                2.0 * (self.SDACS_LENGTH[L.index(l)] + 2),
+                6.0 * (self.SDACS_LENGTH[L.index(l)] + 2) - 2.0,
+            ]
+        )
+        self.C_xMUL = list(map(cMUL, L))  # list of the costs of each [l]P
 
     def elligator(self, A):
 
@@ -263,14 +245,14 @@ class MontgomeryLadder(object):
         P2 = self.xDBL(P, A)
         R = [P, P2, self.xADD(P2, P, P)]
 
-        for i in range(SDACS_LENGTH[j] - 1, -1, -1):
+        for i in range(self.SDACS_LENGTH[j] - 1, -1, -1):
 
-            if self.isinfinity(R[SDACS[j][i]]):
+            if self.isinfinity(R[self.SDACS[j][i]]):
                 T = self.xDBL(R[2], A)
             else:
-                T = self.xADD(R[2], R[SDACS[j][i] ^ 1], R[SDACS[j][i]])
+                T = self.xADD(R[2], R[self.SDACS[j][i] ^ 1], R[self.SDACS[j][i]])
 
-            R[0] = list(R[SDACS[j][i] ^ 1])
+            R[0] = list(R[self.SDACS[j][i] ^ 1])
             R[1] = list(R[2])
             R[2] = list(T)
 
@@ -327,7 +309,7 @@ class MontgomeryLadder(object):
 
     def full_torsion_points(self, A):
 
-        if style != 'wd1':
+        if self.style != 'wd1':
             output = [[0, 0], [0, 0]]
         else:
             output = [[0, 0], [1, 1]]
@@ -343,7 +325,7 @@ class MontgomeryLadder(object):
             ] == [0, 0]:
                 output[0] = list(T_p)
 
-            if style != 'wd1':
+            if self.style != 'wd1':
                 for i in range(0, self.fp.exponent_of_two, 1):
                     T_m = self.xDBL(T_m, A)
                 if self.isfull_order(self.prime_factors(T_m, A, range(0, self.fp.n, 1))) and output[
@@ -381,7 +363,7 @@ class MontgomeryLadder(object):
                     if self.isinfinity(Q) == False:
                         return False
 
-                    bits_of_the_order += bitlength(global_L[i])
+                    bits_of_the_order += bitlength(self.L[i])
                     if bits_of_the_order > self.fp.validation_stop:
                         return True
 

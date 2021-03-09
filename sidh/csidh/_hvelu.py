@@ -41,7 +41,7 @@ class Hvelu(object):
         self.curve = curve
         self.fp = self.curve.fp
         poly_redc_init(curve)
-        self.global_L = self.curve.global_L
+        self.global_L = self.curve.L
 
         self.C_xEVAL = list(
             map(self.cEVAL, self.global_L)
