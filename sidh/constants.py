@@ -1,7 +1,7 @@
 from functools import reduce
 from .math import bitlength, is_prime
 base_path = "/usr/share/python3-sidh/data/"
-base_path = "./data/"
+#base_path = "./data/"
 strategy_data = base_path + "/strategies/"
 sdacs_data = base_path + "/sdacs/"
 sop_data = base_path + "/sop/"
