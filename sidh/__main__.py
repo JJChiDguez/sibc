@@ -2,6 +2,8 @@ from logging import getLogger
 import click
 from click.exceptions import Exit
 from .constants import parameters
+from sidh.csidh.bounds import bounds
+from sidh.common import attrdict
 
 @click.version_option()
 @click.group(short_help="sidh utility")
@@ -48,6 +50,11 @@ from .constants import parameters
     default='montgomery',
 )
 @click.option(
+    "-b",
+    "--benchmark",
+    default=128,
+)
+@click.option(
     "-v",
     "--verbose",
     is_flag=True,
@@ -60,6 +67,7 @@ def main(ctx, **kwargs):
     """
     algo_args = kwargs.copy()
     algorithm = algo_args.pop('algorithm')
+    algo_args.pop('benchmark')
     if algorithm == 'csidh':
         from sidh.csidh import CSIDH
         algo = CSIDH(**algo_args)
@@ -70,7 +78,7 @@ def main(ctx, **kwargs):
         click.echo('algorithm not implemented')
         raise Exit(1)
     kwargs['algo'] = algo
-    ctx.meta['sidh.kwargs'] = kwargs
+    ctx.meta['sidh.kwargs'] = attrdict(kwargs)
 
 @main.command()
 @click.pass_context
@@ -78,6 +86,7 @@ def genkey(ctx):
     algo = ctx.meta['sidh.kwargs']['algo']
     click.echo(algo.random_key())
 
+main.add_command(bounds)
 
 if __name__ == '__main__':
     main()
