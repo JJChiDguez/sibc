@@ -7,6 +7,7 @@ import numpy
 from sympy import floor, sqrt, sign
 
 class Hvelu(object):
+    name = 'hvelu'
     def __init__(self, curve, _verbose):
 
         # Get cost of the isogeny constructions and evaluations

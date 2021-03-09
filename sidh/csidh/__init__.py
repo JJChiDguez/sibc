@@ -1,6 +1,7 @@
 #x = dict(df=gae_df, wd1=gae_wd1, wd2=gae_wd2)
 from sidh.csidh._gae_df import Gae_df
 from sidh.csidh._hvelu import Hvelu
+from sidh.csidh._tvelu import Tvelu
 from sidh.csidh._montgomery import MontgomeryLadder
 
 class CSIDH(object):
@@ -13,7 +14,7 @@ class CSIDH(object):
     >>> sk_b = [ 3,-16,-10,  1, 15, 20,-20,-22,-16,-22,  0,-19,  6, -4, -9, 13,-11, 13,-13, -1, 23, 21, -5, 13, -4, -2, 12, 15, -4,-10, -5,  0, 11,  1, -1, -1,  7,  1, -3,  6,  0,  2, -4, -5,  0,  2, -4, -2, -4, -5,  6,  2, -6, -4,  5, -5,  5, -3,  1,  3, -1, -5,  3, -5, -4,  2,  4,  2,  2,  4,  0, -2, 0, -3 ]
     >>> pk_b = [ 0x5e2fd48334e49b47bb754f88b3345c77d604eb1fadc29b35b931724459143abde2f22346b595e3b161d80f3659870f16d4983bfa58f5f2f9718d3b375c21d65c, 0x314b346a927c21051052b790809d895627ed8fbe4f008408d361223a97556ec0e6d3b544b0898daffcdbff5c5b409ccb5cc9e2edc95504fca54318071e28e054 ]
     >>> ss = 0x1ADB783878BA330BB2A842E7F8B3392329A2CD3B407900E4CF6A8F13B744BFFEFF617BDE2CEBBB9CE97D32BC6FC1BCE2D88381B03B3E13CFF0651EEA82D02937
-    >>> csidh = CSIDH('montgomery', 'p512', 'hvelu', 'df', False, 2)
+    >>> csidh = CSIDH('montgomery', 'p512', 'tvelu', 'df', False, 2)
     // Shortest Differential Addition Chains (SDAC) for each l_i;
     // SDAC's to be read from a file
     >>> csidh.dh(sk_a, pk_b) == csidh.dh(sk_b, pk_a) == ss
@@ -49,8 +50,10 @@ class CSIDH(object):
         # Formulas for ???
         if formula == 'hvelu':
             self.formula = Hvelu(self.curve, verbose)
+        elif formula == 'tvelu':
+            self.formula = Tvelu(self.curve)
         else:
-            self.formula = None
+            self.formula = NotImplemented
 
         # Side channel protection styles
         if self.style == 'df':

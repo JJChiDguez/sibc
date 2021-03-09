@@ -2,7 +2,6 @@ import numpy
 from sympy import symbols, floor, sqrt, sign
 
 from sidh._math import isequal, bitlength, hamming_weight
-from sidh.csidh._hvelu import Hvelu
 from sidh.constants import parameters
 
 # In order to achieve efficiency, the optimal strategies and their cost are saved in two global dictionaries (hash tables)
@@ -24,7 +23,7 @@ class Gae_df(object):
         self.curve = curve
         self.prime = prime
         self.formula = formula
-        self.formula_name ='hvelu'
+        self.formula_name = formula.name
         self.fp = self.curve.fp
         self.verbose = verbose
         self.L = L = parameters['csidh'][prime]['L']
