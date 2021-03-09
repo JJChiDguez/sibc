@@ -16,9 +16,14 @@ class CSIDH(object):
     >>> sk_b = [ 3,-16,-10,  1, 15, 20,-20,-22,-16,-22,  0,-19,  6, -4, -9, 13,-11, 13,-13, -1, 23, 21, -5, 13, -4, -2, 12, 15, -4,-10, -5,  0, 11,  1, -1, -1,  7,  1, -3,  6,  0,  2, -4, -5,  0,  2, -4, -2, -4, -5,  6,  2, -6, -4,  5, -5,  5, -3,  1,  3, -1, -5,  3, -5, -4,  2,  4,  2,  2,  4,  0, -2, 0, -3 ]
     >>> pk_b = [ 0x5e2fd48334e49b47bb754f88b3345c77d604eb1fadc29b35b931724459143abde2f22346b595e3b161d80f3659870f16d4983bfa58f5f2f9718d3b375c21d65c, 0x314b346a927c21051052b790809d895627ed8fbe4f008408d361223a97556ec0e6d3b544b0898daffcdbff5c5b409ccb5cc9e2edc95504fca54318071e28e054 ]
     >>> ss = 0x1ADB783878BA330BB2A842E7F8B3392329A2CD3B407900E4CF6A8F13B744BFFEFF617BDE2CEBBB9CE97D32BC6FC1BCE2D88381B03B3E13CFF0651EEA82D02937
+    >>> csidh = CSIDH('montgomery', 'p512', 'svelu', 'df', False, 2)
+    >>> ss_a = csidh.dh(sk_a, pk_b)
+    >>> ss_b = csidh.dh(sk_b, pk_a)
+    >>> ss_a == ss_b
+    True
+    >>> ss_a == ss
+    True
     >>> csidh = CSIDH('montgomery', 'p512', 'hvelu', 'df', False, 2)
-    // Shortest Differential Addition Chains (SDAC) for each l_i;
-    // SDAC's to be read from a file
     >>> ss_a = csidh.dh(sk_a, pk_b)
     >>> ss_b = csidh.dh(sk_b, pk_a)
     >>> ss_a == ss_b
@@ -40,9 +45,7 @@ class CSIDH(object):
 
     Again with wd1 and tvelu:
     >>> csidh_tvelu_wd1 = CSIDH('montgomery', 'p512', 'tvelu', 'wd1', False, 2)
-    // Shortest Differential Addition Chains (SDAC) for each l_i;
-    // SDAC's to be read from a file
-    >>> sk_a, sk_b = csidh_tvelu_wd1.random_key(), csidh_tvelu_wd1.random_key(), 
+    >>> sk_a, sk_b = csidh_tvelu_wd1.random_key(), csidh_tvelu_wd1.random_key()
     >>> pk_a, pk_b = csidh_tvelu_wd1.pubkey(sk_a), csidh_tvelu_wd1.pubkey(sk_b)
     >>> csidh_tvelu_wd1.dh(sk_a, pk_b) == csidh_tvelu_wd1.dh(sk_b, pk_a)
     True
