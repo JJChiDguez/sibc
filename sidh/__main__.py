@@ -29,18 +29,18 @@ from .constants import parameters
     type=click.Choice(['wd1', 'wd2', 'df']),
     default='df',
 )
-@click.option(
-    "-e",
-    "--exponent",
-    type=click.Choice(['2', '3']),
-    default='2',
-)
-@click.option(
-    "-m",
-    "--multievaluation",
-    type=click.Choice(['???', '????']),
-    default='???',
-)
+#   @click.option(
+#       "-e",
+#       "--exponent",
+#       type=click.Choice(['2', '3']),
+#       default='2',
+#   )
+#   @click.option(
+#       "-m",
+#       "--multievaluation",
+#       type=click.Choice(['???', '????']),
+#       default='???',
+#   )
 @click.option(
     "-c",
     "--curvemodel",
