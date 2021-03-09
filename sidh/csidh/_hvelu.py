@@ -1,5 +1,5 @@
-from sidh.csidh._poly_redc import reciprocal, reciprocal_tree, product_tree, product_selfreciprocal_tree
-from sidh.csidh._poly_redc import poly_redc_init, poly_redc, poly_mul_middle, multieval_scaled, product
+from sidh.csidh._poly_mul import poly_mul_init, product_tree, product_selfreciprocal_tree, poly_mul_middle, product
+from sidh.csidh._poly_redc import poly_redc_init, reciprocal, poly_redc, reciprocal_tree, multieval_scaled
 from sidh._math import isequal, bitlength, hamming_weight
 from sidh.constants import ijk_data
 
@@ -40,7 +40,8 @@ class Hvelu(object):
         self.prime = curve.prime
         self.curve = curve
         self.fp = self.curve.fp
-        poly_redc_init(curve)
+        poly_redc_init(self.fp)
+        poly_mul_init(curve)
         self.global_L = self.curve.L
 
         self.C_xEVAL = list(

@@ -1,6 +1,3 @@
-# finite field and elliptic curve point aritmethics libraries
-from sidh.csidh._montgomery import *
-
 # Next library is used for printing polynomials
 from sympy import symbols, floor, sqrt, sign
 

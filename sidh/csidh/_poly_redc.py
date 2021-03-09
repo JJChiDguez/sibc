@@ -1,10 +1,9 @@
-from sidh.csidh._poly_mul import *
+from sidh.csidh._poly_mul import poly_mul_middle, poly_mul_modxn
 
 fp = None
-def poly_redc_init(curve):
+def poly_redc_init(fp_):
     global fp
-    fp = curve.fp
-    poly_mul_init(curve)
+    fp = fp_
 
 def reciprocal(f, flen, n):
     """
