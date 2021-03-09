@@ -1,6 +1,7 @@
 import random
 import numpy
 from sympy import symbols, floor, sqrt, sign
+from math import log
 
 from sidh.math import isequal, bitlength, hamming_weight
 from sidh.constants import parameters
@@ -39,7 +40,7 @@ class Gae_df(object):
             S[i] = {}
         ######################################################################################################################
         # Next functions are used for computing optimal bounds
-        #self.basis = basis = numpy.eye(n, dtype=int)
+        self.basis = basis = numpy.eye(n, dtype=int)
 
     def pubkey(self, sk):
         pass

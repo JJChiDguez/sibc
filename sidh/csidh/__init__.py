@@ -6,18 +6,13 @@ from sidh.csidh.hvelu import Hvelu
 from sidh.csidh.tvelu import Tvelu
 from sidh.csidh.svelu import Svelu
 from sidh.csidh.montgomery import MontgomeryLadder
+from sidh.constants import parameters
+from sidh.common import attrdict
 
 class CSIDH(object):
     """
 
     CSIDH
-    And again with wd2 and tvelu:
-    >>> csidh_tvelu_wd2 = CSIDH('montgomery', 'p512', 'tvelu', 'wd2', False, 2)
-    >>> sk_a, sk_b = csidh_tvelu_wd2.random_key(), csidh_tvelu_wd2.random_key()
-    >>> pk_a, pk_b = csidh_tvelu_wd2.pubkey(sk_a), csidh_tvelu_wd2.pubkey(sk_b)
-    >>> csidh_tvelu_wd2.dh(sk_a, pk_b) == csidh_tvelu_wd2.dh(sk_b, pk_a)
-    True
-
     >>> sk_a = [ 9,  2,-14,  3, 11,-12,  4,  4,  0, 20,  8,  7,-12,-20, 23, 15,  5,  3, 15,-19,  7,-17,-19,  1, -2, 14,  0, -9,  2,  4, 11,  2,  7,  9,  9, -1,  5, -7,  5,  4, -4,  6,  6,  7, -8, -2,  0,  2, -6,  5, -2,  0, -2,  4, -5, -1, -5,  3,  3,  5,  3, -5,  5,  3, -2,  2, -4, -2,  0, -2,  2,  0, 2, -3 ]
     >>> pk_a = [0x2b84079dfe34daca1000b23de50ed8e581c2f8f174fdbcb03d3ca6c96361e731152f45bdd4959832de406e8f3c4f0b4949c4826af82b3a7362677a458196fbcf, 0x76599305d04fb32f8907b2279ee35be99786da7c055e4a922712a6b546d457fa8db9529049bbe500be47e23dae04ecd34e043264a02bb1917dfdf9fa540f233]
     >>> sk_b = [ 3,-16,-10,  1, 15, 20,-20,-22,-16,-22,  0,-19,  6, -4, -9, 13,-11, 13,-13, -1, 23, 21, -5, 13, -4, -2, 12, 15, -4,-10, -5,  0, 11,  1, -1, -1,  7,  1, -3,  6,  0,  2, -4, -5,  0,  2, -4, -2, -4, -5,  6,  2, -6, -4,  5, -5,  5, -3,  1,  3, -1, -5,  3, -5, -4,  2,  4,  2,  2,  4,  0, -2, 0, -3 ]
@@ -57,6 +52,13 @@ class CSIDH(object):
     >>> csidh_tvelu_wd1.dh(sk_a, pk_b) == csidh_tvelu_wd1.dh(sk_b, pk_a)
     True
 
+    And again with wd2 and tvelu:
+    >>> csidh_tvelu_wd2 = CSIDH('montgomery', 'p512', 'tvelu', 'wd2', False, 2)
+    >>> sk_a, sk_b = csidh_tvelu_wd2.random_key(), csidh_tvelu_wd2.random_key()
+    >>> pk_a, pk_b = csidh_tvelu_wd2.pubkey(sk_a), csidh_tvelu_wd2.pubkey(sk_b)
+    >>> csidh_tvelu_wd2.dh(sk_a, pk_b) == csidh_tvelu_wd2.dh(sk_b, pk_a)
+    True
+
     """
 
     def __init__(self, curvemodel, prime, formula, style, verbose, exponent):
@@ -65,6 +67,8 @@ class CSIDH(object):
         self.style = style
         self._exponent = exponent
         self.fp = None
+        self.params = attrdict(parameters['csidh'][prime])
+        self.params.update(self.params[style])
 
         # Where do we do our math? On a curve!
         if self.curvemodel == 'montgomery':
