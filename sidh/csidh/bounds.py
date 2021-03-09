@@ -9,7 +9,7 @@ from sidh.constants import tmp_dir
 
 @click.command()
 @click.pass_context
-def bounds(ctx):
+def csidh_bounds(ctx):
     algo = ctx.meta['sidh.kwargs']['algo']
     setting = ctx.meta['sidh.kwargs']
     L = algo.params.L
