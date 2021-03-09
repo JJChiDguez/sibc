@@ -1,6 +1,6 @@
 from sidh.csidh._poly_mul import poly_mul_init, product_tree, product_selfreciprocal_tree, poly_mul_middle, product
 from sidh.csidh._poly_redc import poly_redc_init, reciprocal, poly_redc, reciprocal_tree, multieval_scaled
-from sidh._math import isequal, bitlength, hamming_weight
+from sidh.math import isequal, bitlength, hamming_weight
 from sidh.constants import ijk_data
 
 import numpy

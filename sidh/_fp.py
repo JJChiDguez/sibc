@@ -1,6 +1,6 @@
 from functools import reduce
 from .constants import sop_data, parameters
-from ._math import bitlength
+from .math import bitlength
 
 class F_p(object):
     def __init__(self, algorithm, prime):

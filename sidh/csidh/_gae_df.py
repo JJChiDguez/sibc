@@ -2,7 +2,7 @@ import random
 import numpy
 from sympy import symbols, floor, sqrt, sign
 
-from sidh._math import isequal, bitlength, hamming_weight
+from sidh.math import isequal, bitlength, hamming_weight
 from sidh.constants import parameters
 
 # In order to achieve efficiency, the optimal strategies and their cost are saved in two global dictionaries (hash tables)

@@ -2,7 +2,7 @@ import random
 import numpy
 from sympy import symbols, floor, sqrt, sign
 
-from sidh._math import isequal, bitlength, hamming_weight
+from sidh.math import isequal, bitlength, hamming_weight
 from sidh.constants import parameters
 
 class attrdict(dict):

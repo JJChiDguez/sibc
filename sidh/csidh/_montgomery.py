@@ -8,7 +8,7 @@ from sidh._fp import F_p, jacobi
 from functools import reduce
 
 from sidh.constants import sdacs_data, bitlength, parameters
-from sidh._math import hamming_weight
+from sidh.math import hamming_weight
 
 class attrdict(dict):
     """

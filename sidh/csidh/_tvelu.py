@@ -1,6 +1,6 @@
 #from sidh.csidh.montgomery import *
 import numpy
-from sidh._math import hamming_weight, isequal, bitlength
+from sidh.math import hamming_weight, isequal, bitlength
 
 class attrdict(dict):
     """

@@ -1,5 +1,5 @@
 from functools import reduce
-from ._math import bitlength, is_prime
+from .math import bitlength, is_prime
 base_path = "/usr/share/python3-sidh/data/"
 strategy_data = base_path + "/strategies/"
 sdacs_data = base_path + "/sdacs/"
