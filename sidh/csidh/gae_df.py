@@ -37,21 +37,32 @@ class Gae_df(object):
         self.basis = numpy.eye(n, dtype=int)
 
     def pubkey(self, sk):
-        pass
+        C_out, L_out, R_out, S_out, r_out = self.strategy_block_cost(self.L[::-1], self.m[::-1])
+        temporal_m = list(set(self.m))
+        if (len(temporal_m) == 1) or ((len(temporal_m) == 2) and (0 in temporal_m)):
+            return self.GAE(
+                self.curve.A, sk, [L_out[0]], [R_out[0]], [S_out[0]], [temporal_m[-1]], self.m
+            )
+        else:
+            return self.GAE(self.curve.A, sk, L_out, R_out, S_out, r_out, self.m)
 
     def dh(self, sk, pk):
         assert self.curve.validate(pk), "public key does not validate"
         temporal_m = list(set(self.m))
         C_out, L_out, R_out, S_out, r_out = self.strategy_block_cost(self.L[::-1], self.m[::-1])
-        ss = self.GAE(
-            pk,
-            sk,
-            [L_out[0]],
-            [R_out[0]],
-            [S_out[0]],
-            [temporal_m[-1]],
-            self.m,
-        )
+        temporal_m = list(set(self.m))
+        if (len(temporal_m) == 1) or ((len(temporal_m) == 2) and (0 in temporal_m)):
+            ss = self.GAE(
+              pk,
+              sk,
+              [L_out[0]],
+              [R_out[0]],
+              [S_out[0]],
+              [temporal_m[-1]],
+              self.m,
+            )
+        else:
+            ss = self.GAE(pk, sk, L_out, R_out, S_out, r_out, self.m)
         return self.curve.coeff(ss)
 
     def random_key(self, m=None):
@@ -457,7 +468,7 @@ class Gae_df(object):
         """
         filtered()
         inputs : a list L and a sublist SL of L
-        output : L \ SL
+        output : L \\ SL
         """
         return [e for e in List if e not in sublist]
 
