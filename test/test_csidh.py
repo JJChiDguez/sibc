@@ -27,7 +27,7 @@ STYLES = ('df', 'wd1', 'wd2')
 class CSIDH_gae_test_base(object):
 
     def setUp(self):
-        self.c = CSIDH('montgomery', self.prime, self.formula, self.style, False, 2)
+        self.c = CSIDH('montgomery', self.prime, self.formula, self.style, self.verbose, 2)
 
     def test_genpubvalidate(self):
         sk = self.c.gae.random_key()
@@ -42,9 +42,11 @@ class CSIDH_gae_test_base(object):
 for prime in PRIMES:
     for formula in FORMULAS:
         for style in STYLES:
-            class cls(CSIDH_gae_test_base, TestCase):
-                formula = formula
-                style = style
-                prime = prime
-            globals()['csidh_gae_'+prime+'_'+formula+'_'+style] = cls
+            for verbose in (False, True):
+                class cls(CSIDH_gae_test_base, TestCase):
+                    formula = formula
+                    style = style
+                    prime = prime
+                    verbose = verbose
+                globals()['csidh_gae_'+'_'.join([prime, formula, style, ('classical', 'suitable')[verbose]])] = cls
 del cls

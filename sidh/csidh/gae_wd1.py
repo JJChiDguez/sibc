@@ -207,7 +207,7 @@ def Gae_wd1(prime, verbose, curve, formula):
                       # This branchs corresponds with the use of the new velu's formulaes
 
                       if verbose:
-                          formula.set_parameters_velu(sJ_list[pos], sI_list[pos], pos)
+                          formula.set_parameters_velu(formula.sJ_list[pos], formula.sI_list[pos], pos)
 
                       else:
                           # -------------------------------------------------------------
@@ -327,7 +327,7 @@ def Gae_wd1(prime, verbose, curve, formula):
                   # This branchs corresponds with the use of the new velu's formulaes
 
                   if verbose:
-                      formula.set_parameters_velu(sJ_list[pos], sI_list[pos], pos)
+                      formula.set_parameters_velu(formula.sJ_list[pos], formula.sI_list[pos], pos)
 
                   else:
                       # -------------------------------------------------------------

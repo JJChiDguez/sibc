@@ -274,7 +274,7 @@ class Gae_df(object):
 
                         E_prev = list(E_i)
                         if self.verbose:
-                            self.formula.set_parameters_velu(sJ_list[pos], sI_list[pos], pos)
+                            self.formula.set_parameters_velu(self.formula.sJ_list[pos], self.formula.sI_list[pos], pos)
 
                         else:
                             # -------------------------------------------------------------
@@ -419,7 +419,7 @@ class Gae_df(object):
                     # This branchs corresponds with the use of the new velu's formulaes
 
                     if self.verbose:
-                        self.formula.set_parameters_velu(sJ_list[pos], sI_list[pos], pos)
+                        self.formula.set_parameters_velu(self.formula.sJ_list[pos], self.formula.sI_list[pos], pos)
 
                     else:
                         # -------------------------------------------------------------
