@@ -109,5 +109,5 @@ def csidh_parameters(ctx):
             )
 
         print(parameters[str(idx)][0], parameters[str(idx)][1])
-    return attrdict(name='parameters', **locals())
+    return attrdict(name='print-parameters', **locals())
 

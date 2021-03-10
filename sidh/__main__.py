@@ -1,11 +1,12 @@
 from logging import getLogger
 import click
 from click.exceptions import Exit
-from .constants import parameters
 from sidh.csidh.bench import bench
 from sidh.csidh.bounds import csidh_bounds
 from sidh.csidh.header import csidh_header
 from sidh.csidh.ijk import csidh_ijk
+from sidh.csidh.print_parameters import csidh_parameters
+from .constants import parameters
 from sidh.common import attrdict
 
 @click.version_option()
@@ -101,6 +102,7 @@ def genkey(ctx):
 main.add_command(csidh_bounds)
 main.add_command(csidh_header)
 main.add_command(csidh_ijk)
+main.add_command(csidh_parameters)
 main.add_command(bench)
 
 if __name__ == '__main__':
