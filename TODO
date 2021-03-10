@@ -1,0 +1,7 @@
+fix old cli tools
+use SystemRandom or secrets module for key generation instead of non-csprng in random.radnom
+make poly_* not use global fp
+make CSIDH genkey/pubkey/dh bytes API
+make cli genkey/pubkey/dh base64 commands, using CSIDH's bytes API
+use pkg_resources for finding data files
+port doctests to proper tests
