@@ -205,7 +205,7 @@ def Gae_wd1(prime, verbose, curve, formula):
                       # This branchs corresponds with the use of the new velu's formulaes
 
                       if verbose:
-                          set_parameters_velu(sJ_list[pos], sI_list[pos], pos)
+                          formula.set_parameters_velu(sJ_list[pos], sI_list[pos], pos)
 
                       else:
                           # -------------------------------------------------------------
@@ -218,11 +218,11 @@ def Gae_wd1(prime, verbose, curve, formula):
                               b = int(floor(sqrt(global_L[pos] - 1) / 2.0))
                               c = int(floor((global_L[pos] - 1.0) / (4.0 * b)))
 
-                          set_parameters_velu(b, c, pos)
+                          formula.set_parameters_velu(b, c, pos)
 
                       if (
                           formula.name == 'hvelu'
-                          and global_L[pos] <= HYBRID_BOUND
+                          and global_L[pos] <= formula.HYBRID_BOUND
                       ):
                           K = formula.KPs(ramifications[-1], E_i, pos)
                       else:
@@ -245,7 +245,7 @@ def Gae_wd1(prime, verbose, curve, formula):
                   # Next, the horizontal edge [(0,i),(0,i+1)] is performed
                   if formula.name == 'tvelu' or (
                       formula.name == 'hvelu'
-                      and global_L[pos] <= HYBRID_BOUND
+                      and global_L[pos] <= formula.HYBRID_BOUND
                   ):
                       d_i = (global_L[pos] - 1) // 2
                       mask = isequal[
@@ -268,7 +268,7 @@ def Gae_wd1(prime, verbose, curve, formula):
 
                   if formula.name == 'tvelu' or (
                       formula.name == 'hvelu'
-                      and global_L[pos] <= HYBRID_BOUND
+                      and global_L[pos] <= formula.HYBRID_BOUND
                   ):
                       ramifications[0] = formula.xEVAL(ramifications[0], pos)
                   else:
@@ -288,7 +288,7 @@ def Gae_wd1(prime, verbose, curve, formula):
 
                       if formula.name == 'tvelu' or (
                           formula.name == 'hvelu'
-                          and global_L[pos] <= HYBRID_BOUND
+                          and global_L[pos] <= formula.HYBRID_BOUND
                       ):
                           ramifications[j] = formula.xEVAL(ramifications[j], pos)
                       else:
@@ -325,7 +325,7 @@ def Gae_wd1(prime, verbose, curve, formula):
                   # This branchs corresponds with the use of the new velu's formulaes
 
                   if verbose:
-                      set_parameters_velu(sJ_list[pos], sI_list[pos], pos)
+                      formula.set_parameters_velu(sJ_list[pos], sI_list[pos], pos)
 
                   else:
                       # -------------------------------------------------------------
@@ -338,7 +338,7 @@ def Gae_wd1(prime, verbose, curve, formula):
                           b = int(floor(sqrt(global_L[pos] - 1) / 2.0))
                           c = int(floor((global_L[pos] - 1.0) / (4.0 * b)))
 
-                      set_parameters_velu(b, c, pos)
+                      formula.set_parameters_velu(b, c, pos)
 
                   formula.KPs(ramifications[0], E_i, pos)
 
@@ -370,12 +370,13 @@ def Gae_wd1(prime, verbose, curve, formula):
       return floor((m_float * l_float) / (l_float - 1.0) + 0.5)
 
 
-    '''
+    def filtered(List, sublist):
+        """
         filtered()
         inputs : a list L and a sublist SL of L
-        output : L \ SL
-    '''
-    filtered = lambda List, sublist: [e for e in List if e not in sublist]
+        output : L \\ SL
+        """
+        return [e for e in List if e not in sublist]
 
     def rounds(e, n):
       '''
