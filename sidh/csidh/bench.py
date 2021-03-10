@@ -6,10 +6,7 @@ import statistics
 
 @click.command()
 @click.pass_context
-def bench(ctx):
-
-    "Bench command"
-
+def csidh_bench(ctx):
     setting = ctx.meta['sidh.kwargs']
     self = setting['algo']
     n = self.params.n

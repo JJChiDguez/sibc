@@ -1,7 +1,7 @@
 from logging import getLogger
 import click
 from click.exceptions import Exit
-from sidh.csidh.bench import bench
+from sidh.csidh.bench import csidh_bench
 from sidh.csidh.bounds import csidh_bounds
 from sidh.csidh.header import csidh_header
 from sidh.csidh.ijk import csidh_ijk
@@ -11,6 +11,7 @@ from sidh.csidh.sdacs import csidh_sdacs
 from sidh.csidh.suitable_bounds import csidh_suitable_bounds
 from sidh.csidh.test import csidh_test
 from sidh.csidh.main import csidh_main
+from sidh.printstrategy import print_strategy
 from sidh.common import attrdict
 from sidh.constants import parameters
 
@@ -114,7 +115,8 @@ def genkey(ctx):
     algo = ctx.meta['sidh.kwargs']['algo']
     click.echo(algo.random_key())
 
-main.add_command(bench)
+main.add_command(print_strategy)
+main.add_command(csidh_bench)
 main.add_command(csidh_bounds)
 main.add_command(csidh_header)
 main.add_command(csidh_ijk)

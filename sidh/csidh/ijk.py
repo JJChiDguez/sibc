@@ -16,8 +16,12 @@ def csidh_ijk(ctx):
     n = algo.params.n
     m = algo.params.m
     delta = algo.params.delta
-    # XXX: sI_list is currently incorrect - so generation doesn't work
+    # XXX: FIX required - sI_list is currently incorrect - so generation
+    # doesn't work unless -v is added to the arguments when called as:
+    #   `sidh -v csidh-ijk`
     sI_list = algo.formula.sI_list
+    sJ_list = algo.formula.sJ_list
+
     # ---
     k = 3  # Number of rows (format of the list)
     # ---
