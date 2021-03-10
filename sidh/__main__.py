@@ -6,8 +6,12 @@ from sidh.csidh.bounds import csidh_bounds
 from sidh.csidh.header import csidh_header
 from sidh.csidh.ijk import csidh_ijk
 from sidh.csidh.print_parameters import csidh_parameters
-from .constants import parameters
+from sidh.csidh.print_strategy import csidh_strategy
+from sidh.csidh.sdacs import csidh_sdacs
+from sidh.csidh.suitable_bounds import csidh_suitable_bounds
+from sidh.csidh.test import csidh_test
 from sidh.common import attrdict
+from sidh.constants import parameters
 
 @click.version_option()
 @click.group(short_help="sidh utility")
@@ -99,11 +103,15 @@ def genkey(ctx):
     algo = ctx.meta['sidh.kwargs']['algo']
     click.echo(algo.random_key())
 
+main.add_command(bench)
 main.add_command(csidh_bounds)
 main.add_command(csidh_header)
 main.add_command(csidh_ijk)
 main.add_command(csidh_parameters)
-main.add_command(bench)
+main.add_command(csidh_strategy)
+main.add_command(csidh_sdacs)
+main.add_command(csidh_suitable_bounds)
+main.add_command(csidh_test)
 
 if __name__ == '__main__':
     main()

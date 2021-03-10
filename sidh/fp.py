@@ -82,7 +82,7 @@ class F_p(object):
         self.fpmul -= self.fpmul
 
 
-    def show_ops(label, a, b, flag):
+    def show_ops(self, label, a, b, flag):
 
         print("| %s: %7dM + %7dS + %7da" % (label, self.fpmul, self.fpsqr, self.fpadd), end="\t")
 

@@ -236,7 +236,7 @@ class Hvelu(object):
 
     def print_parameters_velu(self):
 
-        print("| sI: %3d, sJ: %3d, sK: %3d |" % (sI, sJ, sK), end="")
+        print("| sI: %3d, sJ: %3d, sK: %3d |" % (self.sI, self.sJ, self.sK), end="")
         return None
 
 
