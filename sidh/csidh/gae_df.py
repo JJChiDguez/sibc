@@ -6,20 +6,12 @@ from math import log
 from sidh.math import isequal, bitlength, hamming_weight
 from sidh.constants import parameters
 
-# In order to achieve efficiency, the optimal strategies and their cost are saved in two global dictionaries (hash tables)
-S = {1: {}}  # Initialization of each strategy
-C = {1: {}}  # Initialization of the costs: 0.
-L = None
-basis = None
-C_xMUL = None
-
 class Gae_df(object):
     def __init__(self, prime, verbose, curve, formula):
-        global S
-        global C
-        global L
-        global basis
-        global C_xMUL
+        # In order to achieve efficiency, the optimal strategies and their cost are saved in two global dictionaries (hash tables)
+        self.S = {1: {}}  # Initialization of each strategy
+        self.C = {1: {}}  # Initialization of the costs: 0.
+
         self.curve = curve
         self.prime = prime
         self.formula = formula
@@ -28,19 +20,19 @@ class Gae_df(object):
         self.verbose = verbose
         self.L = L = parameters['csidh'][prime]['L']
         self.m = parameters['csidh'][prime]['df']['m']
-        C_xMUL = self.curve.C_xMUL
+        self.C_xMUL = self.curve.C_xMUL
         n = parameters['csidh'][prime]['n']
         for i in range(n):
-            S[1][tuple([L[i]])] = []
+            self.S[1][tuple([L[i]])] = []
             # Strategy with a list with only one element (a small odd prime number l_i)
-            C[1][tuple([L[i]])] = self.formula.C_xISOG[i]
+            self.C[1][tuple([L[i]])] = self.formula.C_xISOG[i]
             # For catching the weigth of horizontal edges of the form [(0,j),(0,j+1)]
         for i in range(2, n + 1):
-            C[i] = {}
-            S[i] = {}
+            self.C[i] = {}
+            self.S[i] = {}
         ######################################################################################################################
         # Next functions are used for computing optimal bounds
-        self.basis = basis = numpy.eye(n, dtype=int)
+        self.basis = numpy.eye(n, dtype=int)
 
     def pubkey(self, sk):
         pass
@@ -48,7 +40,7 @@ class Gae_df(object):
     def dh(self, sk, pk):
         assert self.curve.validate(pk), "public key does not validate"
         temporal_m = list(set(self.m))
-        C_out, L_out, R_out, S_out, r_out = self.strategy_block_cost(L[::-1], self.m[::-1])
+        C_out, L_out, R_out, S_out, r_out = self.strategy_block_cost(self.L[::-1], self.m[::-1])
         ss = self.GAE(
             pk,
             sk,
@@ -84,7 +76,6 @@ class Gae_df(object):
         inputs: the list of small odd primes to be processed and its length
         output: the optimal strategy and its cost of the input list of small odd primes
         """
-        global S, C
         # If the approach uses dummy operations, to set DUMMY = 2.0;
         # otherwise, to set DUMMY = 1.0 (dummy free approach);
 
@@ -106,18 +97,18 @@ class Gae_df(object):
 
                 for Tuple in get_neighboring_sets(L, i):
 
-                    if C[i].get(Tuple) is None:
+                    if self.C[i].get(Tuple) is None:
 
                         alpha = [
                             (
                                 b,
-                                C[len(Tuple[:b])][Tuple[:b]]
-                                + C[  # Subtriangle on the right side with b leaves
+                                self.C[len(Tuple[:b])][Tuple[:b]]
+                                + self.C[  # Subtriangle on the right side with b leaves
                                     len(Tuple[b:])
                                 ][Tuple[b:]]
                                 + 2.0  # Subtriangle on the left side with (i - b) leaves
                                 * sum(
-                                    [C_xMUL[self.formula.global_L.index(t)] for t in Tuple[:b]]
+                                    [self.C_xMUL[self.formula.global_L.index(t)] for t in Tuple[:b]]
                                 )
                                 + 2.0  # Weights corresponding with vertical edges required for connecting the vertex (0,0) with the subtriangle with b leaves
                                 * sum(
@@ -125,15 +116,15 @@ class Gae_df(object):
                                 )
                                 + 1.0  # Weights corresponding with horizontal edges required for connecting the vertex (0,0) with the subtriangle with (i - b) leaves
                                 * sum(
-                                    [C_xMUL[self.formula.global_L.index(t)] for t in Tuple[b:]]
+                                    [self.C_xMUL[self.formula.global_L.index(t)] for t in Tuple[b:]]
                                 ),  # Weights corresponding with horizontal edges required for connecting the vertex (0,0) with the subtriangle with (i - b) leaves
                             )
                             for b in range(1, i - 1)
                         ] + [
                             (
                                 i - 1,
-                                C[i - 1][Tuple[: (i - 1)]]
-                                + C[  # Subtriangle on the right side with (i - 1) leaves
+                                self.C[i - 1][Tuple[: (i - 1)]]
+                                + self.C[  # Subtriangle on the right side with (i - 1) leaves
                                     1
                                 ][
                                     Tuple[(i - 1) :]
@@ -141,28 +132,28 @@ class Gae_df(object):
                                 + 1.0  # Subtriangle on the left side with 1 leaf (only one vertex)
                                 * sum(
                                     [
-                                        C_xMUL[self.formula.global_L.index(t)]
+                                        self.C_xMUL[self.formula.global_L.index(t)]
                                         for t in Tuple[: (i - 1)]
                                     ]
                                 )
                                 + 2.0  # Weights corresponding with vertical edges required for connecting the vertex (0,0) with the subtriangle with 1 leaf
                                 * self.formula.C_xEVAL[self.formula.global_L.index(Tuple[i - 1])]
                                 + 1.0  # Weights corresponding with horizontal edges required for connecting the vertex (0,0) with the subtriangle with (i - 1) leaves
-                                * C_xMUL[
+                                * self.C_xMUL[
                                     self.formula.global_L.index(Tuple[i - 1])
                                 ],  # Weights corresponding with horizontal edges required for connecting the vertex (0,0) with the subtriangle with (i - 1) leaves
                             )
                         ]
-                        b, C[i][Tuple] = min(
+                        b, self.C[i][Tuple] = min(
                             alpha, key=lambda t: self.curve.measure(t[1])
                         )  # We save the minimal cost corresponding to the triangle with leaves Tuple
-                        S[i][Tuple] = (
-                            [b] + S[i - b][Tuple[b:]] + S[b][Tuple[:b]]
+                        self.S[i][Tuple] = (
+                            [b] + self.S[i - b][Tuple[b:]] + self.S[b][Tuple[:b]]
                         )  # We save the optimal strategy corresponding to the triangle with leaves Tuple
 
             return (
-                S[n][tuple(L)],
-                C[n][tuple(L)],
+                self.S[n][tuple(L)],
+                self.C[n][tuple(L)],
             )  # The weight of the horizontal edges [(0,n-1),(0,n)] must be equal to C_xISOG[self.formula.global_L.index(L[0])].
 
 
@@ -595,7 +586,7 @@ class Gae_df(object):
             R_out.append([L[k] for k in tmp_Cs[j]])
             L_out.append([L[k] for k in tmp_Ls[j]])
 
-            bo_C = 2.0 * sum([C_xMUL[self.formula.global_L.index(L[k])] for k in tmp_Cs[j]])
+            bo_C = 2.0 * sum([self.C_xMUL[self.formula.global_L.index(L[k])] for k in tmp_Cs[j]])
             S_tmp, go_C = self.dynamic_programming_algorithm(
                 [L[k] for k in tmp_Ls[j]], len(tmp_Ls[j])
             )
