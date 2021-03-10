@@ -5,7 +5,7 @@ from sidh.csidh.gae_wd2 import Gae_wd2
 from sidh.csidh.hvelu import Hvelu
 from sidh.csidh.tvelu import Tvelu
 from sidh.csidh.svelu import Svelu
-from sidh.csidh.montgomery import MontgomeryLadder
+from sidh.csidh.montgomery import MontgomeryCurve
 from sidh.constants import parameters
 from sidh.common import attrdict
 
@@ -37,7 +37,7 @@ class CSIDH(object):
 
         # Where do we do our math? On a curve!
         if self.curvemodel == 'montgomery':
-            self.curve = MontgomeryLadder(prime, style)
+            self.curve = MontgomeryCurve(prime, style)
             self.fp = self.curve.fp
         else:
             self.curve = None

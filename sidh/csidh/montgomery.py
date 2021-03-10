@@ -27,7 +27,7 @@ def write_list_of_lists_of_ints_to_file(path, data):
             fh.writelines(' '.join(str(v) for v in v in line))
         fh.writelines()
 
-def MontgomeryLadder(prime, style):
+def MontgomeryCurve(prime, style):
     style = style
     prime = prime
     fp = F_p('csidh', prime)
