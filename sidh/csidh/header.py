@@ -1,1285 +1,200 @@
-from sidh.framework import *
+import click
+import numpy
 
-if setting.style == 'wd1':
-    # Using one torsion point and dummy isogeny constructions
-    from sidh.csidh.gae_wd1 import *
+from sidh.common import attrdict
+from sidh.fp import printl
+from sidh.constants import strategy_data
 
+@click.command()
+@click.pass_context
+def csidh_header(ctx):
     delta = 1
-elif setting.style == 'wd2':
-    # Using two torsion points and dummy isogeny constructions
-    from sidh.csidh.gae_wd2 import *
+    algo = ctx.meta['sidh.kwargs']['algo']
+    setting = ctx.meta['sidh.kwargs']
+    L = algo.params.L
+    n = algo.params.n
+    m = algo.params.m
+    geometric_serie = algo.gae.geometric_serie
+    rounds = algo.gae.rounds
 
-    delta = 2
-elif setting.style == 'df':
-    # Dummy-free approach by using two torsion points
-    from sidh.csidh.gae_df import *
 
-    delta = 1
-else:
+    strategy_block_cost = algo.gae.strategy_block_cost
+    basis = numpy.eye(n, dtype=int)
+    measure = algo.curve.measure
 
-    print("  ,-~~-.___.          ")
+    # ==========================================================================
+
+    if len(set(m)) > 1:
+        # Maximum number of degree-(l_i) isogeny constructions is m_i (different for each l_i)
+        LABEL_m = 'different_bounds'
+    else:
+        # Maximum number of degree-(l_i) isogeny constructions is m (the same for each l_i)
+        LABEL_m = 'with_same_bounds'
+
+    if setting.verbose:
+        verb = '-suitable'
+    else:
+        verb = '-classical'
+
+    try:
+
+        # List of Small Odd Primes, L := [l_0, ..., l_{n-1}]
+        m_prime = [geometric_serie(m[k], L[k]) for k in range(n)]
+        r_out, L_out, R_out = rounds(m_prime[::-1], n)
+        for j in range(0, len(r_out), 1):
+
+            R_out[j] = list([L[::-1][k] for k in R_out[j]])
+            L_out[j] = list([L[::-1][k] for k in L_out[j]])
+
+        f = open(
+            strategy_data
+            + setting.algorithm
+            + '-'
+            + setting.prime
+            + '-'
+            + setting.style
+            + '-'
+            + setting.formula
+            + '-'
+            + LABEL_m
+            + verb
+        )
+        # print("// Strategies to be read from a file")
+        S_out = []
+        for i in range(0, len(r_out), 1):
+
+            tmp = f.readline()
+            tmp = [int(b) for b in tmp.split()]
+            S_out.append(tmp)
+
+        f.close()
+
+    except IOError:
+
+        # print("// Strategies to be computed")
+        C_out, L_out, R_out, S_out, r_out = strategy_block_cost(L[::-1], m[::-1])
+        f = open(
+            strategy_data
+            + setting.algorithm
+            + '-'
+            + setting.prime
+            + '-'
+            + setting.style
+            + '-'
+            + setting.formula
+            + '-'
+            + LABEL_m
+            + verb,
+            'w',
+        )
+        for i in range(0, len(r_out)):
+
+            f.writelines(' '.join([str(tmp) for tmp in S_out[i]]) + '\n')
+
+        f.close()
+
+    if (len(set(m)) == 1) or ((len(set(m)) == 2) and (0 in set(m))):
+        L_out = list([L_out[0]])
+        R_out = list([R_out[0]])
+        S_out = list([S_out[0]])
+        r_out = list([r_out[0]])
+    # ---
+    k = 3  # Number of rows (format of the list)
+    # ---
+
+    print("#ifndef _STRATEGIES_H_")
+    print("#define _STRATEGIES_H_\n")
     print(
-        " / |  '     \\          SYNTAX ERROR ..., run python3 main.py -h for help"
+        "// This script assumes the C-code implementation has the list of Small Odd Primes (SOPs) stored such that l_0 < l_1 < ... < l_{n-1}"
     )
-    print("(  )         0        ")
-    print(" \_/-, ,----'         ")
-    print("    ====           // ")
-    print("   /  \-'~;    /~~~(O)")
-    print("  /  __/~|   /       |")
-    print("=(  _____| (_________|")
-    exit(7)
+    print("// Recall, the strategies process from small SOPs to large SOPs.\n")
 
-''' -------------------------------------------------------------------------------------
-    Number of degree-(l_i) isogeny constructions to be performed: m_i
-    ------------------------------------------------------------------------------------- '''
+    for i in range(len(r_out)):
+        print(
+            "// -----------------------------------------------------------------------------------------------------------------------------------"
+        )
+        print("// Strategy number %d\n" % (i))
+        L_string = "static uint32_t L%d[] " % (i)
+        R_string = "static uint32_t W%d[] " % (i)
+        S_string = "static uint32_t S%d[] " % (i)
 
-# ==========================================================================
+        printl(
+            L_string, [L.index(l_i) for l_i in L_out[i]], len(L_out[i]) // k + 1
+        )
+        if R_out[i] != []:
+            printl(
+                R_string,
+                [L.index(r_i) for r_i in R_out[i]],
+                len(R_out[i]) // k + 1,
+            )
+        else:
+            print("static uint32_t W%d[1];" % i)
+        if S_out[i] != []:
+            printl(S_string, S_out[i], len(S_out[i]) // k + 1)
+        else:
+            print("static uint32_t S%d[1];" % i)
 
-if setting.prime == 'p512':
-    # CSIDH-512
-    if setting.style == 'wd1':
-        m = [
-            15,
-            18,
-            20,
-            21,
-            21,
-            22,
-            22,
-            22,
-            22,
-            22,
-            22,
-            19,
-            20,
-            22,
-            23,
-            23,
-            23,
-            23,
-            23,
-            23,
-            23,
-            21,
-            23,
-            20,
-            16,
-            16,
-            16,
-            15,
-            14,
-            12,
-            13,
-            12,
-            11,
-            11,
-            10,
-            10,
-            9,
-            9,
-            9,
-            8,
-            8,
-            8,
-            8,
-            7,
-            7,
-            7,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            4,
-            4,
-            4,
-            4,
-            4,
-            4,
-            4,
-            4,
-            4,
-            3,
-        ]
 
-    if setting.style == 'wd2':
-        m = [
-            7,
-            9,
-            9,
-            10,
-            10,
-            10,
-            10,
-            10,
-            11,
-            11,
-            11,
-            11,
-            11,
-            11,
-            11,
-            11,
-            11,
-            11,
-            11,
-            11,
-            11,
-            9,
-            11,
-            9,
-            8,
-            8,
-            8,
-            7,
-            7,
-            7,
-            7,
-            6,
-            6,
-            5,
-            5,
-            5,
-            5,
-            4,
-            4,
-            4,
-            4,
-            4,
-            4,
-            4,
-            4,
-            3,
-            3,
-            3,
-            3,
-            3,
-            3,
-            3,
-            3,
-            3,
-            3,
-            3,
-            3,
-            3,
-            3,
-            3,
-            3,
-            3,
-            3,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            1,
-        ]
-
-    if setting.style == 'df':
-        m = [
-            15,
-            18,
-            20,
-            21,
-            21,
-            22,
-            22,
-            22,
-            22,
-            22,
-            22,
-            19,
-            20,
-            22,
-            23,
-            23,
-            23,
-            23,
-            23,
-            23,
-            23,
-            23,
-            23,
-            19,
-            16,
-            16,
-            16,
-            15,
-            14,
-            12,
-            13,
-            12,
-            11,
-            11,
-            11,
-            9,
-            9,
-            9,
-            9,
-            8,
-            8,
-            8,
-            8,
-            7,
-            8,
-            6,
-            6,
-            6,
-            6,
-            7,
-            6,
-            6,
-            6,
-            6,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            4,
-            4,
-            4,
-            4,
-            4,
-            4,
-            4,
-            4,
-            4,
-            3,
-        ]
-
-elif setting.prime == 'p1024':
-    # CSIDH-1024
-    if setting.style == 'wd1':
-        m = [
-            4,
-            5,
-            5,
-            5,
-            5,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            4,
-            4,
-            4,
-            4,
-            4,
-            4,
-            3,
-            3,
-            3,
-            3,
-            3,
-            3,
-            3,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-        ]
-
-    if setting.style == 'wd2':
-        m = [
-            3,
-            4,
-            4,
-            4,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            4,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-        ]
-
-    if setting.style == 'df':
-        m = [
-            4,
-            5,
-            5,
-            5,
-            5,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-            5,
-            6,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            4,
-            4,
-            4,
-            4,
-            4,
-            4,
-            4,
-            4,
-            4,
-            3,
-            3,
-            3,
-            3,
-            3,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            1,
-            2,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-        ]
-
-elif setting.prime == 'p1792':
-    # CSIDH-1792
-    if setting.style == 'wd1':
-        m = [
-            3,
-            4,
-            4,
-            4,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            4,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-        ]
-
-    if setting.style == 'wd2':
-        m = [1] * n
-
-    if setting.style == 'df':
-        m = [
-            3,
-            4,
-            4,
-            4,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            4,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-        ]
-
-else:
-    print(
-        "[ERROR]\tMissing bound. To set the maximum number of isogeny constructions, and sigma and kappa from SIMBA method (to add they in ELSE statement in line 147 of file csidh.py)"
-    )
-    exit(11)
-
-# ==========================================================================
-
-if len(set(m)) > 1:
-    # Maximum number of degree-(l_i) isogeny constructions is m_i (different for each l_i)
-    LABEL_m = 'different_bounds'
-else:
-    # Maximum number of degree-(l_i) isogeny constructions is m (the same for each l_i)
-    LABEL_m = 'with_same_bounds'
-
-if setting.verbose:
-    verb = '-suitable'
-else:
-    verb = '-classical'
-
-try:
-
-    # List of Small Odd Primes, L := [l_0, ..., l_{n-1}]
-    m_prime = [geometric_serie(m[k], L[k]) for k in range(n)]
-    r_out, L_out, R_out = rounds(m_prime[::-1], n)
-    for j in range(0, len(r_out), 1):
-
-        R_out[j] = list([L[::-1][k] for k in R_out[j]])
-        L_out[j] = list([L[::-1][k] for k in L_out[j]])
-
-    f = open(
-        strategy_data
-        + setting.algorithm
-        + '-'
-        + setting.prime
-        + '-'
-        + setting.style
-        + '-'
-        + setting.formulaes
-        + '-'
-        + LABEL_m
-        + verb
-    )
-    # print("// Strategies to be read from a file")
-    S_out = []
-    for i in range(0, len(r_out), 1):
-
-        tmp = f.readline()
-        tmp = [int(b) for b in tmp.split()]
-        S_out.append(tmp)
-
-    f.close()
-
-except IOError:
-
-    # print("// Strategies to be computed")
-    C_out, L_out, R_out, S_out, r_out = strategy_block_cost(L[::-1], m[::-1])
-    f = open(
-        strategy_data
-        + setting.algorithm
-        + '-'
-        + setting.prime
-        + '-'
-        + setting.style
-        + '-'
-        + setting.formulaes
-        + '-'
-        + LABEL_m
-        + verb,
-        'w',
-    )
-    for i in range(0, len(r_out)):
-
-        f.writelines(' '.join([str(tmp) for tmp in S_out[i]]) + '\n')
-
-    f.close()
-
-if (len(set(m)) == 1) or ((len(set(m)) == 2) and (0 in set(m))):
-    L_out = list([L_out[0]])
-    R_out = list([R_out[0]])
-    S_out = list([S_out[0]])
-    r_out = list([r_out[0]])
-# ---
-k = 3  # Number of rows (format of the list)
-# ---
-
-print("#ifndef _STRATEGIES_H_")
-print("#define _STRATEGIES_H_\n")
-print(
-    "// This script assumes the C-code implementation has the list of Small Odd Primes (SOPs) stored such that l_0 < l_1 < ... < l_{n-1}"
-)
-print("// Recall, the strategies process from small SOPs to large SOPs.\n")
-
-for i in range(len(r_out)):
+    print("\n")
     print(
         "// -----------------------------------------------------------------------------------------------------------------------------------"
     )
-    print("// Strategy number %d\n" % (i))
-    L_string = "static uint32_t L%d[] " % (i)
-    R_string = "static uint32_t W%d[] " % (i)
-    S_string = "static uint32_t S%d[] " % (i)
-
-    printl(
-        L_string, [L.index(l_i) for l_i in L_out[i]], len(L_out[i]) // k + 1
+    print(
+        "// -----------------------------------------------------------------------------------------------------------------------------------"
     )
-    if R_out[i] != []:
-        printl(
-            R_string,
-            [L.index(r_i) for r_i in R_out[i]],
-            len(R_out[i]) // k + 1,
-        )
-    else:
-        print("static uint32_t W%d[1];" % i)
-    if S_out[i] != []:
-        printl(S_string, S_out[i], len(S_out[i]) // k + 1)
-    else:
-        print("static uint32_t S%d[1];" % i)
+    print("#define NUMBER_OF_DIFFERENT_STRATEGIES  %d" % len(L_out))
+    print("")
+    L_string = (
+        "static uint32_t *L_STRATEGY[NUMBER_OF_DIFFERENT_STRATEGIES] = {\n\t"
+    )
+    R_string = (
+        "static uint32_t *W_STRATEGY[NUMBER_OF_DIFFERENT_STRATEGIES] = {\n\t"
+    )
+    S_string = "static uint32_t *S[NUMBER_OF_DIFFERENT_STRATEGIES] = {\n\t"
 
+    tmp_sizes = "static uint32_t NUMBER_OF_PRIMES[] = {\n\t"
+    tmp_round = "static uint8_t ROUNDS[] = {\n\t"
 
-print("\n")
-print(
-    "// -----------------------------------------------------------------------------------------------------------------------------------"
-)
-print(
-    "// -----------------------------------------------------------------------------------------------------------------------------------"
-)
-print("#define NUMBER_OF_DIFFERENT_STRATEGIES  %d" % len(L_out))
-print("")
-L_string = (
-    "static uint32_t *L_STRATEGY[NUMBER_OF_DIFFERENT_STRATEGIES] = {\n\t"
-)
-R_string = (
-    "static uint32_t *W_STRATEGY[NUMBER_OF_DIFFERENT_STRATEGIES] = {\n\t"
-)
-S_string = "static uint32_t *S[NUMBER_OF_DIFFERENT_STRATEGIES] = {\n\t"
+    for i in range(len(L_out) - 1):
 
-tmp_sizes = "static uint32_t NUMBER_OF_PRIMES[] = {\n\t"
-tmp_round = "static uint8_t ROUNDS[] = {\n\t"
+        L_string = L_string + "L%d, " % (i)
+        R_string = R_string + "W%d, " % (i)
+        S_string = S_string + "S%d, " % (i)
 
-for i in range(len(L_out) - 1):
+        tmp_sizes = tmp_sizes + "%3d," % (len(L_out[i]))
+        tmp_round = tmp_round + "%3d," % (r_out[i])
 
-    L_string = L_string + "L%d, " % (i)
-    R_string = R_string + "W%d, " % (i)
-    S_string = S_string + "S%d, " % (i)
+    L_string = L_string + "L%d\n\t};" % (len(L_out) - 1)
+    R_string = R_string + "W%d\n\t};" % (len(L_out) - 1)
+    S_string = S_string + "S%d\n\t};" % (len(L_out) - 1)
 
-    tmp_sizes = tmp_sizes + "%3d," % (len(L_out[i]))
-    tmp_round = tmp_round + "%3d," % (r_out[i])
+    tmp_sizes = tmp_sizes + "%3d\n\t};" % (len(L_out[len(L_out) - 1]))
+    tmp_round = tmp_round + "%3d\n\t};" % (r_out[len(L_out) - 1])
 
-L_string = L_string + "L%d\n\t};" % (len(L_out) - 1)
-R_string = R_string + "W%d\n\t};" % (len(L_out) - 1)
-S_string = S_string + "S%d\n\t};" % (len(L_out) - 1)
+    print("// L_STRATEGY[i] determines the small odd primes l_i per each strategy")
+    print(L_string)
+    print("\n// W_STRATEGY[i] determines L \ L_STRATEGY[i]")
+    print(R_string)
+    print("\n// S_STRATEGY[i] determines the optimal strategy for L_STRATEGY[i]")
+    print(S_string)
 
-tmp_sizes = tmp_sizes + "%3d\n\t};" % (len(L_out[len(L_out) - 1]))
-tmp_round = tmp_round + "%3d\n\t};" % (r_out[len(L_out) - 1])
+    print("\n// Number of primes for each strategy")
+    print(tmp_sizes)
+    print("")
+    print("// Number of rounds per each different strategy")
+    print(tmp_round)
 
-print("// L_STRATEGY[i] determines the small odd primes l_i per each strategy")
-print(L_string)
-print("\n// W_STRATEGY[i] determines L \ L_STRATEGY[i]")
-print(R_string)
-print("\n// S_STRATEGY[i] determines the optimal strategy for L_STRATEGY[i]")
-print(S_string)
+    print("")
+    print("// Maximum number of degree-(l_i) isogeny constructions")
+    printl("static uint8_t M[]", m, n // k + 1)
 
-print("\n// Number of primes for each strategy")
-print(tmp_sizes)
-print("")
-print("// Number of rounds per each different strategy")
-print(tmp_round)
-
-print("")
-print("// Maximum number of degree-(l_i) isogeny constructions")
-printl("static uint8_t M[]", m, n // k + 1)
-
-STYLE_NAME = {
-    'wd2': 'OAYT-style',
-    'wd1': 'MCR-style',
-    'df': 'dummy-free-style',
-}[setting.style]
-print(
-    "\n#endif /* required framework for the strategies to be used in CSIDH-%s using %s */"
-    % (setting.prime[1:], STYLE_NAME)
-)
+    STYLE_NAME = {
+        'wd2': 'OAYT-style',
+        'wd1': 'MCR-style',
+        'df': 'dummy-free-style',
+    }[setting.style]
+    print(
+        "\n#endif /* required framework for the strategies to be used in CSIDH-%s using %s */"
+        % (setting.prime[1:], STYLE_NAME)
+    )
+    return attrdict(name='bounds', **locals())
