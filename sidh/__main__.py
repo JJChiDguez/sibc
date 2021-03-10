@@ -10,6 +10,7 @@ from sidh.csidh.print_strategy import csidh_strategy
 from sidh.csidh.sdacs import csidh_sdacs
 from sidh.csidh.suitable_bounds import csidh_suitable_bounds
 from sidh.csidh.test import csidh_test
+from sidh.csidh.main import csidh_main
 from sidh.common import attrdict
 from sidh.constants import parameters
 
@@ -79,7 +80,17 @@ from sidh.constants import parameters
 @click.pass_context
 def main(ctx, **kwargs):
     """
-    sidh main stub
+
+    \b
+      ,-~~-.___.          
+     / |  '     \\        
+    (  )         0        
+     \_/-, ,----'         
+        ====           // 
+       /  \-'~;    /~~~(O)
+      /  __/~|   /       |
+    =(  _____| (_________|
+
     """
     algo_args = kwargs.copy()
     algorithm = algo_args.pop('algorithm')
@@ -112,6 +123,7 @@ main.add_command(csidh_strategy)
 main.add_command(csidh_sdacs)
 main.add_command(csidh_suitable_bounds)
 main.add_command(csidh_test)
+main.add_command(csidh_main)
 
 if __name__ == '__main__':
     main()
