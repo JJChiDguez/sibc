@@ -60,7 +60,9 @@ class Gae_df(object):
         )
         return self.curve.coeff(ss)
 
-    def random_key(self):
+    def random_key(self, m=None):
+        if m is None:
+            m = self.m
         """
         random_key(m) implements an uniform random sample from S(m_1) x S(m_2) x ... x S(m_n)
         """

@@ -54,6 +54,9 @@ def MontgomeryLadder(prime, style):
     )
     C_xMUL = list(map(cMUL, L))  # list of the costs of each [l]P
 
+    SQR = 1.00
+    ADD = 0.00
+
     def elligator(A):
 
         Ap = fp.fp_add(A[0], A[0])
@@ -109,8 +112,6 @@ def MontgomeryLadder(prime, style):
         ADD = 0.00
         # In F_p, we have ADD_{F_p} = ADD x MUL_{F_p}
         """
-        SQR = 1.00
-        ADD = 0.00
         return (x[0] + SQR * x[1] + ADD * x[2])
 
     def dacs(l, r0, r1, r2, chain):

@@ -15,7 +15,7 @@ def Gae_wd1(prime, verbose, curve, formula):
     temporal_m = list(set(m))
 
     # random_key() implements an uniform random sample from [-m_1,m_1] x ... x -[m_n, m_n]
-    random_key = lambda: [random.randint(0, m_i) for m_i in m]
+    random_key = lambda m=m: [random.randint(0, m_i) for m_i in m]
 
     '''
     security()

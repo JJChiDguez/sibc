@@ -1,6 +1,8 @@
 import click
+from progress.bar import Bar
 from sidh.constants import strategy_data
 from sidh.csidh import CSIDH
+import statistics
 
 @click.command()
 @click.pass_context
@@ -10,7 +12,6 @@ def bench(ctx):
 
     setting = ctx.meta['sidh.kwargs']
     self = setting['algo']
-
     n = self.params.n
     m = self.params.m
     L = self.params.L
@@ -86,7 +87,7 @@ def bench(ctx):
 
     print(
         "// All the experiments are assuming S = %2.3fM and a = %2.3fM. The measures are given in millions of field operations.\n"
-        % (SQR, ADD)
+        % (self.curve.SQR, self.curve.ADD)
     )
 
     ''' -------------------------------------------------------------------------------------
@@ -99,14 +100,15 @@ def bench(ctx):
     # print("fp2<i> := ext<fp | x^2 + 1>;")
     # print("P<x> := PolynomialRing(fp2);");
 
-    A = [2, 4]
+    A = self.curve.A
+    assert A == [2, 4]
     # print("public_coeff := 0x%X;\n" % coeff(A))
 
     ''' -------------------------------------------------------------------------------------
         Main
         ------------------------------------------------------------------------------------- '''
 
-    e = random_key(m)
+    e = self.gae.random_key(m)
     B = list(A)
 
     tmp = list(set(m))
@@ -116,24 +118,24 @@ def bench(ctx):
 
     for main_i in range(setting.benchmark):
 
-        e = random_key(m)
+        e = self.gae.random_key(m)
 
         if (len(tmp) == 1) or ((len(tmp) == 2) and (0 in tmp)):
 
-            set_zero_ops()
-            B = GAE(B, e, [L_out[0]], [R_out[0]], [S_out[0]], [tmp[-1]], m)
-            SAMPLE[main_i] = get_ops()
+            self.fp.set_zero_ops()
+            B = self.gae.GAE(B, e, [L_out[0]], [R_out[0]], [S_out[0]], [tmp[-1]], m)
+            SAMPLE[main_i] = self.fp.get_ops()
 
         else:
 
-            set_zero_ops()
-            B = GAE(B, e, L_out, R_out, S_out, r_out, m)
-            SAMPLE[main_i] = get_ops()
+            self.fp.set_zero_ops()
+            B = self.gae.GAE(B, e, L_out, R_out, S_out, r_out, m)
+            SAMPLE[main_i] = self.fp.get_ops()
 
-        set_zero_ops()
-        V = validate(B)
+        self.fp.set_zero_ops()
+        V = self.curve.validate(B)
         assert V
-        SAMPLE_VALIDATE[main_i] = get_ops()
+        SAMPLE_VALIDATE[main_i] = self.fp.get_ops()
 
         # print("Random(EllipticCurve(x^3 + 0x%X * x^2 + x)) * (p+1);" % coeff(B))
 
@@ -151,7 +153,7 @@ def bench(ctx):
             AVERAGE[0] / (10.0 ** 6),
             AVERAGE[1] / (10.0 ** 6),
             AVERAGE[2] / (10.0 ** 6),
-            measure(AVERAGE) / (10.0 ** 6),
+            self.curve.measure(AVERAGE) / (10.0 ** 6),
         )
     )
 
@@ -166,7 +168,7 @@ def bench(ctx):
             AVERAGE[0] / (10.0 ** 6),
             AVERAGE[1] / (10.0 ** 6),
             AVERAGE[2] / (10.0 ** 6),
-            measure(AVERAGE) / (10.0 ** 6),
+            self.curve.measure(AVERAGE) / (10.0 ** 6),
         )
     )
 
