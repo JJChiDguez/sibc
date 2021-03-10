@@ -804,8 +804,8 @@ class Hvelu(object):
 
                 bc = f.readline()
                 bc = [int(bci) for bci in bc.split()]
-                sJ_list.append(bc[0])
-                sI_list.append(bc[1])
+                self.sJ_list.append(bc[0])
+                self.sI_list.append(bc[1])
 
             f.close()
 
@@ -816,7 +816,7 @@ class Hvelu(object):
         for i in range(0, self.fp.n, 1):
 
             if self.verbose:
-                self.set_parameters_velu(sJ_list[i], sI_list[i], i)
+                self.set_parameters_velu(self.sJ_list[i], sI_list[i], i)
             else:
                 # Parameters sJ and sI correspond with the parameters b and b' from example 4.12 of https://eprint.iacr.org/2020/341
                 # These paramters are required in KPs, xISOG, and xEVAL
