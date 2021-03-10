@@ -25,6 +25,7 @@ def csidh_main(ctx):
     measure = algo.curve.measure
     GAE = algo.gae.GAE
     strategy_block_cost = algo.gae.strategy_block_cost
+    random_key = algo.gae.random_key
 
     if algo.formula.name != 'tvelu':
         set_parameters_velu = algo.formula.set_parameters_velu
@@ -139,12 +140,7 @@ def csidh_main(ctx):
     public_validation = validate(A)
     assert public_validation
 
-    #a_private = random_key(m)
-    a_private = [ 9,  2,-14,  3, 11,-12,  4,  4,  0, 20,  8,  7,-12,-20, 23, 15,
-            5,  3, 15,-19,  7,-17,-19,  1, -2, 14,  0, -9,  2,  4, 11,  2,  7,  9,
-            9, -1,  5, -7,  5,  4, -4,  6,  6,  7, -8, -2,  0,  2, -6,  5, -2,  0,
-            -2,  4, -5, -1, -5,  3,  3,  5,  3, -5,  5,  3, -2,  2, -4, -2,  0, -2,
-            2,  0, 2, -3 ]
+    a_private = random_key(m)
 
     print("// Private key corresponding to Alice")
     print("/*")
@@ -187,12 +183,7 @@ def csidh_main(ctx):
     # ------------------------------------------------------------------------- Bob
     set_zero_ops()
 
-    #b_private = random_key(m)
-    b_private = [ 3,-16,-10,  1, 15, 20,-20,-22,-16,-22,  0,-19,  6, -4, -9,
-            13,-11, 13,-13, -1, 23, 21, -5, 13, -4, -2, 12, 15, -4,-10, -5,  0, 11,
-            1, -1, -1,  7,  1, -3,  6,  0,  2, -4, -5,  0,  2, -4, -2, -4, -5,  6,
-            2, -6, -4,  5, -5,  5, -3,  1,  3, -1, -5,  3, -5, -4,  2,  4,  2,  2,
-            4,  0, -2, 0, -3 ]
+    b_private = random_key(m)
 
     print("// Private key corresponding to Bob")
     print("/*")
