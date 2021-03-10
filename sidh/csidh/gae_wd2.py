@@ -1,4 +1,4 @@
-import random
+from random import SystemRandom
 import numpy
 from sympy import symbols, floor, sqrt, sign
 
@@ -13,6 +13,7 @@ def Gae_wd2(prime, verbose, curve, formula):
     n = parameters['csidh'][prime]['n']
     m = parameters['csidh'][prime]['wd2']['m']
     temporal_m = list(set(m))
+    random = SystemRandom()
 
     # random_key() implements an uniform random sample from [-m_1,m_1] x ... x -[m_n, m_n]
     random_key = lambda m=m: [random.randint(-m_i, m_i) for m_i in m]

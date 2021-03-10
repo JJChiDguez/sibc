@@ -1,4 +1,4 @@
-import random
+from random import SystemRandom
 import numpy
 from sympy import symbols, floor, sqrt, sign
 from math import log
@@ -8,6 +8,8 @@ from sidh.constants import parameters
 
 class Gae_df(object):
     def __init__(self, prime, verbose, curve, formula):
+        self.random = SystemRandom()
+
         # In order to achieve efficiency, the optimal strategies and their cost are saved in two global dictionaries (hash tables)
         self.S = {1: {}}  # Initialization of each strategy
         self.C = {1: {}}  # Initialization of the costs: 0.
@@ -58,7 +60,7 @@ class Gae_df(object):
         """
         random_key(m) implements an uniform random sample from S(m_1) x S(m_2) x ... x S(m_n)
         """
-        return [2 * (random.randint(0, m_i) - (m_i // 2)) - (m_i % 2) for m_i in self.m ]
+        return [2 * (self.random.randint(0, m_i) - (m_i // 2)) - (m_i % 2) for m_i in self.m ]
 
     def security(self, M, n):
         """
