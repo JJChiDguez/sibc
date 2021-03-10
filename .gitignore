@@ -1,6 +1,7 @@
-__pycache__/*
-csidh/__pycache__/*
-bsidh/__pycache__/*
+sidh/__pycache__/*
+sidh/csidh/__pycache__/*
+sidh/bsidh/__pycache__/*
+test/__pycache__/*
 prime-filter.sh
 prime-search.sh
 prime-search.py
@@ -8,3 +9,4 @@ more/*
 build/
 dist/
 sidh.egg-info/
+*.swp
