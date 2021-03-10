@@ -1,6 +1,6 @@
 from random import SystemRandom
 import numpy
-from sympy import symbols, floor, sqrt, sign
+from sympy import symbols, floor, sqrt, sign, log
 
 from sidh.math import isequal, bitlength, hamming_weight
 from sidh.constants import parameters

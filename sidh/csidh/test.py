@@ -15,16 +15,17 @@ def csidh_test(ctx):
     n = algo.params.n
     A = algo.curve.A
     xMUL = algo.curve.xMUL
-    set_parameters_velu = algo.formula.set_parameters_velu
-    print_parameters_velu = algo.formula.print_parameters_velu
+    if algo.formula.name != 'tvelu':
+        set_parameters_velu = algo.formula.set_parameters_velu
+        print_parameters_velu = algo.formula.print_parameters_velu
+        sI = algo.formula.sI
+        HYBRID_BOUND = algo.formula.HYBRID_BOUND
     get_ops = algo.fp.get_ops
     set_zero_ops = algo.fp.set_zero_ops
-    sI = algo.formula.sI
     KPs = algo.formula.KPs
     show_ops = algo.fp.show_ops
     xISOG = algo.formula.xISOG
     xEVAL = algo.formula.xEVAL
-    HYBRID_BOUND = algo.formula.HYBRID_BOUND
 
     total_cost = [0, 0, 0]
     print("p := 0x%X;" % p)

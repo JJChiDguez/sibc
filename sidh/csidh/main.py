@@ -26,6 +26,9 @@ def csidh_main(ctx):
     GAE = algo.gae.GAE
     strategy_block_cost = algo.gae.strategy_block_cost
 
+    if algo.formula.name != 'tvelu':
+        set_parameters_velu = algo.formula.set_parameters_velu
+
     temporal_m = list(set(m))
     if len(temporal_m) > 1:
         # Maximum number of degree-(l_i) isogeny constructions is m_i (different for each l_i)
