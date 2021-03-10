@@ -5,6 +5,7 @@ from .constants import parameters
 from sidh.csidh.bench import bench
 from sidh.csidh.bounds import csidh_bounds
 from sidh.csidh.header import csidh_header
+from sidh.csidh.ijk import csidh_ijk
 from sidh.common import attrdict
 
 @click.version_option()
@@ -14,30 +15,35 @@ from sidh.common import attrdict
     "--prime",
     type=click.Choice(['b2', 'b3', 'b5', 'b6', 'p1024', 'p1792', 'p512', 'sv']),
     default="p512",
+    show_default=True,
 )
 @click.option(
     "-f",
     "--formula",
     type=click.Choice(['tvelu', 'svelu', 'hvelu']),
     default='hvelu',
+    show_default=True,
 )
 @click.option(
     "-a",
     "--algorithm",
     type=click.Choice(["csidh", "bsidh"]),
     default='csidh',
+    show_default=True,
 )
 @click.option(
     "-s",
     "--style",
     type=click.Choice(['wd1', 'wd2', 'df']),
     default='df',
+    show_default=True,
 )
 @click.option(
    "-e",
    "--exponent",
-   type=click.Choice(['2', '3']),
+   type=click.Choice(['2']),
    default='2',
+    show_default=True,
 )
 #   @click.option(
 #       "-m",
@@ -50,17 +56,20 @@ from sidh.common import attrdict
     "--curvemodel",
     type=click.Choice(['edwards', 'montgomery']),
     default='montgomery',
+    show_default=True,
 )
 @click.option(
     "-b",
     "--benchmark",
     default=128,
+    show_default=True,
 )
 @click.option(
     "-v",
     "--verbose",
     is_flag=True,
     help="Not the kind of verbosity you might expect",
+    show_default=True,
 )
 @click.pass_context
 def main(ctx, **kwargs):
@@ -91,6 +100,7 @@ def genkey(ctx):
 
 main.add_command(csidh_bounds)
 main.add_command(csidh_header)
+main.add_command(csidh_ijk)
 main.add_command(bench)
 
 if __name__ == '__main__':

@@ -1,81 +1,72 @@
-from sidh.framework import *
+import click
+import numpy
 
-if setting.style == 'wd1':
-    # Using one torsion point and dummy isogeny constructions
-    from sidh.csidh.gae_wd1 import *
+from sidh.common import attrdict
+from sidh.fp import printl
+from sidh.constants import strategy_data
+from sidh.math import isequal, bitlength
 
-    delta = 1
-elif setting.style == 'wd2':
-    # Using two torsion points and dummy isogeny constructions
-    from sidh.csidh.gae_wd2 import *
 
-    delta = 2
-elif setting.style == 'df':
-    # Dummy-free approach by using two torsion points
-    from sidh.csidh.gae_df import *
+@click.command()
+@click.pass_context
+def csidh_ijk(ctx):
+    algo = ctx.meta['sidh.kwargs']['algo']
+    setting = ctx.meta['sidh.kwargs']
+    L = algo.params.L
+    n = algo.params.n
+    m = algo.params.m
+    delta = algo.params.delta
+    # XXX: sI_list is currently incorrect - so generation doesn't work
+    sI_list = algo.formula.sI_list
+    # ---
+    k = 3  # Number of rows (format of the list)
+    # ---
 
-    delta = 1
-else:
+    print("#ifndef _IJK_%s_H_" % setting.prime)
+    print("#define _IJK_%s_H_" % setting.prime)
+    print("")
+    assert n == len(L)
 
-    print("  ,-~~-.___.          ")
+    print("#ifdef _MONT_C_CODE_")
+    print("// The list of the bitlength of each SOP")
+    printl("static uint64_t bL[]", [bitlength(l) for l in L], n // k + 1)
+    print("#endif")
+
+    print("")
+    print("#ifdef _ISOG_H_")
     print(
-        " / |  '     \\          SYNTAX ERROR ..., run python3 main.py -h for help"
+        "\n// The list of Small Odd Primes (SOPs) is stored such that l_0 < l_1 < ... < l_{n-1}"
     )
-    print("(  )         0        ")
-    print(" \_/-, ,----'         ")
-    print("    ====           // ")
-    print("   /  \-'~;    /~~~(O)")
-    print("  /  __/~|   /       |")
-    print("=(  _____| (_________|")
-    exit(7)
+    printl("static uint64_t L[]", L, n // k + 1)
 
-# ---
-k = 3  # Number of rows (format of the list)
-# ---
+    assert n == len(sI_list)
+    assert n == len(sJ_list)
 
-print("#ifndef _IJK_%s_H_" % setting.prime)
-print("#define _IJK_%s_H_" % setting.prime)
-print("")
-assert n == len(L)
+    sK_list = []
+    for i in range(0, n, 1):
+        assert sJ_list[i] <= sI_list[i]
+        sK_list.append(((L[i] - 2 - 4 * sJ_list[i] * sI_list[i] - 1) // 2) + 1)
+        assert sK_list[i] >= 0
 
-print("#ifdef _MONT_C_CODE_")
-print("// The list of the bitlength of each SOP")
-printl("static uint64_t bL[]", [bitlength(l) for l in L], n // k + 1)
-print("#endif")
+    print("")
+    print("#ifndef _C_CODE_")
+    print(
+        "// Sizes for the sets I, J, and K required in the new velusqrt formulae"
+    )
+    printl("static int sizeI[]", sI_list, n // k + 1)
+    printl("static int sizeJ[]", sJ_list, n // k + 1)
+    printl("static int sizeK[]", sK_list, n // k + 1)
+    print("#endif")
 
-print("")
-print("#ifdef _ISOG_H_")
-print(
-    "\n// The list of Small Odd Primes (SOPs) is stored such that l_0 < l_1 < ... < l_{n-1}"
-)
-printl("static uint64_t L[]", L, n // k + 1)
+    print("")
+    print("#define sI_max %d" % (max(sI_list)))
+    print("#define sJ_max %d" % (max(sJ_list)))
+    print("#define sK_max %d" % (L[n - 1] // 2 + 1))
+    print("#endif")
 
-assert n == len(sI_list)
-assert n == len(sJ_list)
+    print(
+        "\n#endif /* required framework for the #I, #J, and #K, which is used in new velusqrt fomurlae on CSIDH-%s */"
+        % setting.prime[1:]
+    )
+    return attrdict(name='ijk', **locals())
 
-sK_list = []
-for i in range(0, n, 1):
-    assert sJ_list[i] <= sI_list[i]
-    sK_list.append(((L[i] - 2 - 4 * sJ_list[i] * sI_list[i] - 1) // 2) + 1)
-    assert sK_list[i] >= 0
-
-print("")
-print("#ifndef _C_CODE_")
-print(
-    "// Sizes for the sets I, J, and K required in the new velusqrt formulae"
-)
-printl("static int sizeI[]", sI_list, n // k + 1)
-printl("static int sizeJ[]", sJ_list, n // k + 1)
-printl("static int sizeK[]", sK_list, n // k + 1)
-print("#endif")
-
-print("")
-print("#define sI_max %d" % (max(sI_list)))
-print("#define sJ_max %d" % (max(sJ_list)))
-print("#define sK_max %d" % (L[n - 1] // 2 + 1))
-print("#endif")
-
-print(
-    "\n#endif /* required framework for the #I, #J, and #K, which is used in new velusqrt fomurlae on CSIDH-%s */"
-    % setting.prime[1:]
-)

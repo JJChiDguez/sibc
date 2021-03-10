@@ -8,12 +8,12 @@ from sidh.constants import strategy_data
 @click.command()
 @click.pass_context
 def csidh_header(ctx):
-    delta = 1
     algo = ctx.meta['sidh.kwargs']['algo']
     setting = ctx.meta['sidh.kwargs']
     L = algo.params.L
     n = algo.params.n
     m = algo.params.m
+    delta = algo.params.delta
     geometric_serie = algo.gae.geometric_serie
     rounds = algo.gae.rounds
 
@@ -197,4 +197,4 @@ def csidh_header(ctx):
         "\n#endif /* required framework for the strategies to be used in CSIDH-%s using %s */"
         % (setting.prime[1:], STYLE_NAME)
     )
-    return attrdict(name='bounds', **locals())
+    return attrdict(name='header', **locals())
