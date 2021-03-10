@@ -1,5 +1,6 @@
 """
-This file creates test classes for all 27 permutations of prime, formula, and seed.
+This module creates test classes for all 54 permutations of prime, formula,
+style, and verbose.
 
 These obviously take a long time to run.
 
@@ -9,25 +10,21 @@ tvelu, you could run this:
     pytest -k 'p512 and df and tvelu and validate'
 """
 
-
 from unittest import TestCase
 from sidh.csidh import CSIDH
 
 PRIMES = ('p512', 'p1024', 'p1792')
 
-# PRIMES = ('p512',) # uncomment this to only run p512
-
 FORMULAS = ('tvelu', 'svelu', 'hvelu')
 
 STYLES = ('df', 'wd1', 'wd2')
 
-# STYLES = ('wd1',) # only this passes right now
-
 
 class CSIDH_gae_test_base(object):
-
     def setUp(self):
-        self.c = CSIDH('montgomery', self.prime, self.formula, self.style, self.verbose, 2)
+        self.c = CSIDH(
+            'montgomery', self.prime, self.formula, self.style, self.verbose, 2
+        )
 
     def test_genpubvalidate(self):
         sk = self.c.gae.random_key()
@@ -39,14 +36,27 @@ class CSIDH_gae_test_base(object):
         pk_a, pk_b = self.c.gae.pubkey(sk_a), self.c.gae.pubkey(sk_b)
         self.assertEqual(self.c.gae.dh(sk_a, pk_b), self.c.gae.dh(sk_b, pk_a))
 
+
 for prime in PRIMES:
     for formula in FORMULAS:
         for style in STYLES:
             for verbose in (False, True):
+
                 class cls(CSIDH_gae_test_base, TestCase):
                     formula = formula
                     style = style
                     prime = prime
                     verbose = verbose
-                globals()['csidh_gae_'+'_'.join([prime, formula, style, ('classical', 'suitable')[verbose]])] = cls
+
+                globals()[
+                    'csidh_gae_'
+                    + '_'.join(
+                        [
+                            prime,
+                            formula,
+                            style,
+                            ('classical', 'suitable')[verbose],
+                        ]
+                    )
+                ] = cls
 del cls

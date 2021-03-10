@@ -2,6 +2,7 @@ from unittest import TestCase
 from sidh.csidh import CSIDH
 from sidh.common import attrdict
 
+
 class known_df_p512(object):
 
     """
@@ -59,7 +60,9 @@ class known_df_p512(object):
     verbose = False
 
     def setUp(self):
-        self.csidh = CSIDH('montgomery', self.prime, self.formula, self.style, self.verbose, 2)
+        self.csidh = CSIDH(
+            'montgomery', self.prime, self.formula, self.style, self.verbose, 2
+        )
 
     def test_dh_AB(self):
         self.assertEqual(
@@ -85,11 +88,14 @@ class known_df_p512(object):
                 keys.compressed, compress(uncompress(compress(keys.pk)))
             )
 
+
 class Test_known_df_p512_hvelu(known_df_p512, TestCase):
     formula = 'hvelu'
 
+
 class Test_known_df_p512_tvelu(known_df_p512, TestCase):
     formula = 'tvelu'
+
 
 class Test_known_df_p512_svelu(known_df_p512, TestCase):
     formula = 'svelu'
