@@ -6,11 +6,6 @@ from sidh.constants import strategy_data
 @click.command()
 @click.pass_context
 def csidh_strategy(ctx):
-    '''
-    -------------------------------------------------------------------------------------
-    Number of degree-(l_i) isogeny constructions to be performed: m_i
-    -------------------------------------------------------------------------------------
-    '''
     algo = ctx.meta['sidh.kwargs']['algo']
     setting = ctx.meta['sidh.kwargs']
     L = algo.params.L
