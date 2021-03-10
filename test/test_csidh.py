@@ -6,7 +6,7 @@ These obviously take a long time to run.
 You can run the tests with pytest and limit which are run using the -k option.
 For instance, to only run the test_genpubvalidate test on p512 with df and
 tvelu, you could run this:
-    pytest -k 'p512 and df and wd1 and validate'
+    pytest -k 'p512 and df and tvelu and validate'
 """
 
 

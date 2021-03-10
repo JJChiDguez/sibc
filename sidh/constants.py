@@ -1,7 +1,11 @@
+import os
 from functools import reduce
 from .math import bitlength, is_prime
 base_path = "/usr/share/python3-sidh/data/"
-#base_path = "./data/"
+if not os.path.exists(base_path) and os.path.exists('./data'):
+    # this allows running it from the repo without installing on the system, for now
+    # FIXME: use pkg_resources to locate data
+    base_path = "./data/"
 strategy_data = base_path + "/strategies/"
 sdacs_data = base_path + "/sdacs/"
 sop_data = base_path + "/sop/"
