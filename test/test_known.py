@@ -7,12 +7,13 @@ class known_df_p512(object):
     """
     Known-answer tests
 
-    We currently only have these for p512 df keys. They should work for all 3
-    formulas, but we've commented out two of them for now to be able to run the
-    tests quicker.
+    We currently only have these for p512 df keys.
 
     These keys and answers came from running csidh/main.py (which generated
     these keys) prior to the big refactoring.
+
+    To run this test for just one formula, you can run commands like this:
+        pytest -k 'known_df and hvelu'
     """
 
     keys = attrdict(
@@ -86,9 +87,9 @@ class known_df_p512(object):
 
 class Test_known_df_p512_hvelu(known_df_p512, TestCase):
     formula = 'hvelu'
-#
-#class Test_known_df_p512_tvelu(known_df_p512, TestCase):
-#    formula = 'tvelu'
-#
-#class Test_known_df_p512_svelu(known_df_p512, TestCase):
-#    formula = 'svelu'
+
+class Test_known_df_p512_tvelu(known_df_p512, TestCase):
+    formula = 'tvelu'
+
+class Test_known_df_p512_svelu(known_df_p512, TestCase):
+    formula = 'svelu'

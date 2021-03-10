@@ -1,9 +1,12 @@
 """
-This file can test many things.
+This file creates test classes for all 27 permutations of prime, formula, and seed.
 
-For now, we're commenting and uncommenting things below to control which
-permutations of parameters get tested. In the future we should use pytest's
-option handling to be able to specify this.
+These obviously take a long time to run.
+
+You can run the tests with pytest and limit which are run using the -k option.
+For instance, to only run the test_genpubvalidate test on p512 with df and
+tvelu, you could run this:
+    pytest -k 'p512 and df and wd1 and validate'
 """
 
 
@@ -12,13 +15,13 @@ from sidh.csidh import CSIDH
 
 PRIMES = ('p512', 'p1024', 'p1792')
 
-PRIMES = ('p512',) # only test this for now, to be able to run tests quickly
+# PRIMES = ('p512',) # uncomment this to only run p512
 
 FORMULAS = ('tvelu', 'svelu', 'hvelu')
 
 STYLES = ('df', 'wd1', 'wd2')
 
-STYLES = ('wd1',) # only this passes right now
+# STYLES = ('wd1',) # only this passes right now
 
 
 class CSIDH_gae_test_base(object):
