@@ -3,3 +3,7 @@ make cli genkey/pubkey/dh base64 commands, using CSIDH's bytes API
 make poly_* not use global fp
 use pkg_resources for finding data files
 fix bsidh commands and subcommands as documented in the README.md file
+consider and implement a modular fp backend:
+- https://pypi.org/project/pyfinite/
+- https://pypi.org/project/gmpy2/
+- others?
