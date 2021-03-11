@@ -1,5 +1,3 @@
-make CSIDH genkey/pubkey/dh bytes API
-make cli genkey/pubkey/dh base64 commands, using CSIDH's bytes API
 make poly_* not use global fp
 use pkg_resources for finding data files
 fix bsidh commands and subcommands as documented in the README.md file

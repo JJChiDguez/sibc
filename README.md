@@ -73,6 +73,32 @@ Commands:
   print-strategy         draw graphs
 ```
 
+## sidh api
+
+Currently only CSIDH is available as a library function.
+
+### Basic shared secret generation
+```python3
+from sidh.csidh import CSIDH, default_parameters
+c = CSIDH(**default_parameters)
+
+# alice generates a key
+alice_secret_key = c.secret_key()
+alice_public_key = c.public_key(alice_secret_key)
+
+# bob generates a key
+bob_secret_key = c.secret_key()
+bob_public_key = c.public_key(bob_secret_key)
+
+# if either alice or bob use their secret key with the other's respective
+# public key, the resulting shared secrets are the same
+shared_secret_alice = c.dh(alice_secret_key, bob_public_key)
+shared_secret_bob = c.dh(bob_secret_key, alice_public_key)
+
+# Alice and bob produce an identical shared secret
+assert shared_secret_alice == shared_secret_bob
+```
+
 ## Adding new primes
 
 The field characteristic `p` should be stored in directory `data/sop/`, and CSIDH and BSIDH have different structures (see below):

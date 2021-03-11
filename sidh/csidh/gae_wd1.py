@@ -68,7 +68,7 @@ def Gae_wd1(prime, verbose, curve, formula):
             )
         else:
             ss = GAE(pk, sk, L_out, R_out, S_out, r_out, m)
-        return curve.coeff(ss)
+        return ss
 
     def dynamic_programming_algorithm(L, n):
       '''

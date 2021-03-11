@@ -1,5 +1,6 @@
 from logging import getLogger
 import click
+from base64 import b64encode, b64decode
 from click.exceptions import Exit
 from sidh.csidh.bench import csidh_bench
 from sidh.csidh.bounds import csidh_bounds
@@ -12,6 +13,7 @@ from sidh.csidh.suitable_bounds import csidh_suitable_bounds
 from sidh.csidh.test import csidh_test
 from sidh.csidh.main import csidh_main
 from sidh.printstrategy import print_strategy
+from sidh.timing import print_timing
 from sidh.common import attrdict
 from sidh.constants import parameters
 
@@ -113,8 +115,26 @@ def main(ctx, **kwargs):
 def genkey(ctx):
     "Generate a secret key"
     algo = ctx.meta['sidh.kwargs']['algo']
-    click.echo(algo.random_key())
+    click.echo(b64encode(algo.secret_key()))
 
+@main.command()
+@click.argument('secret_key', type=click.File())
+@click.pass_context
+def pubkey(ctx, secret_key):
+    "Generate a public key from a secret key"
+    algo = ctx.meta['sidh.kwargs']['algo']
+    click.echo(b64encode(algo.public_key(b64decode(secret_key.read()))))
+
+@main.command()
+@click.argument('secret_key', type=click.File())
+@click.argument('public_key', type=str)
+@click.pass_context
+def dh(ctx, secret_key, public_key):
+    "Generate a shared secret between a secret key and a public key"
+    algo = ctx.meta['sidh.kwargs']['algo']
+    click.echo(b64encode(algo.dh(b64decode(secret_key.read()),b64decode(public_key))))
+
+main.add_command(print_timing)
 main.add_command(print_strategy)
 main.add_command(csidh_bench)
 main.add_command(csidh_bounds)

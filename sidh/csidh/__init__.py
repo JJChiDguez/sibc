@@ -1,4 +1,6 @@
 #x = dict(df=gae_df, wd1=gae_wd1, wd2=gae_wd2)
+from struct import pack, unpack
+
 from sidh.csidh.gae_df import Gae_df
 from sidh.csidh.gae_wd1 import Gae_wd1
 from sidh.csidh.gae_wd2 import Gae_wd2
@@ -9,6 +11,10 @@ from sidh.csidh.montgomery import MontgomeryCurve
 from sidh.constants import parameters
 from sidh.common import attrdict
 
+default_parameters = dict(curvemodel='montgomery', prime='p512',
+                          formula='hvelu', style='wd2', verbose=False,
+                          exponent=2)
+
 class CSIDH(object):
     """
 
@@ -17,9 +23,25 @@ class CSIDH(object):
     Here is one group action test with random keys:
 
     >>> csidh_tvelu_wd1 = CSIDH('montgomery', 'p512', 'tvelu', 'wd1', False, 2)
-    >>> sk_a, sk_b = csidh_tvelu_wd1.random_key(), csidh_tvelu_wd1.random_key()
-    >>> pk_a, pk_b = csidh_tvelu_wd1.pubkey(sk_a), csidh_tvelu_wd1.pubkey(sk_b)
+    >>> sk_a, sk_b = csidh_tvelu_wd1.secret_key(), csidh_tvelu_wd1.secret_key()
+    >>> pk_a, pk_b = csidh_tvelu_wd1.public_key(sk_a), csidh_tvelu_wd1.public_key(sk_b)
     >>> csidh_tvelu_wd1.dh(sk_a, pk_b) == csidh_tvelu_wd1.dh(sk_b, pk_a)
+    True
+
+    >>> from sidh.csidh import CSIDH, default_parameters
+    >>> c = CSIDH(**default_parameters)
+    >>> # alice generates a key
+    >>> alice_secret_key = c.secret_key()
+    >>> alice_public_key = c.public_key(alice_secret_key)
+    >>> # bob generates a key
+    >>> bob_secret_key = c.secret_key()
+    >>> bob_public_key = c.public_key(bob_secret_key)
+    >>> # if either alice or bob use their secret key with the other's respective
+    >>> # public key, the resulting shared secrets are the same
+    >>> shared_secret_alice = c.dh(alice_secret_key, bob_public_key)
+    >>> shared_secret_bob = c.dh(bob_secret_key, alice_public_key)
+    >>> # Alice and bob produce an identical shared secret
+    >>> shared_secret_alice == shared_secret_bob
     True
 
     Other tests which were previously here are now in the test directory.
@@ -62,13 +84,25 @@ class CSIDH(object):
             self.gae = NotImplemented
 
     def dh(self, sk, pk):
-        return self.gae.dh(sk, pk)
+        sk = unpack('<{}b'.format(len(sk)), sk)
+        pk = int.from_bytes(pk, 'little')
+        pk = self.curve.affine_to_projective(pk)
+        ss = self.curve.coeff(self.gae.dh(sk, pk)).to_bytes(length=64, byteorder='little')
+        return ss
 
-    def random_key(self):
-        return self.gae.random_key()
+    def secret_key(self):
+        k = self.gae.random_key()
+        return pack('<{}b'.format(len(k)), *k)
 
-    def pubkey(self, sk):
-        return self.gae.pubkey(sk)
+    def public_key(self, sk):
+        # unpack sk into list of ints
+        sk = unpack('<{}b'.format(len(sk)), sk)
+        xy = self.gae.pubkey(sk)
+        x = self.curve.coeff(xy)
+        # this implies a y of 4 on the receiver side
+        return x.to_bytes(length=64, byteorder='little')
+
+
 
 if __name__ == "__main__":
     import doctest

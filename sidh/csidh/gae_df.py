@@ -63,7 +63,7 @@ class Gae_df(object):
             )
         else:
             ss = self.GAE(pk, sk, L_out, R_out, S_out, r_out, self.m)
-        return self.curve.coeff(ss)
+        return ss
 
     def random_key(self, m=None):
         if m is None:
