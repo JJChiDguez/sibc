@@ -130,7 +130,7 @@ We summarize some examples of runs as follows:
 
 ```bash
 # CSIDH
-sidh -p p1024 -f tvelu -a csidh -s df csidh-main <- currently broken (!!!)
+sidh -p p1024 -f tvelu -a csidh -s df csidh-main
 sidh -p p512 -f svelu -a csidh -s wd2 csidh-main
 sidh -p p1792 -f hvelu -a csidh -s wd1 -v csidh-main
 
