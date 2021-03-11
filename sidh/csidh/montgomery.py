@@ -1,5 +1,5 @@
 import math
-import random
+from random import SystemRandom
 
 import numpy
 
@@ -56,6 +56,8 @@ def MontgomeryCurve(prime, style):
 
     SQR = 1.00
     ADD = 0.00
+
+    random = SystemRandom()
 
     def elligator(A):
 

@@ -1,4 +1,4 @@
-import random
+from random import SystemRandom
 from progress.bar import Bar
 
 bitlength = lambda x: len(bin(x)[2:])  # number of bits
@@ -7,6 +7,7 @@ hamming_weight = lambda x: bin(x).count("1")
 
 sign = lambda x: (1, -1)[x < 0]  # Sign of an integer
 isequal = {True: 1, False: 0}  # Simulating constant-time integer comparison
+random = SystemRandom()
 
 def _try_composite(a, d, n, s):
     if pow(a, d, n) == 1:
