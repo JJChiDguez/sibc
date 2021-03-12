@@ -17,12 +17,15 @@ from sidh.timing import print_timing
 from sidh.common import attrdict
 from sidh.constants import parameters
 
+
 @click.version_option()
 @click.group(short_help="sidh utility")
 @click.option(
     "-p",
     "--prime",
-    type=click.Choice(['b2', 'b3', 'b5', 'b6', 'p1024', 'p1792', 'p512', 'sv']),
+    type=click.Choice(
+        ['b2', 'b3', 'b5', 'b6', 'p1024', 'p1792', 'p512', 'sv']
+    ),
     default="p512",
     show_default=True,
 )
@@ -48,18 +51,14 @@ from sidh.constants import parameters
     show_default=True,
 )
 @click.option(
-   "-e",
-   "--exponent",
-   type=click.Choice(['2']),
-   default='2',
+    "-e",
+    "--exponent",
+    type=click.Choice(['2']),
+    default='2',
     show_default=True,
 )
 @click.option(
-    "-m",
-    "--multievaluation",
-    is_flag=True,
-    help="",
-    show_default=True,
+    "-m", "--multievaluation", is_flag=True, help="", show_default=True,
 )
 @click.option(
     "-c",
@@ -69,17 +68,10 @@ from sidh.constants import parameters
     show_default=True,
 )
 @click.option(
-    "-b",
-    "--benchmark",
-    default=128,
-    show_default=True,
+    "-b", "--benchmark", default=128, show_default=True,
 )
 @click.option(
-    "-t",
-    "--tuned",
-    is_flag=True,
-    help="",
-    show_default=True,
+    "-t", "--tuned", is_flag=True, help="", show_default=True,
 )
 @click.option(
     "-v",
@@ -108,6 +100,7 @@ def main(ctx, **kwargs):
     algo_args.pop('benchmark')
     if algorithm == 'csidh':
         from sidh.csidh import CSIDH
+
         algo = CSIDH(**algo_args)
     elif algorithm == 'bsidh':
         click.echo('BSIDH not yet implemented; try again later')
@@ -118,12 +111,14 @@ def main(ctx, **kwargs):
     kwargs['algo'] = algo
     ctx.meta['sidh.kwargs'] = attrdict(kwargs)
 
+
 @main.command()
 @click.pass_context
 def genkey(ctx):
     "Generate a secret key"
     algo = ctx.meta['sidh.kwargs']['algo']
     click.echo(b64encode(algo.secret_key()))
+
 
 @main.command()
 @click.argument('secret_key', type=click.File())
@@ -133,6 +128,7 @@ def pubkey(ctx, secret_key):
     algo = ctx.meta['sidh.kwargs']['algo']
     click.echo(b64encode(algo.public_key(b64decode(secret_key.read()))))
 
+
 @main.command()
 @click.argument('secret_key', type=click.File())
 @click.argument('public_key', type=str)
@@ -140,7 +136,10 @@ def pubkey(ctx, secret_key):
 def dh(ctx, secret_key, public_key):
     "Generate a shared secret between a secret key and a public key"
     algo = ctx.meta['sidh.kwargs']['algo']
-    click.echo(b64encode(algo.dh(b64decode(secret_key.read()),b64decode(public_key))))
+    click.echo(
+        b64encode(algo.dh(b64decode(secret_key.read()), b64decode(public_key)))
+    )
+
 
 main.add_command(print_timing)
 main.add_command(print_strategy)

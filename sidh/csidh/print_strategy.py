@@ -3,6 +3,7 @@ import click
 from sidh.common import attrdict
 from sidh.constants import strategy_data
 
+
 @click.command()
 @click.pass_context
 def csidh_strategy(ctx):
@@ -67,7 +68,9 @@ def csidh_strategy(ctx):
     except IOError:
 
         print("// Strategies to be computed")
-        C_out, L_out, R_out, S_out, r_out = strategy_block_cost(L[::-1], m[::-1])
+        C_out, L_out, R_out, S_out, r_out = strategy_block_cost(
+            L[::-1], m[::-1]
+        )
         f = open(
             strategy_data
             + setting.algorithm

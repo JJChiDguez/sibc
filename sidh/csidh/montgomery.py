@@ -11,6 +11,7 @@ from sidh.constants import sdacs_data, bitlength, parameters
 from sidh.math import hamming_weight
 from sidh.common import attrdict
 
+
 def filename_to_list_of_lists_of_ints(path):
     res = []
     try:
@@ -21,15 +22,17 @@ def filename_to_list_of_lists_of_ints(path):
         res = []
     return res
 
+
 def write_list_of_lists_of_ints_to_file(path, data):
     with open(path, 'w') as fh:
         for line in data:
             fh.writelines(' '.join(str(v) for v in v in line))
         fh.writelines()
 
+
 def MontgomeryCurve(prime, style):
 
-    if True: # algorithm == 'csidh':
+    if True:  # algorithm == 'csidh':
         # this is csidh/montgomery.py currently
         A = parameters['csidh']['A']
         L = parameters['csidh'][prime]['L']
@@ -39,7 +42,7 @@ def MontgomeryCurve(prime, style):
         p = (2 ** (exponent_of_two)) * reduce(
             lambda x, y: (x * y), L
         ) - 1  # p := 4 * l_0 * ... * l_n - 1
-        #p_minus_one_halves = (p - 1) // 2  # (p - 1) / 2
+        # p_minus_one_halves = (p - 1) // 2  # (p - 1) / 2
         p_minus_one_halves = parameters['csidh'][prime]['p_minus_one_halves']
         validation_stop = sum([bitlength(l_i) for l_i in L]) / 2.0 + 2
     else:
@@ -73,7 +76,6 @@ def MontgomeryCurve(prime, style):
 
         f.close()
 
-
         # pp = (2**exponent_of_twop) * reduce(lambda x,y : (x*y), [ Lp[i]**Ep[i] for i in range(0, np, 1)  ])
         pp = reduce(
             lambda x, y: (x * y), [Lp[i] ** Ep[i] for i in range(0, np, 1)]
@@ -92,9 +94,9 @@ def MontgomeryCurve(prime, style):
         p_minus_3_quarters = (p - 3) // 4
 
     fp = F_p(p)
-    #print("// Shortest Differential Addition Chains (SDAC) for each l_i;")
+    # print("// Shortest Differential Addition Chains (SDAC) for each l_i;")
     # List of Small odd primes, L := [l_0, ..., l_{n-1}]
-    #print("// SDAC's to be read from a file")
+    # print("// SDAC's to be read from a file")
     path = sdacs_data + prime
     SDACS = filename_to_list_of_lists_of_ints(path)
     if len(SDACS) == 0:
@@ -132,7 +134,9 @@ def MontgomeryCurve(prime, style):
         u_squared_minus_one = fp.fp_sub(u_squared, 1)
 
         C_times_u_squared_minus_one = fp.fp_mul(Cp, u_squared_minus_one)
-        AC_times_u_squared_minus_one = fp.fp_mul(Ap, C_times_u_squared_minus_one)
+        AC_times_u_squared_minus_one = fp.fp_mul(
+            Ap, C_times_u_squared_minus_one
+        )
 
         tmp = fp.fp_sqr(Ap)
         tmp = fp.fp_mul(tmp, u_squared)
@@ -158,13 +162,10 @@ def MontgomeryCurve(prime, style):
             [Tm_X, C_times_u_squared_minus_one],
         )
 
-
-
     def generate_sdacs(L):
         return list(
             map(sdac, L)
         )  # Shortest Differential Addition Chains for each small odd prime l in L
-
 
     def measure(x):
         """
@@ -173,7 +174,7 @@ def MontgomeryCurve(prime, style):
         ADD = 0.00
         # In F_p, we have ADD_{F_p} = ADD x MUL_{F_p}
         """
-        return (x[0] + SQR * x[1] + ADD * x[2])
+        return x[0] + SQR * x[1] + ADD * x[2]
 
     def dacs(l, r0, r1, r2, chain):
         '''
@@ -211,7 +212,7 @@ def MontgomeryCurve(prime, style):
         output: projective Montgomery constants A24 := A + 2C and C24 := 4C
                 where E : y^2 = x^3 + (A/C)*x^2 + x
         """
-        res = [ 0, 0 ]
+        res = [0, 0]
         res[0] = fp.fp_add(affine, A[0])
         res[1] = fp.fp_add(0, A[1])
         return res
@@ -238,7 +239,6 @@ def MontgomeryCurve(prime, style):
         isinfinity(P) determines if x(P) := (XP : ZP) = (1 : 0)
         """
         return P[1] == 0
-
 
     def areequal(P, Q):
         """ areequal(P, Q) determines if x(P) = x(Q) """
@@ -267,9 +267,6 @@ def MontgomeryCurve(prime, style):
 
         return [X, Z]
 
-
-
-
     def xADD(P, Q, PQ):
         '''
         ----------------------------------------------------------------------
@@ -292,7 +289,6 @@ def MontgomeryCurve(prime, style):
         X = fp.fp_mul(PQ[1], c)
         Z = fp.fp_mul(PQ[0], d)
         return [X, Z]
-
 
     # Modificar esta parte para usar cadenas de addicion
     def xMUL(P, A, j):
@@ -320,9 +316,6 @@ def MontgomeryCurve(prime, style):
             R[2] = list(T)
 
         return R[2]
-
-
-
 
     def prime_factors(P, A, points):
         '''
@@ -364,11 +357,9 @@ def MontgomeryCurve(prime, style):
 
             return []
 
-
     def isfull_order(seq):
         tmp = [not isinfinity(seq_i) for seq_i in seq]
         return reduce(lambda x, y: (x and y), tmp)
-
 
     def full_torsion_points(A):
 
@@ -391,20 +382,18 @@ def MontgomeryCurve(prime, style):
             if style != 'wd1':
                 for i in range(0, exponent_of_two, 1):
                     T_m = xDBL(T_m, A)
-                if isfull_order(prime_factors(T_m, A, range(0, n, 1))) and output[
-                    1
-                ] == [0, 0]:
+                if isfull_order(
+                    prime_factors(T_m, A, range(0, n, 1))
+                ) and output[1] == [0, 0]:
                     output[1] = list(T_m)
 
         return output[0], output[1]
-
 
     def CrissCross(alpha, beta, gamma, delta):
 
         t_1 = fp.fp_mul(alpha, delta)
         t_2 = fp.fp_mul(beta, gamma)
         return fp.fp_add(t_1, t_2), fp.fp_sub(t_1, t_2)
-
 
     def validate(A):
 

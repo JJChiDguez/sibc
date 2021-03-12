@@ -51,7 +51,6 @@ def csidh_suitable_bounds(ctx):
 
             return minimum
 
-
     # Finally, the next functions is the implementation of algorithm 2.0
     def optimal_bounds(L, b, r):
 
@@ -114,7 +113,6 @@ def csidh_suitable_bounds(ctx):
 
         print("Security in bits ~ %f\n" % SEC)
         return (e, RNC)
-
 
     ''' -------------------------------------------------------------------------------------
         Number of degree-(l_i) isogeny constructions to be performed: m_i
@@ -219,4 +217,3 @@ def csidh_suitable_bounds(ctx):
         "_______________________________________________________________________________________________________________________________\n"
     )
     return attrdict(name='csidh-suitable-bounds', **locals())
-

@@ -1,6 +1,7 @@
 import os
 from functools import reduce
 from .math import bitlength, is_prime
+
 base_path = "/usr/share/python3-sidh/data/"
 if not os.path.exists(base_path) and os.path.exists('./data'):
     # this allows running it from the repo without installing on the system, for now

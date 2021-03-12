@@ -7,6 +7,7 @@ from sidh.common import attrdict
 from sidh.fp import printl
 from sidh.constants import tmp_dir
 
+
 @click.command()
 @click.pass_context
 def csidh_bounds(ctx):
@@ -57,7 +58,6 @@ def csidh_bounds(ctx):
                         minimum = tmp
 
             return minimum
-
 
     # Finally, the next functions is the implementation of algorithm 2.0
     def optimal_bounds(L, b, r):
@@ -123,7 +123,6 @@ def csidh_bounds(ctx):
         f.close()
         # --------------------------------------------------------------------------------------------------
         return (e, RNC)
-
 
     ''' -------------------------------------------------------------------------------------
         Number of degree-(l_i) isogeny constructions to be performed: m_i

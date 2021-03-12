@@ -5,6 +5,7 @@ from sidh.common import attrdict
 
 x = symbols('x')
 
+
 def Poly_mul(curve):
     fp = curve.fp
     # ----------------------------------------------------------------------------------
@@ -30,7 +31,6 @@ def Poly_mul(curve):
         # Just a pretty way for printing polynomials
         print(sum([h[i] * (x ** i) for i in range(0, lenh, 1)]), ";")
         return None
-
 
     def karatsuba_mul(f, flen, g, glen):
         """
@@ -131,7 +131,10 @@ def Poly_mul(curve):
                 c1 = karatsuba_mul(f_high, mf, g[:glen], glen)
                 return (
                     c0[:nf]
-                    + [fp.fp_add(c0[nf + i], c1[i]) for i in range(0, glen - 1, 1)]
+                    + [
+                        fp.fp_add(c0[nf + i], c1[i])
+                        for i in range(0, glen - 1, 1)
+                    ]
                     + c1[(glen - 1) :]
                 )
 
@@ -161,20 +164,27 @@ def Poly_mul(curve):
                 fg_mid = poly_mul(f_mid, mf, g_mid, mg)
 
             fg_mid = [
-                fp.fp_sub(fg_mid[i], fg_high[i]) for i in range(0, mf + mg - 1, 1)
+                fp.fp_sub(fg_mid[i], fg_high[i])
+                for i in range(0, mf + mg - 1, 1)
             ] + fg_mid[(mf + mg - 1) :]
             fg_mid = [
-                fp.fp_sub(fg_mid[i], fg_low[i]) for i in range(0, 2 * nf - 1, 1)
+                fp.fp_sub(fg_mid[i], fg_low[i])
+                for i in range(0, 2 * nf - 1, 1)
             ] + fg_mid[(2 * nf - 1) :]
 
             return (
                 fg_low[:nf]
-                + [fp.fp_add(fg_low[nf + i], fg_mid[i]) for i in range(0, nf - 1, 1)]
+                + [
+                    fp.fp_add(fg_low[nf + i], fg_mid[i])
+                    for i in range(0, nf - 1, 1)
+                ]
                 + [fg_mid[nf - 1]]
-                + [fp.fp_add(fg_mid[nf + i], fg_high[i]) for i in range(0, mf - 1)]
+                + [
+                    fp.fp_add(fg_mid[nf + i], fg_high[i])
+                    for i in range(0, mf - 1)
+                ]
                 + fg_high[(mf - 1) :]
             )
-
 
     def qring_mul(f, g, e):
 
@@ -255,7 +265,10 @@ def Poly_mul(curve):
 
             # return [ [fp.fp_mul(h[i], in2) for i in range(0, m, 1)] ]
             return [
-                [fp.fp_mul(h[i], negative_powers_of_two[n2]) for i in range(0, m, 1)]
+                [
+                    fp.fp_mul(h[i], negative_powers_of_two[n2])
+                    for i in range(0, m, 1)
+                ]
             ]
             # return [list(h)]
 
@@ -308,13 +321,14 @@ def Poly_mul(curve):
                     q, r = divmod(i - m + e2, m)
                     sgn = q % 2
                     h1j.append(fp_add(H1[j][i], H2[j][i]))
-                    h2j.append(fp_op[1 - sgn](0, fp.fp_sub(H1[j][r], H2[j][r])))
+                    h2j.append(
+                        fp_op[1 - sgn](0, fp.fp_sub(H1[j][r], H2[j][r]))
+                    )
 
                 h1.append(h1j)
                 h2.append(h2j)
 
             return h1 + h2
-
 
     def poly_mul(f, flen, g, glen):
 
@@ -336,7 +350,6 @@ def Poly_mul(curve):
         else:
             # This branch is only for checking if karatsuba is better(?)
             return karatsuba_mul(f, flen, g, glen)
-
 
     def poly_mul_modxn(n, f, flen, g, glen):
         """
@@ -443,7 +456,8 @@ def Poly_mul(curve):
             for i in range(0, nf, 1):
                 for j in range(0, n - 2 * i - 1, 1):
                     c[k] = fp.fp_mul(
-                        fp.fp_add(f[i], f[i + j + 1]), fp.fp_add(g[i], g[i + j + 1])
+                        fp.fp_add(f[i], f[i + j + 1]),
+                        fp.fp_add(g[i], g[i + j + 1]),
                     )
                     c[k] = fp.fp_sub(c[k], fp.fp_add(c[i], c[i + j + 1]))
                     k = k + 1
@@ -479,8 +493,12 @@ def Poly_mul(curve):
         g1 = [g[2 * i + 1] for i in range(0, g1len, 1)]
 
         # Middle part like karatsuba
-        f01 = [fp.fp_add(f0[i], f1[i]) for i in range(0, f1len, 1)] + f0[f1len:]
-        g01 = [fp.fp_add(g0[i], g1[i]) for i in range(0, g1len, 1)] + g0[g1len:]
+        f01 = [fp.fp_add(f0[i], f1[i]) for i in range(0, f1len, 1)] + f0[
+            f1len:
+        ]
+        g01 = [fp.fp_add(g0[i], g1[i]) for i in range(0, g1len, 1)] + g0[
+            g1len:
+        ]
 
         # product f0 * g0 must has degree at most x^l0
         n0 = f0len + g0len - 1
@@ -501,8 +519,12 @@ def Poly_mul(curve):
         fg_1 = poly_mul_modxn(n1, f1, f1len, g1, g1len)
 
         # Computing the middle part
-        fg_01 = [fp.fp_sub(fg_01[i], fg_0[i]) for i in range(0, n01, 1)] + fg_01[n01:]
-        fg_01 = [fp.fp_sub(fg_01[i], fg_1[i]) for i in range(0, n1, 1)] + fg_01[n1:]
+        fg_01 = [
+            fp.fp_sub(fg_01[i], fg_0[i]) for i in range(0, n01, 1)
+        ] + fg_01[n01:]
+        fg_01 = [
+            fp.fp_sub(fg_01[i], fg_1[i]) for i in range(0, n1, 1)
+        ] + fg_01[n1:]
 
         # Unifying the computations
         fg = [0] * n
@@ -520,7 +542,6 @@ def Poly_mul(curve):
 
         return fg
 
-
     def quasi_poly_mul_middle(g, glen, f, flen):
         """
         Next function computes the central part polynomial of f * g mod (x^m - 1)
@@ -528,8 +549,8 @@ def Poly_mul(curve):
         Algorithm, I." by G. Hanrot. M. Quercia, and P. Zimmermann
         """
 
-    #    if not glen == len(g):
-    #        import pdb; pdb.set_trace();
+        #    if not glen == len(g):
+        #        import pdb; pdb.set_trace();
         assert glen == len(g)
         assert flen == len(f)
 
@@ -545,7 +566,10 @@ def Poly_mul(curve):
         A = poly_mul_middle(
             g[glen0:],
             glen1,
-            [fp.fp_add(f[i], f[i + glen1]) for i in range(0, 2 * glen1 - 1, 1)],
+            [
+                fp.fp_add(f[i], f[i + glen1])
+                for i in range(0, 2 * glen1 - 1, 1)
+            ],
             2 * glen1 - 1,
         )
 
@@ -581,7 +605,6 @@ def Poly_mul(curve):
         return [fp.fp_sub(A[i], B[i]) for i in range(0, glen1, 1)] + [
             fp.fp_add(C[i], B[i]) for i in range(0, glen0, 1)
         ]
-
 
     def poly_mul_middle(g, glen, f, flen):
         """
@@ -623,7 +646,6 @@ def Poly_mul(curve):
             return [
                 fp.fp_add(fg_low[i], fg_high[i]) for i in range(0, glen - 1, 1)
             ] + [fg_high[glen - 1]]
-
 
     def poly_mul_selfreciprocal(g, glen, f, flen):
         """
@@ -799,7 +821,9 @@ def Poly_mul(curve):
                 h[half + i] = fp.fp_add(h[half + i], h1[i])
 
             for i in range(0, glen - 1, 1):
-                h[glen + half - 2 - i] = fp.fp_add(h[glen + half - 2 - i], h1[i])
+                h[glen + half - 2 - i] = fp.fp_add(
+                    h[glen + half - 2 - i], h1[i]
+                )
 
             return h
 
@@ -812,7 +836,6 @@ def Poly_mul(curve):
             h[i] = h[hlen - 1 - i]
 
         return h
-
 
     def product_tree(f, n):
         """
@@ -841,11 +864,13 @@ def Poly_mul(curve):
                 'left': left,
                 'right': right,
                 'poly': poly_mul(
-                    left['poly'], left['deg'] + 1, right['poly'], right['deg'] + 1
+                    left['poly'],
+                    left['deg'] + 1,
+                    right['poly'],
+                    right['deg'] + 1,
                 ),
                 'deg': left['deg'] + right['deg'],
             }
-
 
     def product_selfreciprocal_tree(f, n):
         """
@@ -874,13 +899,15 @@ def Poly_mul(curve):
                 'left': left,
                 'right': right,
                 'poly': poly_mul_selfreciprocal(
-                    left['poly'], left['deg'] + 1, right['poly'], right['deg'] + 1
+                    left['poly'],
+                    left['deg'] + 1,
+                    right['poly'],
+                    right['deg'] + 1,
                 ),
                 'deg': left['deg'] + right['deg'],
             }
 
             # Now, the resultant of two polinomials corresponds with product of all g(x) mod f_i(x) when each f_i is a linear polynomial
-
 
     def product(list_g_mod_f, n):
 

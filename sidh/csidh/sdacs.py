@@ -4,6 +4,7 @@ from sidh.common import attrdict
 from sidh.constants import strategy_data
 from sidh.fp import printl
 
+
 @click.command()
 @click.pass_context
 def csidh_sdacs(ctx):
@@ -44,7 +45,9 @@ def csidh_sdacs(ctx):
     print(
         "\n// The list of Shortest Differential Addition Chains (SDACs) corresponding with each l_i"
     )
-    printl("static int LENGTHS[]", [len(sdac_i) for sdac_i in SDACS], n // k + 1)
+    printl(
+        "static int LENGTHS[]", [len(sdac_i) for sdac_i in SDACS], n // k + 1
+    )
     print("")
     for i in range(0, n, 1):
         if len(SDACS[i]) == 0:
@@ -75,4 +78,3 @@ def csidh_sdacs(ctx):
         % setting.prime[1:]
     )
     return attrdict(name='csidh-sdacs', **locals())
-

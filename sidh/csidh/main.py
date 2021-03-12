@@ -5,6 +5,7 @@ from sidh.common import attrdict
 from sidh.constants import strategy_data
 from sidh.fp import printl
 
+
 @click.command()
 @click.pass_context
 def csidh_main(ctx):
@@ -79,7 +80,9 @@ def csidh_main(ctx):
     except IOError:
 
         print("// Strategies to be computed")
-        C_out, L_out, R_out, S_out, r_out = strategy_block_cost(L[::-1], m[::-1])
+        C_out, L_out, R_out, S_out, r_out = strategy_block_cost(
+            L[::-1], m[::-1]
+        )
         f = open(
             strategy_data
             + setting.algorithm
@@ -104,7 +107,6 @@ def csidh_main(ctx):
         "// All the experiments are assuming S = %1.6f x M and a = %1.6f x M. The measures are given in millions of field operations.\n"
         % (SQR, ADD)
     )
-
 
     ''' -------------------------------------------------------------------------------------
         Framework
@@ -160,9 +162,17 @@ def csidh_main(ctx):
     )
 
     set_zero_ops()
-    if (len(temporal_m) == 1) or ((len(temporal_m) == 2) and (0 in temporal_m)):
+    if (len(temporal_m) == 1) or (
+        (len(temporal_m) == 2) and (0 in temporal_m)
+    ):
         a_public = GAE(
-            A, a_private, [L_out[0]], [R_out[0]], [S_out[0]], [temporal_m[-1]], m
+            A,
+            a_private,
+            [L_out[0]],
+            [R_out[0]],
+            [S_out[0]],
+            [temporal_m[-1]],
+            m,
         )
     else:
         a_public = GAE(A, a_private, L_out, R_out, S_out, r_out, m)
@@ -177,7 +187,7 @@ def csidh_main(ctx):
             measure(RUNNING_TIME) / (10.0 ** 6),
         )
     )
-    print("pk_a := %r;\n" % list(map(hex,a_public)))
+    print("pk_a := %r;\n" % list(map(hex, a_public)))
     print("pk_a := 0x%X;\n" % coeff(a_public))
 
     # ------------------------------------------------------------------------- Bob
@@ -206,9 +216,17 @@ def csidh_main(ctx):
     )
 
     set_zero_ops()
-    if (len(temporal_m) == 1) or ((len(temporal_m) == 2) and (0 in temporal_m)):
+    if (len(temporal_m) == 1) or (
+        (len(temporal_m) == 2) and (0 in temporal_m)
+    ):
         b_public = GAE(
-            A, b_private, [L_out[0]], [R_out[0]], [S_out[0]], [temporal_m[-1]], m
+            A,
+            b_private,
+            [L_out[0]],
+            [R_out[0]],
+            [S_out[0]],
+            [temporal_m[-1]],
+            m,
         )
     else:
         b_public = GAE(A, b_private, L_out, R_out, S_out, r_out, m)
@@ -223,7 +241,7 @@ def csidh_main(ctx):
             measure(RUNNING_TIME) / (10.0 ** 6),
         )
     )
-    print("pk_b := %r;\n" % list(map(hex,b_public)))
+    print("pk_b := %r;\n" % list(map(hex, b_public)))
     print("pk_b := 0x%X;" % coeff(b_public))
 
     print(
@@ -251,7 +269,9 @@ def csidh_main(ctx):
     )
 
     set_zero_ops()
-    if (len(temporal_m) == 1) or ((len(temporal_m) == 2) and (0 in temporal_m)):
+    if (len(temporal_m) == 1) or (
+        (len(temporal_m) == 2) and (0 in temporal_m)
+    ):
         ss_a = GAE(
             b_public,
             a_private,
@@ -276,7 +296,9 @@ def csidh_main(ctx):
         )
     )
     print("ss_a := 0x%X;\n" % coeff(ss_a))
-    print("expected: 0x1ADB783878BA330BB2A842E7F8B3392329A2CD3B407900E4CF6A8F13B744BFFEFF617BDE2CEBBB9CE97D32BC6FC1BCE2D88381B03B3E13CFF0651EEA82D02937")
+    print(
+        "expected: 0x1ADB783878BA330BB2A842E7F8B3392329A2CD3B407900E4CF6A8F13B744BFFEFF617BDE2CEBBB9CE97D32BC6FC1BCE2D88381B03B3E13CFF0651EEA82D02937"
+    )
 
     # ------------------------------------------------------------------------- Bob
     set_zero_ops()
@@ -295,7 +317,9 @@ def csidh_main(ctx):
     )
 
     set_zero_ops()
-    if (len(temporal_m) == 1) or ((len(temporal_m) == 2) and (0 in temporal_m)):
+    if (len(temporal_m) == 1) or (
+        (len(temporal_m) == 2) and (0 in temporal_m)
+    ):
         ss_b = GAE(
             a_public,
             b_private,
@@ -319,7 +343,6 @@ def csidh_main(ctx):
         )
     )
     print("ss_b := 0x%X;\n" % coeff(ss_b))
-
 
     print(
         "\n// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------"

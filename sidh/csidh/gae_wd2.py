@@ -6,6 +6,7 @@ from sidh.math import isequal, bitlength, hamming_weight
 from sidh.constants import parameters
 from sidh.common import attrdict
 
+
 def Gae_wd2(prime, tuned, curve, formula):
 
     fp = curve.fp
@@ -37,7 +38,9 @@ def Gae_wd2(prime, tuned, curve, formula):
         S[1][tuple([L[i]])] = []
         # Strategy with a list with only one element (a small odd prime number l_i)
         C[1][tuple([L[i]])] = (
-            formula.C_xISOG[i] - curve.C_xMUL[i] + 2.0 * numpy.array([4.0, 2.0, 6.0])
+            formula.C_xISOG[i]
+            - curve.C_xMUL[i]
+            + 2.0 * numpy.array([4.0, 2.0, 6.0])
         )  # For catching the weigth of horizontal edges of the form [(0,j),(0,j+1)]
 
     for i in range(2, n + 1):
@@ -52,30 +55,44 @@ def Gae_wd2(prime, tuned, curve, formula):
     '''
 
     def pubkey(sk):
-        C_out, L_out, R_out, S_out, r_out = strategy_block_cost(L[::-1], m[::-1])
-        if (len(temporal_m) == 1) or ((len(temporal_m) == 2) and (0 in temporal_m)):
+        C_out, L_out, R_out, S_out, r_out = strategy_block_cost(
+            L[::-1], m[::-1]
+        )
+        if (len(temporal_m) == 1) or (
+            (len(temporal_m) == 2) and (0 in temporal_m)
+        ):
             return GAE(
-                curve.A, sk, [L_out[0]], [R_out[0]], [S_out[0]], [temporal_m[-1]], m
+                curve.A,
+                sk,
+                [L_out[0]],
+                [R_out[0]],
+                [S_out[0]],
+                [temporal_m[-1]],
+                m,
             )
         else:
             return GAE(curve.A, sk, L_out, R_out, S_out, r_out, m)
 
     def dh(sk, pk):
-      assert curve.validate(pk), "public key does not validate"
-      C_out, L_out, R_out, S_out, r_out = strategy_block_cost(L[::-1], m[::-1])
-      if (len(temporal_m) == 1) or ((len(temporal_m) == 2) and (0 in temporal_m)):
-          ss = GAE(
-              pk,
-              sk,
-              [L_out[0]],
-              [R_out[0]],
-              [S_out[0]],
-              [temporal_m[-1]],
-              m,
-          )
-      else:
-          ss = GAE(pk, sk, L_out, R_out, S_out, r_out, m)
-      return ss
+        assert curve.validate(pk), "public key does not validate"
+        C_out, L_out, R_out, S_out, r_out = strategy_block_cost(
+            L[::-1], m[::-1]
+        )
+        if (len(temporal_m) == 1) or (
+            (len(temporal_m) == 2) and (0 in temporal_m)
+        ):
+            ss = GAE(
+                pk,
+                sk,
+                [L_out[0]],
+                [R_out[0]],
+                [S_out[0]],
+                [temporal_m[-1]],
+                m,
+            )
+        else:
+            ss = GAE(pk, sk, L_out, R_out, S_out, r_out, m)
+        return ss
 
     def dynamic_programming_algorithm(L, n):
         nonlocal S, C
@@ -86,7 +103,8 @@ def Gae_wd2(prime, tuned, curve, formula):
 
             # If the list of prime numbers doesn't have size n, then we return [],-1
             print(
-                "error:\tthe list of prime numbers has different size from %d." % n
+                "error:\tthe list of prime numbers has different size from %d."
+                % n
             )
             return [], -1
         else:
@@ -108,18 +126,29 @@ def Gae_wd2(prime, tuned, curve, formula):
                                 C[len(Tuple[:b])][Tuple[:b]]
                                 + C[  # Subtriangle on the right side with b leaves
                                     len(Tuple[b:])
-                                ][Tuple[b:]]
+                                ][
+                                    Tuple[b:]
+                                ]
                                 + 2.0  # Subtriangle on the left side with (i - b) leaves
                                 * sum(
-                                    [curve.C_xMUL[global_L.index(t)] for t in Tuple[:b]]
+                                    [
+                                        curve.C_xMUL[global_L.index(t)]
+                                        for t in Tuple[:b]
+                                    ]
                                 )
                                 + 2.0  # Weights corresponding with vertical edges required for connecting the vertex (0,0) with the subtriangle with b leaves
                                 * sum(
-                                    [formula.C_xEVAL[global_L.index(t)] for t in Tuple[b:]]
+                                    [
+                                        formula.C_xEVAL[global_L.index(t)]
+                                        for t in Tuple[b:]
+                                    ]
                                 )
                                 + 2.0  # Weights corresponding with horizontal edges required for connecting the vertex (0,0) with the subtriangle with (i - b) leaves
                                 * sum(
-                                    [curve.C_xMUL[global_L.index(t)] for t in Tuple[b:]]
+                                    [
+                                        curve.C_xMUL[global_L.index(t)]
+                                        for t in Tuple[b:]
+                                    ]
                                 ),  # Weights corresponding with horizontal edges required for connecting the vertex (0,0) with the subtriangle with (i - b) leaves
                             )
                             for b in range(1, i - 1)
@@ -161,7 +190,6 @@ def Gae_wd2(prime, tuned, curve, formula):
                 - 2.0 * numpy.array([4.0, 2.0, 6.0]),
             )  # The weight of the horizontal edges [(0,n-1),(0,n)] must be equal to C_xISOG[global_L.index(L[0])].
 
-
     '''
         evaluate_strategy():
         inputs : a projective Montgomery constants A24:= A + 2C and C24:=4C where E : y^2 = x^3 + (A/C)*x^2 + x,
@@ -175,7 +203,6 @@ def Gae_wd2(prime, tuned, curve, formula):
         
         NOTE: T_+ belongs to E[pi - 1] and T_- belongs to E[pi + 1]. In particular, P = [T_-, T_+]
     '''
-
 
     def evaluate_strategy(E, P, L, strategy, n, m, e):
 
@@ -206,7 +233,9 @@ def Gae_wd2(prime, tuned, curve, formula):
                 moves.append(
                     strategy[k]
                 )  # Number of vertical edges to be performed
-                T = list([list(ramifications[-1][0]), list(ramifications[-1][1])])
+                T = list(
+                    [list(ramifications[-1][0]), list(ramifications[-1][1])]
+                )
                 for j in range(prev, prev + strategy[k], 1):
                     T = list(
                         [
@@ -227,7 +256,9 @@ def Gae_wd2(prime, tuned, curve, formula):
                 moves.append(
                     strategy[k]
                 )  # Number of vertical edges (without ramifications) to be performed
-                T = list([list(ramifications[-1][0]), list(ramifications[-1][1])])
+                T = list(
+                    [list(ramifications[-1][0]), list(ramifications[-1][1])]
+                )
 
                 T[0][0], T[1][0] = fp.fp_cswap(T[0][0], T[1][0], c_i)
                 T[0][1], T[1][1] = fp.fp_cswap(T[0][1], T[1][1], c_i)
@@ -264,20 +295,32 @@ def Gae_wd2(prime, tuned, curve, formula):
                     # T_+ or T_- ?
                     # Root
                     # Swap the torsion elliptic curve points on the current root
-                    ramifications[0][0][0], ramifications[0][1][0] = fp.fp_cswap(
+                    (
+                        ramifications[0][0][0],
+                        ramifications[0][1][0],
+                    ) = fp.fp_cswap(
                         ramifications[0][0][0], ramifications[0][1][0], c_i
                     )
-                    ramifications[0][0][1], ramifications[0][1][1] = fp.fp_cswap(
+                    (
+                        ramifications[0][0][1],
+                        ramifications[0][1][1],
+                    ) = fp.fp_cswap(
                         ramifications[0][0][1], ramifications[0][1][1], c_i
                     )
 
                     # Dummy or NOT Dummy degree-(l_{n-1-i}) isogeny construction, that's the question?
                     b_i = isequal[u[pos] == 0]
 
-                    ramifications[-1][0][0], ramifications[0][0][0] = fp.fp_cswap(
+                    (
+                        ramifications[-1][0][0],
+                        ramifications[0][0][0],
+                    ) = fp.fp_cswap(
                         ramifications[-1][0][0], ramifications[0][0][0], b_i
                     )
-                    ramifications[-1][0][1], ramifications[0][0][1] = fp.fp_cswap(
+                    (
+                        ramifications[-1][0][1],
+                        ramifications[0][0][1],
+                    ) = fp.fp_cswap(
                         ramifications[-1][0][1], ramifications[0][0][1], b_i
                     )
 
@@ -285,7 +328,9 @@ def Gae_wd2(prime, tuned, curve, formula):
                         # This branchs corresponds with the use of the new velu's formulaes
 
                         if tuned:
-                            formula.set_parameters_velu(formula.sJ_list[pos], formula.sI_list[pos], pos)
+                            formula.set_parameters_velu(
+                                formula.sJ_list[pos], formula.sI_list[pos], pos
+                            )
 
                         else:
                             # -------------------------------------------------------------
@@ -296,7 +341,9 @@ def Gae_wd2(prime, tuned, curve, formula):
                                 c = 0
                             else:
                                 b = int(floor(sqrt(global_L[pos] - 1) / 2.0))
-                                c = int(floor((global_L[pos] - 1.0) / (4.0 * b)))
+                                c = int(
+                                    floor((global_L[pos] - 1.0) / (4.0 * b))
+                                )
 
                             formula.set_parameters_velu(b, c, pos)
 
@@ -313,10 +360,16 @@ def Gae_wd2(prime, tuned, curve, formula):
                     else:
                         K = formula.KPs(ramifications[-1][0], E_i, pos)
 
-                    ramifications[-1][0][0], ramifications[0][0][0] = fp.fp_cswap(
+                    (
+                        ramifications[-1][0][0],
+                        ramifications[0][0][0],
+                    ) = fp.fp_cswap(
                         ramifications[-1][0][0], ramifications[0][0][0], b_i
                     )
-                    ramifications[-1][0][1], ramifications[0][0][1] = fp.fp_cswap(
+                    (
+                        ramifications[-1][0][1],
+                        ramifications[0][0][1],
+                    ) = fp.fp_cswap(
                         ramifications[-1][0][1], ramifications[0][0][1], b_i
                     )
 
@@ -336,8 +389,12 @@ def Gae_wd2(prime, tuned, curve, formula):
                         Z = formula.yADD(
                             K[(d_i + mask) - 1], K[0], K[(d_i + mask) - 2]
                         )  # y([d_i + 1]K[0])
-                        Z[0], K[d_i][0] = fp.fp_cswap(Z[0], K[d_i][0], mask ^ 1)
-                        Z[1], K[d_i][1] = fp.fp_cswap(Z[1], K[d_i][1], mask ^ 1)
+                        Z[0], K[d_i][0] = fp.fp_cswap(
+                            Z[0], K[d_i][0], mask ^ 1
+                        )
+                        Z[1], K[d_i][1] = fp.fp_cswap(
+                            Z[1], K[d_i][1], mask ^ 1
+                        )
 
                         T = formula.yADD(
                             K[d_i], K[d_i - 1], K[0]
@@ -347,18 +404,28 @@ def Gae_wd2(prime, tuned, curve, formula):
                             fp.fp_sub(T[1], T[0]),
                         ]  # x([l_i]K[0])
 
-                    ramifications[0][1] = curve.xMUL(ramifications[0][1], E_i, pos)
+                    ramifications[0][1] = curve.xMUL(
+                        ramifications[0][1], E_i, pos
+                    )
                     T_prime = list(ramifications[0][1])
 
                     if formula.name == 'tvelu' or (
                         formula.name == 'hvelu'
                         and global_L[pos] <= formula.HYBRID_BOUND
                     ):
-                        ramifications[0][0] = formula.xEVAL(ramifications[0][0], pos)
-                        ramifications[0][1] = formula.xEVAL(ramifications[0][1], pos)
+                        ramifications[0][0] = formula.xEVAL(
+                            ramifications[0][0], pos
+                        )
+                        ramifications[0][1] = formula.xEVAL(
+                            ramifications[0][1], pos
+                        )
                     else:
-                        ramifications[0][0] = formula.xEVAL(ramifications[0][0], E_i)
-                        ramifications[0][1] = formula.xEVAL(ramifications[0][1], E_i)
+                        ramifications[0][0] = formula.xEVAL(
+                            ramifications[0][0], E_i
+                        )
+                        ramifications[0][1] = formula.xEVAL(
+                            ramifications[0][1], E_i
+                        )
 
                     T[0], ramifications[0][0][0] = fp.fp_cswap(
                         T[0], ramifications[0][0][0], b_i
@@ -373,20 +440,32 @@ def Gae_wd2(prime, tuned, curve, formula):
                         T_prime[1], ramifications[0][1][1], b_i
                     )
 
-                    ramifications[0][0][0], ramifications[0][1][0] = fp.fp_cswap(
+                    (
+                        ramifications[0][0][0],
+                        ramifications[0][1][0],
+                    ) = fp.fp_cswap(
                         ramifications[0][0][0], ramifications[0][1][0], c_i
                     )
-                    ramifications[0][0][1], ramifications[0][1][1] = fp.fp_cswap(
+                    (
+                        ramifications[0][0][1],
+                        ramifications[0][1][1],
+                    ) = fp.fp_cswap(
                         ramifications[0][0][1], ramifications[0][1][1], c_i
                     )
 
                     # The remainder horizontal edges are performed
                     for j in range(1, len(moves) - 1, 1):
 
-                        ramifications[j][0][0], ramifications[j][1][0] = fp.fp_cswap(
+                        (
+                            ramifications[j][0][0],
+                            ramifications[j][1][0],
+                        ) = fp.fp_cswap(
                             ramifications[j][0][0], ramifications[j][1][0], c_i
                         )
-                        ramifications[j][0][1], ramifications[j][1][1] = fp.fp_cswap(
+                        (
+                            ramifications[j][0][1],
+                            ramifications[j][1][1],
+                        ) = fp.fp_cswap(
                             ramifications[j][0][1], ramifications[j][1][1], c_i
                         )
 
@@ -397,9 +476,13 @@ def Gae_wd2(prime, tuned, curve, formula):
                             formula.name == 'hvelu'
                             and global_L[pos] <= formula.HYBRID_BOUND
                         ):
-                            ramifications[j][0] = formula.xEVAL(ramifications[j][0], pos)
+                            ramifications[j][0] = formula.xEVAL(
+                                ramifications[j][0], pos
+                            )
                         else:
-                            ramifications[j][0] = formula.xEVAL(ramifications[j][0], E_i)
+                            ramifications[j][0] = formula.xEVAL(
+                                ramifications[j][0], E_i
+                            )
 
                         T[0], ramifications[j][0][0] = fp.fp_cswap(
                             T[0], ramifications[j][0][0], b_i
@@ -409,16 +492,22 @@ def Gae_wd2(prime, tuned, curve, formula):
                         )
 
                         # T_+ or (T_+)
-                        ramifications[j][1] = curve.xMUL(ramifications[j][1], E_i, pos)
+                        ramifications[j][1] = curve.xMUL(
+                            ramifications[j][1], E_i, pos
+                        )
 
                         T = list(ramifications[j][1])
                         if formula.name == 'tvelu' or (
                             formula.name == 'hvelu'
                             and global_L[pos] <= formula.HYBRID_BOUND
                         ):
-                            ramifications[j][1] = formula.xEVAL(ramifications[j][1], pos)
+                            ramifications[j][1] = formula.xEVAL(
+                                ramifications[j][1], pos
+                            )
                         else:
-                            ramifications[j][1] = formula.xEVAL(ramifications[j][1], E_i)
+                            ramifications[j][1] = formula.xEVAL(
+                                ramifications[j][1], E_i
+                            )
 
                         T[0], ramifications[j][1][0] = fp.fp_cswap(
                             T[0], ramifications[j][1][0], b_i
@@ -427,10 +516,16 @@ def Gae_wd2(prime, tuned, curve, formula):
                             T[1], ramifications[j][1][1], b_i
                         )
 
-                        ramifications[j][0][0], ramifications[j][1][0] = fp.fp_cswap(
+                        (
+                            ramifications[j][0][0],
+                            ramifications[j][1][0],
+                        ) = fp.fp_cswap(
                             ramifications[j][0][0], ramifications[j][1][0], c_i
                         )
-                        ramifications[j][0][1], ramifications[j][1][1] = fp.fp_cswap(
+                        (
+                            ramifications[j][0][1],
+                            ramifications[j][1][1],
+                        ) = fp.fp_cswap(
                             ramifications[j][0][1], ramifications[j][1][1], c_i
                         )
 
@@ -444,17 +539,31 @@ def Gae_wd2(prime, tuned, curve, formula):
 
                     for j in range(0, len(moves) - 1, 1):
 
-                        ramifications[j][0][0], ramifications[j][1][0] = fp.fp_cswap(
+                        (
+                            ramifications[j][0][0],
+                            ramifications[j][1][0],
+                        ) = fp.fp_cswap(
                             ramifications[j][0][0], ramifications[j][1][0], c_i
                         )
-                        ramifications[j][0][1], ramifications[j][1][1] = fp.fp_cswap(
+                        (
+                            ramifications[j][0][1],
+                            ramifications[j][1][1],
+                        ) = fp.fp_cswap(
                             ramifications[j][0][1], ramifications[j][1][1], c_i
                         )
-                        ramifications[j][1] = curve.xMUL(ramifications[j][1], E_i, pos)
-                        ramifications[j][0][0], ramifications[j][1][0] = fp.fp_cswap(
+                        ramifications[j][1] = curve.xMUL(
+                            ramifications[j][1], E_i, pos
+                        )
+                        (
+                            ramifications[j][0][0],
+                            ramifications[j][1][0],
+                        ) = fp.fp_cswap(
                             ramifications[j][0][0], ramifications[j][1][0], c_i
                         )
-                        ramifications[j][0][1], ramifications[j][1][1] = fp.fp_cswap(
+                        (
+                            ramifications[j][0][1],
+                            ramifications[j][1][1],
+                        ) = fp.fp_cswap(
                             ramifications[j][0][1], ramifications[j][1][1], c_i
                         )
             else:
@@ -472,30 +581,50 @@ def Gae_wd2(prime, tuned, curve, formula):
 
                     for j in range(0, len(moves) - 1, 1):
 
-                        ramifications[j][0] = curve.xMUL(ramifications[j][0], E_i, pos)
-                        ramifications[j][1] = curve.xMUL(ramifications[j][1], E_i, pos)
+                        ramifications[j][0] = curve.xMUL(
+                            ramifications[j][0], E_i, pos
+                        )
+                        ramifications[j][1] = curve.xMUL(
+                            ramifications[j][1], E_i, pos
+                        )
                 else:
 
                     for j in range(0, len(moves) - 1, 1):
 
-                        ramifications[j][0][0], ramifications[j][1][0] = fp.fp_cswap(
+                        (
+                            ramifications[j][0][0],
+                            ramifications[j][1][0],
+                        ) = fp.fp_cswap(
                             ramifications[j][0][0], ramifications[j][1][0], c_i
                         )
-                        ramifications[j][0][1], ramifications[j][1][1] = fp.fp_cswap(
+                        (
+                            ramifications[j][0][1],
+                            ramifications[j][1][1],
+                        ) = fp.fp_cswap(
                             ramifications[j][0][1], ramifications[j][1][1], c_i
                         )
-                        ramifications[j][1] = curve.xMUL(ramifications[j][1], E_i, pos)
-                        ramifications[j][0][0], ramifications[j][1][0] = fp.fp_cswap(
+                        ramifications[j][1] = curve.xMUL(
+                            ramifications[j][1], E_i, pos
+                        )
+                        (
+                            ramifications[j][0][0],
+                            ramifications[j][1][0],
+                        ) = fp.fp_cswap(
                             ramifications[j][0][0], ramifications[j][1][0], c_i
                         )
-                        ramifications[j][0][1], ramifications[j][1][1] = fp.fp_cswap(
+                        (
+                            ramifications[j][0][1],
+                            ramifications[j][1][1],
+                        ) = fp.fp_cswap(
                             ramifications[j][0][1], ramifications[j][1][1], c_i
                         )
 
             moves.pop()
             ramifications.pop()
 
-        pos = global_L.index(L[0])  # Current element of global_L to be required
+        pos = global_L.index(
+            L[0]
+        )  # Current element of global_L to be required
         s_i = sign(e[pos])  # Sign of e[pos]
         c_i = (s_i + 1) // 2  # Constant-swap of T_+ and T_-
 
@@ -518,7 +647,9 @@ def Gae_wd2(prime, tuned, curve, formula):
                     # This branchs corresponds with the use of the new velu's formulaes
 
                     if tuned:
-                        formula.set_parameters_velu(formula.sJ_list[pos], formula.sI_list[pos], pos)
+                        formula.set_parameters_velu(
+                            formula.sJ_list[pos], formula.sI_list[pos], pos
+                        )
 
                     else:
                         # -------------------------------------------------------------
@@ -546,7 +677,6 @@ def Gae_wd2(prime, tuned, curve, formula):
 
         return E_i, v, u
 
-
     '''
         geometric_serie()
         inputs: and integer m, and a prime number l
@@ -556,13 +686,11 @@ def Gae_wd2(prime, tuned, curve, formula):
                     l - 1
     '''
 
-
     def geometric_serie(m, l):
 
         l_float = float(l)
         m_float = float(m)
         return floor((m_float * l_float) / (l_float - 1.0) + 0.5)
-
 
     '''
         filtered()
@@ -580,7 +708,6 @@ def Gae_wd2(prime, tuned, curve, formula):
                  the complement of each subset (with respect to the set of all the small odd primes)
     '''
 
-
     def rounds(e, n):
         tmp_N = range(n)
         tmp_e = list(e)
@@ -596,7 +723,6 @@ def Gae_wd2(prime, tuned, curve, formula):
 
         return rounds_out, sublists_L, sublists_C
 
-
     '''
         GAE():
         inputs : a projective Montgomery constants A24:= A + 2C and C24:=4C where E : y^2 = x^3 + (A/C)*x^2 + x,
@@ -610,7 +736,6 @@ def Gae_wd2(prime, tuned, curve, formula):
               rounds().
               THIS IS THE IMPLEMENTATION OF OUR PROPOSED STRATEGY METHOD.
     '''
-
 
     def GAE(A, e, L, R, St, r, m):
 
@@ -632,7 +757,13 @@ def Gae_wd2(prime, tuned, curve, formula):
                     T_m = curve.xMUL(T_m, E_k, global_L.index(l))
 
                 E_k, m, e = evaluate_strategy(
-                    E_k, list([list(T_m), list(T_p)]), L[j], St[j], len(L[j]), m, e
+                    E_k,
+                    list([list(T_m), list(T_p)]),
+                    L[j],
+                    St[j],
+                    len(L[j]),
+                    m,
+                    e,
                 )
 
         # Multiplicative strategy on the set of unreached small odd prime numbers
@@ -674,13 +805,14 @@ def Gae_wd2(prime, tuned, curve, formula):
                 if m[global_L.index(unreached_sop[k])] == 0
             ]
 
-            unreached_sop = list(tmp_unreached)  # Removing elements from the batch
+            unreached_sop = list(
+                tmp_unreached
+            )  # Removing elements from the batch
             remainder_sop = (
                 remainder_sop + tmp_remainder
             )  # Adding elements to the complement of the batch
 
         return E_k
-
 
     ######################################################################################################################
     # Next functions are used for computing optimal bounds
@@ -708,7 +840,9 @@ def Gae_wd2(prime, tuned, curve, formula):
             R_out.append([L[k] for k in tmp_Cs[j]])
             L_out.append([L[k] for k in tmp_Ls[j]])
 
-            bo_C = 2.0 * sum([curve.C_xMUL[global_L.index(L[k])] for k in tmp_Cs[j]])
+            bo_C = 2.0 * sum(
+                [curve.C_xMUL[global_L.index(L[k])] for k in tmp_Cs[j]]
+            )
             S_tmp, go_C = dynamic_programming_algorithm(
                 [L[k] for k in tmp_Ls[j]], len(tmp_Ls[j])
             )
@@ -716,7 +850,8 @@ def Gae_wd2(prime, tuned, curve, formula):
             S_out.append(S_tmp)
             C_e = (
                 C_e
-                + (go_C + bo_C + elligator_cost + 2.0 * mul_fp_by_four) * tmp_r[j]
+                + (go_C + bo_C + elligator_cost + 2.0 * mul_fp_by_four)
+                * tmp_r[j]
             )
 
         return C_e, L_out, R_out, S_out, tmp_r

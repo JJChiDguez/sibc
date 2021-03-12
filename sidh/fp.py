@@ -2,6 +2,7 @@ from functools import reduce
 from .constants import sop_data, parameters
 from .math import bitlength
 
+
 class F_p(object):
     def __init__(self, p):
         # counters for field operations performed
@@ -16,10 +17,13 @@ class F_p(object):
         self.fpsqr -= self.fpsqr
         self.fpmul -= self.fpmul
 
-
     def show_ops(self, label, a, b, flag):
 
-        print("| %s: %7dM + %7dS + %7da" % (label, self.fpmul, self.fpsqr, self.fpadd), end="\t")
+        print(
+            "| %s: %7dM + %7dS + %7da"
+            % (label, self.fpmul, self.fpsqr, self.fpadd),
+            end="\t",
+        )
 
         return None
 
@@ -33,24 +37,20 @@ class F_p(object):
         # 	raise ValueError
         return x % self.p
 
-
     # Modular addition
     def fp_add(self, a, b):
         self.fpadd += 1
         return (a + b) % self.p
-
 
     # Modular substraction
     def fp_sub(self, a, b):
         self.fpadd += 1
         return (a - b) % self.p
 
-
     # Modular multiplication
     def fp_mul(self, a, b):
         self.fpmul += 1
         return (a * b) % self.p
-
 
     # Modular squaring
     def fp_sqr(self, a):
@@ -58,14 +58,12 @@ class F_p(object):
         # print(fpsqr)
         return (a ** 2) % self.p
 
-
     # constant-time swap
     def fp_cswap(self, x, y, b):
 
         z = list([x, y])
         z = list(z[:: (1 - 2 * b)])
         return z[0], z[1]
-
 
     # Modular exponentiation
     def fp_exp(self, a, e):
@@ -121,7 +119,6 @@ def xgcd(aa, bb):
         lastx * (-1 if aa < 0 else 1),
         lasty * (-1 if bb < 0 else 1),
     )
-
 
 
 # --------------------------------------------------------------------------------------------------------------------------------

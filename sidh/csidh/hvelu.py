@@ -6,8 +6,10 @@ from sidh.constants import ijk_data
 import numpy
 from sympy import floor, sqrt, sign
 
+
 class Hvelu(object):
     name = 'hvelu'
+
     def __init__(self, curve, tuned, multievaluation):
         # Get cost of the isogeny constructions and evaluations
         self.sI_list = None
@@ -52,7 +54,7 @@ class Hvelu(object):
         )  # list of the costs of each degree-l isogeny construction
 
         # Now, we proceed to store all the correct costs
-        self.cISOG_and_cEVAL() # FIXME: not for general use, right?
+        self.cISOG_and_cEVAL()  # FIXME: not for general use, right?
 
     def cEVAL(self, l):
         numpy.array([2.0 * (l - 1.0), 2.0, (l + 1.0)])
@@ -60,12 +62,16 @@ class Hvelu(object):
     def cISOG(self, l):
         numpy.array(
             [
-                (3.0 * l + 2.0 * hamming_weight(l) - 9.0 + isequal[l == 3] * 4.0),
+                (
+                    3.0 * l
+                    + 2.0 * hamming_weight(l)
+                    - 9.0
+                    + isequal[l == 3] * 4.0
+                ),
                 (l + 2.0 * bitlength(l) + 1.0 + isequal[l == 3] * 2.0),
                 (3.0 * l - 7.0 + isequal[l == 3] * 6.0),
             ]
         )
-
 
     def yDBL(self, P, A):
         '''
@@ -85,9 +91,7 @@ class Hvelu(object):
         t_0 = self.fp.fp_mul(A[0], t_1)
         Z = self.fp.fp_add(Z, t_0)
         Z = self.fp.fp_mul(Z, t_1)
-        return [ self.fp.fp_sub(X, Z), self.fp.fp_add(X, Z)]
-
-
+        return [self.fp.fp_sub(X, Z), self.fp.fp_add(X, Z)]
 
     def yADD(self, P, Q, PQ):
         '''
@@ -109,10 +113,7 @@ class Hvelu(object):
         zD = self.fp.fp_sub(PQ[1], PQ[0])
         X = self.fp.fp_mul(zD, c)
         Z = self.fp.fp_mul(xD, d)
-        return [ self.fp.fp_sub(X, Z), self.fp.fp_add(X, Z)]
-
-
-
+        return [self.fp.fp_sub(X, Z), self.fp.fp_add(X, Z)]
 
     def KPs_t(self, P, A, i):
         '''
@@ -128,7 +129,9 @@ class Hvelu(object):
         d = (self.curve.L[i] - 1) // 2
 
         self.K = [[0, 0] for j in range(d + 1)]
-        self.K[0] = list([self.fp.fp_sub(P[0], P[1]), self.fp.fp_add(P[0], P[1])])  # 2a
+        self.K[0] = list(
+            [self.fp.fp_sub(P[0], P[1]), self.fp.fp_add(P[0], P[1])]
+        )  # 2a
         self.K[1] = self.yDBL(self.K[0], A)  # 4M + 2S + 4a
         for j in range(2, d, 1):
             self.K[j] = self.yADD(
@@ -216,7 +219,6 @@ class Hvelu(object):
 
         return [X, Z]  # 2(l - 1)M + 2S + (l + 1)a
 
-
     # Next functions is used for setting the cardinalities sI, sJ, and sK
     def set_parameters_velu(self, b, c, i):
 
@@ -230,12 +232,13 @@ class Hvelu(object):
         self.sK = d
         return None
 
-
     def print_parameters_velu(self):
 
-        print("| sI: %3d, sJ: %3d, sK: %3d |" % (self.sI, self.sJ, self.sK), end="")
+        print(
+            "| sI: %3d, sJ: %3d, sK: %3d |" % (self.sI, self.sJ, self.sK),
+            end="",
+        )
         return None
-
 
     # KPs computes x([i]P), x([j]P), and x([k]P) for each i in I, j in J, and j in J.
     # I, J, and K are defined according to Examples 4.7 and 4.12 of https://eprint.iacr.org/2020/341
@@ -268,9 +271,11 @@ class Hvelu(object):
 
             I = [list(P2)]
             hI = [
-                list([ self.fp.fp_sub(0, P2[0]), P2[1]])
+                list([self.fp.fp_sub(0, P2[0]), P2[1]])
             ]  # we only need to negate x-coordinate of each point
-            self.ptree_hI = self.poly_mul.product_tree(hI, self.sI)  # product tree of hI
+            self.ptree_hI = self.poly_mul.product_tree(
+                hI, self.sI
+            )  # product tree of hI
 
             if not self.SCALED_REMAINDER_TREE:
                 # Using remainder trees
@@ -284,11 +289,16 @@ class Hvelu(object):
             else:
                 # Using scaled remainder trees
                 assert (2 * self.sJ - self.sI + 1) > self.sI
-                self.ptree_hI['reciprocal'], self.ptree_hI['a'] = self.poly_redc.reciprocal(
-                    self.ptree_hI['poly'][::-1], self.sI + 1, 2 * self.sJ - self.sI + 1
+                (
+                    self.ptree_hI['reciprocal'],
+                    self.ptree_hI['a'],
+                ) = self.poly_redc.reciprocal(
+                    self.ptree_hI['poly'][::-1],
+                    self.sI + 1,
+                    2 * self.sJ - self.sI + 1,
                 )
                 self.ptree_hI['scaled'], self.ptree_hI['as'] = (
-                    list(self.ptree_hI['reciprocal'][:self.sI]),
+                    list(self.ptree_hI['reciprocal'][: self.sI]),
                     self.ptree_hI['a'],
                 )
 
@@ -317,9 +327,11 @@ class Hvelu(object):
                 I[ii] = self.xADD(I[ii - 1], Q2, I[ii - 2])  # x([2**i + 1]Q)
 
             hI = [
-                [ self.fp.fp_sub(0, iP[0]), iP[1]] for iP in I
+                [self.fp.fp_sub(0, iP[0]), iP[1]] for iP in I
             ]  # we only need to negate x-coordinate of each point
-            self.ptree_hI = self.poly_mul.product_tree(hI, self.sI)  # product tree of hI
+            self.ptree_hI = self.poly_mul.product_tree(
+                hI, self.sI
+            )  # product tree of hI
 
             if not self.SCALED_REMAINDER_TREE:
                 # Using remainder trees
@@ -333,11 +345,16 @@ class Hvelu(object):
             else:
                 # Using scaled remainder trees
                 assert (2 * self.sJ - self.sI + 1) <= self.sI
-                self.ptree_hI['scaled'], ptree_hI['as'] = self.poly_redc.reciprocal(
+                (
+                    self.ptree_hI['scaled'],
+                    ptree_hI['as'],
+                ) = self.poly_redc.reciprocal(
                     ptree_hI['poly'][::-1], self.sI + 1, self.sI
                 )
                 self.ptree_hI['reciprocal'], self.ptree_hI['a'] = (
-                    list(self.ptree_hI['scaled'][: (2 * self.sJ - self.sI + 1)]),
+                    list(
+                        self.ptree_hI['scaled'][: (2 * self.sJ - self.sI + 1)]
+                    ),
                     self.ptree_hI['as'],
                 )
 
@@ -362,19 +379,27 @@ class Hvelu(object):
         P2 = self.curve.xDBL(P, A)  # x([2]P)
         self.J[1] = self.curve.xADD(P2, self.J[0], self.J[0])  # x([3]P)
         for jj in range(2, self.sJ, 1):
-            self.J[jj] = self.curve.xADD(self.J[jj - 1], P2, self.J[jj - 2])  # x([2*jj + 1]P)
+            self.J[jj] = self.curve.xADD(
+                self.J[jj - 1], P2, self.J[jj - 2]
+            )  # x([2*jj + 1]P)
 
         # -------------------------------------------------------
         # Computing [i]P for i in { (2*sJ) * (2i + 1) : 0 <= i < sI}
         bhalf_floor = self.sJ // 2
         bhalf_ceil = self.sJ - bhalf_floor
         P4 = self.curve.xDBL(P2, A)  # x([4]P)
-        P2[0], P4[0] = self.fp.fp_cswap(P2[0], P4[0], self.sJ % 2)  # Constant-time swap
+        P2[0], P4[0] = self.fp.fp_cswap(
+            P2[0], P4[0], self.sJ % 2
+        )  # Constant-time swap
         P2[1], P4[1] = self.fp.fp_cswap(
             P2[1], P4[1], self.sJ % 2
         )  # x([4]P) <--- coditional swap ---> x([2]P)
-        Q = self.curve.xADD(self.J[bhalf_ceil], self.J[bhalf_floor - 1], P2)  # Q := [2b]P
-        P2[0], P4[0] = self.fp.fp_cswap(P2[0], P4[0], self.sJ % 2)  # Constant-time swap
+        Q = self.curve.xADD(
+            self.J[bhalf_ceil], self.J[bhalf_floor - 1], P2
+        )  # Q := [2b]P
+        P2[0], P4[0] = self.fp.fp_cswap(
+            P2[0], P4[0], self.sJ % 2
+        )  # Constant-time swap
         P2[1], P4[1] = self.fp.fp_cswap(
             P2[1], P4[1], self.sJ % 2
         )  # x([4]P) <--- coditional swap ---> x([2]P)
@@ -407,9 +432,11 @@ class Hvelu(object):
         # In order to avoid costly inverse computations in fp, we are gonna work with projective coordinates
 
         hI = [
-            [ self.fp.fp_sub(0, iP[0]), iP[1]] for iP in I
+            [self.fp.fp_sub(0, iP[0]), iP[1]] for iP in I
         ]  # we only need to negate x-coordinate of each point
-        self.ptree_hI = self.poly_mul.product_tree(hI, self.sI)  # product tree of hI
+        self.ptree_hI = self.poly_mul.product_tree(
+            hI, self.sI
+        )  # product tree of hI
 
         if not self.SCALED_REMAINDER_TREE:
             # Using scaled remainder trees
@@ -423,20 +450,30 @@ class Hvelu(object):
         else:
             # Using scaled remainder trees
             if self.sI < (2 * self.sJ - self.sI + 1):
-                self.ptree_hI['reciprocal'], self.ptree_hI['a'] = self.poly_redc.reciprocal(
-                    self.ptree_hI['poly'][::-1], self.sI + 1, 2 * self.sJ - self.sI + 1
+                (
+                    self.ptree_hI['reciprocal'],
+                    self.ptree_hI['a'],
+                ) = self.poly_redc.reciprocal(
+                    self.ptree_hI['poly'][::-1],
+                    self.sI + 1,
+                    2 * self.sJ - self.sI + 1,
                 )
                 self.ptree_hI['scaled'], self.ptree_hI['as'] = (
-                    list(self.ptree_hI['reciprocal'][:self.sI]),
+                    list(self.ptree_hI['reciprocal'][: self.sI]),
                     self.ptree_hI['a'],
                 )
 
             else:
-                self.ptree_hI['scaled'], self.ptree_hI['as'] = self.poly_redc.reciprocal(
+                (
+                    self.ptree_hI['scaled'],
+                    self.ptree_hI['as'],
+                ) = self.poly_redc.reciprocal(
                     self.ptree_hI['poly'][::-1], self.sI + 1, self.sI
                 )
                 self.ptree_hI['reciprocal'], self.ptree_hI['a'] = (
-                    list(self.ptree_hI['scaled'][: (2 * self.sJ - self.sI + 1)]),
+                    list(
+                        self.ptree_hI['scaled'][: (2 * self.sJ - self.sI + 1)]
+                    ),
                     self.ptree_hI['as'],
                 )
 
@@ -450,7 +487,6 @@ class Hvelu(object):
         assert len(self.K) == self.sK
 
         return None
-
 
     # Next function perform algorithm 2 of https://eprint.iacr.org/2020/341 with input \alpha = 1 and \alpha = -1, and
     # then it computes the isogenous Montgomery curve coefficient
@@ -471,13 +507,19 @@ class Hvelu(object):
         self.XZJ4 = [0 for j in range(0, self.sJ, 1)]  # 2*Xj*Zj
         for j in range(0, self.sJ, 1):
 
-            SUB_SQUARED[j] = self.fp.fp_sub(self.J[j][0], self.J[j][1])  # (Xj - Zj)
+            SUB_SQUARED[j] = self.fp.fp_sub(
+                self.J[j][0], self.J[j][1]
+            )  # (Xj - Zj)
             SUB_SQUARED[j] = self.fp.fp_sqr(SUB_SQUARED[j])  # (Xj - Zj)^2
 
-            ADD_SQUARED[j] = self.fp.fp_add(self.J[j][0], self.J[j][1])  # (Xj + Zj)
+            ADD_SQUARED[j] = self.fp.fp_add(
+                self.J[j][0], self.J[j][1]
+            )  # (Xj + Zj)
             ADD_SQUARED[j] = self.fp.fp_sqr(ADD_SQUARED[j])  # (Xj + Zj)^2
 
-            self.XZJ4[j] = self.fp.fp_sub(SUB_SQUARED[j], ADD_SQUARED[j])  # -4*Xj*Zj
+            self.XZJ4[j] = self.fp.fp_sub(
+                SUB_SQUARED[j], ADD_SQUARED[j]
+            )  # -4*Xj*Zj
 
         # --------------------------------------------------------------------------------------------------
         #                   ~~~~~~~~
@@ -536,16 +578,34 @@ class Hvelu(object):
         else:
             # Approach using scaled remainder trees
             if self.ptree_hI != None:
-                poly_EJ_0 = self.poly_redc.poly_redc(poly_EJ_0, 2 * self.sJ + 1, self.ptree_hI)
-                fg_0 = self.poly_mul.poly_mul_middle(self.ptree_hI['scaled'], self.sI, poly_EJ_0[::-1], self.sI)
+                poly_EJ_0 = self.poly_redc.poly_redc(
+                    poly_EJ_0, 2 * self.sJ + 1, self.ptree_hI
+                )
+                fg_0 = self.poly_mul.poly_mul_middle(
+                    self.ptree_hI['scaled'], self.sI, poly_EJ_0[::-1], self.sI
+                )
                 remainders_EJ_0 = self.poly_redc.multieval_scaled(
-                    fg_0[::-1], self.sI, [1] + [0] * (self.sI - 1), self.sI, self.ptree_hI, self.sI
+                    fg_0[::-1],
+                    self.sI,
+                    [1] + [0] * (self.sI - 1),
+                    self.sI,
+                    self.ptree_hI,
+                    self.sI,
                 )
 
-                poly_EJ_1 = self.poly_redc.poly_redc(poly_EJ_1, 2 * self.sJ + 1, self.ptree_hI)
-                fg_1 = self.poly_mul.poly_mul_middle(self.ptree_hI['scaled'], self.sI, poly_EJ_1[::-1], self.sI)
+                poly_EJ_1 = self.poly_redc.poly_redc(
+                    poly_EJ_1, 2 * self.sJ + 1, self.ptree_hI
+                )
+                fg_1 = self.poly_mul.poly_mul_middle(
+                    self.ptree_hI['scaled'], self.sI, poly_EJ_1[::-1], self.sI
+                )
                 remainders_EJ_1 = self.poly_redc.multieval_scaled(
-                    fg_1[::-1], self.sI, [1] + [0] * (self.sI - 1), self.sI, self.ptree_hI, self.sI
+                    fg_1[::-1],
+                    self.sI,
+                    [1] + [0] * (self.sI - 1),
+                    self.sI,
+                    self.ptree_hI,
+                    self.sI,
                 )
             else:
                 remainders_EJ_0 = []
@@ -561,11 +621,21 @@ class Hvelu(object):
         # In other words, it is not required to compute the product of all Zk's with k In K
 
         # Case alpha = 1
-        hK_0 = [[ self.fp.fp_sub(self.K[k][1], self.K[k][0])] for k in range(0, self.sK, 1)]
-        hK_0 = self.poly_mul.product(hK_0, self.sK)  # product of (Zk - Xk) for each k in K
+        hK_0 = [
+            [self.fp.fp_sub(self.K[k][1], self.K[k][0])]
+            for k in range(0, self.sK, 1)
+        ]
+        hK_0 = self.poly_mul.product(
+            hK_0, self.sK
+        )  # product of (Zk - Xk) for each k in K
         # Case alpha = -1
-        hK_1 = [[ self.fp.fp_add(self.K[k][1], self.K[k][0])] for k in range(0, self.sK, 1)]
-        hK_1 = self.poly_mul.product(hK_1, self.sK)  # product of (Zk + Xk) for each k in K
+        hK_1 = [
+            [self.fp.fp_add(self.K[k][1], self.K[k][0])]
+            for k in range(0, self.sK, 1)
+        ]
+        hK_1 = self.poly_mul.product(
+            hK_1, self.sK
+        )  # product of (Zk + Xk) for each k in K
 
         # --------------------------------------------------------------
         # Now, we have all the ingredients for computing the image curve
@@ -606,7 +676,6 @@ class Hvelu(object):
 
         # return [t24, t24m], ptree_hI, XZJ4
         return [t24, t24m]
-
 
     def xEVAL_s(self, P, A):
 
@@ -650,13 +719,19 @@ class Hvelu(object):
 
             # Computing the quadratic coefficient
             quadratic = self.fp.fp_sub(t1, t2)  #   2 * [(X*Zj) - (Z*Xj)]
-            quadratic = self.fp.fp_sqr(quadratic)  # ( 2 * [(X*Zj) - (Z*Xj)] )^2
-            quadratic = self.fp.fp_mul(A[1], quadratic)  # C * ( 2 * [(X*Zj) - (Z*Xj)] )^2
+            quadratic = self.fp.fp_sqr(
+                quadratic
+            )  # ( 2 * [(X*Zj) - (Z*Xj)] )^2
+            quadratic = self.fp.fp_mul(
+                A[1], quadratic
+            )  # C * ( 2 * [(X*Zj) - (Z*Xj)] )^2
 
             # Computing the constant coefficient
             constant = self.fp.fp_add(t1, t2)  #   2 * [(X*Xj) - (Z*Zj)]
             constant = self.fp.fp_sqr(constant)  # ( 2 * [(X*Xj) - (Z*Zj)] )^2
-            constant = self.fp.fp_mul(A[1], constant)  # C * ( 2 * [(X*Xj) - (Z*Zj)] )^2
+            constant = self.fp.fp_mul(
+                A[1], constant
+            )  # C * ( 2 * [(X*Xj) - (Z*Zj)] )^2
 
             # Computing the linear coefficient
             # ----------------------------------------------------------------------------------------------------------
@@ -667,14 +742,20 @@ class Hvelu(object):
             t1 = self.fp.fp_add(
                 t1, self.XZJ4[j]
             )  # 2 * (Xj + Zj)^2 - (4*Xj*Zj) := 2 * (Xj^2 + Zj^2)
-            t1 = self.fp.fp_mul(t1, CXZ2)  # [2 * (Xj^2 + Zj^2)] * (2 * [ C * (X * Z)])
+            t1 = self.fp.fp_mul(
+                t1, CXZ2
+            )  # [2 * (Xj^2 + Zj^2)] * (2 * [ C * (X * Z)])
 
-            t2 = self.fp.fp_mul(CX2Z2, self.XZJ4[j])  # [C * (X^2 + Z^2)] * (-4 * Xj * Zj)
+            t2 = self.fp.fp_mul(
+                CX2Z2, self.XZJ4[j]
+            )  # [C * (X^2 + Z^2)] * (-4 * Xj * Zj)
             t1 = self.fp.fp_sub(
                 t2, t1
             )  # [C * (X^2 + Z^2)] * (-4 * Xj * Zj) - [2 * (Xj^2 + Zj^2)] * (2 * [ C * (X * Z)])
 
-            t2 = self.fp.fp_mul(AXZ2, self.XZJ4[j])  # (2 * [A' * (X * Z)]) * (-4 * Xj * Zj)
+            t2 = self.fp.fp_mul(
+                AXZ2, self.XZJ4[j]
+            )  # (2 * [A' * (X * Z)]) * (-4 * Xj * Zj)
             linear = self.fp.fp_add(
                 t1, t2
             )  # This is our desired equation but multiplied by 2
@@ -706,16 +787,34 @@ class Hvelu(object):
         else:
             # Approach using scaled remainder trees
             if self.ptree_hI != None:
-                poly_EJ_0 = self.poly_redc.poly_redc(poly_EJ_0, 2 * self.sJ + 1, self.ptree_hI)
-                fg_0 = self.poly_mul.poly_mul_middle(self.ptree_hI['scaled'], self.sI, poly_EJ_0[::-1], self.sI)
+                poly_EJ_0 = self.poly_redc.poly_redc(
+                    poly_EJ_0, 2 * self.sJ + 1, self.ptree_hI
+                )
+                fg_0 = self.poly_mul.poly_mul_middle(
+                    self.ptree_hI['scaled'], self.sI, poly_EJ_0[::-1], self.sI
+                )
                 remainders_EJ_0 = self.poly_redc.multieval_scaled(
-                    fg_0[::-1], self.sI, [1] + [0] * (self.sI - 1), self.sI, self.ptree_hI, self.sI
+                    fg_0[::-1],
+                    self.sI,
+                    [1] + [0] * (self.sI - 1),
+                    self.sI,
+                    self.ptree_hI,
+                    self.sI,
                 )
 
-                poly_EJ_1 = self.poly_redc.poly_redc(poly_EJ_1, 2 * self.sJ + 1, self.ptree_hI)
-                fg_1 = self.poly_mul.poly_mul_middle(self.ptree_hI['scaled'], self.sI, poly_EJ_1[::-1], self.sI)
+                poly_EJ_1 = self.poly_redc.poly_redc(
+                    poly_EJ_1, 2 * self.sJ + 1, self.ptree_hI
+                )
+                fg_1 = self.poly_mul.poly_mul_middle(
+                    self.ptree_hI['scaled'], self.sI, poly_EJ_1[::-1], self.sI
+                )
                 remainders_EJ_1 = self.poly_redc.multieval_scaled(
-                    fg_1[::-1], self.sI, [1] + [0] * (self.sI - 1), self.sI, self.ptree_hI, self.sI
+                    fg_1[::-1],
+                    self.sI,
+                    [1] + [0] * (self.sI - 1),
+                    self.sI,
+                    self.ptree_hI,
+                    self.sI,
                 )
             else:
                 remainders_EJ_0 = []
@@ -740,13 +839,17 @@ class Hvelu(object):
             t2 = self.fp.fp_mul(XZ_add, XZk_sub)  # (X + Z) * (Xk - Zk)
 
             # Case alpha = X/Z
-            hK_0[k] = [ self.fp.fp_sub(t1, t2)]  # 2 * [(X*Zk) - (Z*Xk)]
+            hK_0[k] = [self.fp.fp_sub(t1, t2)]  # 2 * [(X*Zk) - (Z*Xk)]
 
             # Case 1/alpha = Z/X
-            hK_1[k] = [ self.fp.fp_add(t1, t2)]  # 2 * [(X*Xk) - (Z*Zk)]
+            hK_1[k] = [self.fp.fp_add(t1, t2)]  # 2 * [(X*Xk) - (Z*Zk)]
 
-        hK_0 = self.poly_mul.product(hK_0, self.sK)  # product of (XZk - ZXk) for each k in K
-        hK_1 = self.poly_mul.product(hK_1, self.sK)  # product of (XXk - ZZk) for each k in K
+        hK_0 = self.poly_mul.product(
+            hK_0, self.sK
+        )  # product of (XZk - ZXk) for each k in K
+        hK_1 = self.poly_mul.product(
+            hK_1, self.sK
+        )  # product of (XXk - ZZk) for each k in K
 
         # ---------------------------------------------------------------------------------
         # Now, unifying all the computations
@@ -764,14 +867,12 @@ class Hvelu(object):
 
         return [XX, ZZ]
 
-
     def KPs(self, P, A, i):
 
         if self.global_L[i] <= self.HYBRID_BOUND:
             return self.KPs_t(P, A, i)
         else:
             return self.KPs_s(P, A, i)
-
 
     def xISOG(self, A, i):
 
@@ -780,14 +881,12 @@ class Hvelu(object):
         else:
             return self.xISOG_s(A, i)
 
-
     def xEVAL(self, P, v):
 
         if type(v) == int:
             return self.xEVAL_t(P, v)
         else:
             return self.xEVAL_s(P, v)
-
 
     def cISOG_and_cEVAL(self):
 
@@ -840,7 +939,9 @@ class Hvelu(object):
             self.fp.set_zero_ops()
             B = self.xISOG(A, i)
             t = self.fp.get_ops()
-            self.C_xISOG[i] += numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
+            self.C_xISOG[i] += numpy.array(
+                [t[0] * 1.0, t[1] * 1.0, t[2] * 1.0]
+            )
 
             # xEVAL: kernel point determined by the next isogeny evaluation
             self.fp.set_zero_ops()

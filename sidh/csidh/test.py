@@ -3,6 +3,7 @@ from sympy import symbols, floor, sqrt, sign
 
 from sidh.common import attrdict
 
+
 @click.command()
 @click.pass_context
 def csidh_test(ctx):
@@ -150,4 +151,3 @@ def csidh_test(ctx):
     )
     print("// copy and paste it at http://magma.maths.usyd.edu.au/calc/\n")
     return attrdict(name='csidh-test', **locals())
-

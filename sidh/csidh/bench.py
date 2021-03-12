@@ -4,6 +4,7 @@ from sidh.constants import strategy_data
 from sidh.csidh import CSIDH
 import statistics
 
+
 @click.command()
 @click.pass_context
 def csidh_bench(ctx):
@@ -61,7 +62,9 @@ def csidh_bench(ctx):
     except IOError:
 
         print("// Strategies to be computed")
-        C_out, L_out, R_out, S_out, r_out = self.gae.strategy_block_cost(L[::-1], m[::-1])
+        C_out, L_out, R_out, S_out, r_out = self.gae.strategy_block_cost(
+            L[::-1], m[::-1]
+        )
         f = open(
             strategy_data
             + setting.algorithm
@@ -120,7 +123,9 @@ def csidh_bench(ctx):
         if (len(tmp) == 1) or ((len(tmp) == 2) and (0 in tmp)):
 
             self.fp.set_zero_ops()
-            B = self.gae.GAE(B, e, [L_out[0]], [R_out[0]], [S_out[0]], [tmp[-1]], m)
+            B = self.gae.GAE(
+                B, e, [L_out[0]], [R_out[0]], [S_out[0]], [tmp[-1]], m
+            )
             SAMPLE[main_i] = self.fp.get_ops()
 
         else:
@@ -168,4 +173,3 @@ def csidh_bench(ctx):
             self.curve.measure(AVERAGE) / (10.0 ** 6),
         )
     )
-

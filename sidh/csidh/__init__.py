@@ -10,9 +10,17 @@ from sidh.csidh.montgomery import MontgomeryCurve
 from sidh.constants import parameters
 from sidh.common import attrdict
 
-default_parameters = dict(curvemodel='montgomery', prime='p512',
-                        formula='hvelu', style='wd2', exponent=2, tuned=False,
-                        multievaluation=False, verbose=False)
+default_parameters = dict(
+    curvemodel='montgomery',
+    prime='p512',
+    formula='hvelu',
+    style='wd2',
+    exponent=2,
+    tuned=False,
+    multievaluation=False,
+    verbose=False,
+)
+
 
 class CSIDH(object):
     """
@@ -47,8 +55,17 @@ class CSIDH(object):
 
     """
 
-    def __init__(self, curvemodel, prime, formula, style, tuned, exponent,
-                 multievaluation, verbose):
+    def __init__(
+        self,
+        curvemodel,
+        prime,
+        formula,
+        style,
+        tuned,
+        exponent,
+        multievaluation,
+        verbose,
+    ):
         self.curvemodel = curvemodel
         self.prime = prime
         self.style = style
@@ -86,7 +103,9 @@ class CSIDH(object):
         sk = unpack('<{}b'.format(len(sk)), sk)
         pk = int.from_bytes(pk, 'little')
         pk = self.curve.affine_to_projective(pk)
-        ss = self.curve.coeff(self.gae.dh(sk, pk)).to_bytes(length=64, byteorder='little')
+        ss = self.curve.coeff(self.gae.dh(sk, pk)).to_bytes(
+            length=64, byteorder='little'
+        )
         return ss
 
     def secret_key(self):
@@ -101,7 +120,7 @@ class CSIDH(object):
         return x.to_bytes(length=64, byteorder='little')
 
 
-
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod(verbose=True)

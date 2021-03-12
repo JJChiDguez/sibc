@@ -34,7 +34,6 @@ def Tvelu(curve):
         output: the projective Twisted Edwards y-coordinate point y([2]P)
         ------------------------------------------------------------------------- '''
 
-
     def yDBL(P, A):
 
         t_0 = fp.fp_sqr(P[0])
@@ -47,14 +46,12 @@ def Tvelu(curve):
         Z = fp.fp_mul(Z, t_1)
         return [fp.fp_sub(X, Z), fp.fp_add(X, Z)]
 
-
     ''' -------------------------------------------------------------------------
         yADD()
         input : the projective Twisted Edwards y-coordinate points y(P) := YP/WP,
                 y(Q) := YQ/WQ, and y(P-Q) := YPQ/QPQ
         output: the projective Twisted Edwards y-coordinate point y(P+Q)
         ------------------------------------------------------------------------- '''
-
 
     def yADD(P, Q, PQ):
 
@@ -71,7 +68,6 @@ def Tvelu(curve):
         Z = fp.fp_mul(xD, d)
         return [fp.fp_sub(X, Z), fp.fp_add(X, Z)]
 
-
     ''' -------------------------------------------------------------------------
         KPs()
         input : the projective Twisted Edwards y-coordinate points y(P) := YP/WP,
@@ -80,7 +76,6 @@ def Tvelu(curve):
         output: the list of projective Twisted Edwards y-coordinate points y(P),
                 y([2]P), y([3]P), ..., and y([d_i]P) where l_i = 2 * d_i + 1
         ------------------------------------------------------------------------- '''
-
 
     def KPs(P, A, i):
 
@@ -96,7 +91,6 @@ def Tvelu(curve):
 
         return K  # 2(l - 3)M + (l - 3)S + 3(l - 3)a
 
-
     ''' ------------------------------------------------------------------------------
         xISOG()
         input : the projective Montgomery constants A24:= A + 2C and C24:=4C where
@@ -106,7 +100,6 @@ def Tvelu(curve):
         output: the projective Montgomery constants a24:= a + 2c and c24:=4c where
                 E': y^2 = x^3 + (a/c)*x^2 + x is a degree-(l_i) isogenous curve to E
         ------------------------------------------------------------------------------ '''
-
 
     def xISOG(A, i):
 
@@ -148,7 +141,6 @@ def Tvelu(curve):
 
         return [C0, C1]  # (l - 1 + 2*HW(l) - 2)M + 2(|l|_2 + 1)S + 2a
 
-
     ''' ------------------------------------------------------------------------------
         xEVAL()
         input : the projective Montgomery constants A24:= A + 2C and C24:=4C where
@@ -158,7 +150,6 @@ def Tvelu(curve):
         output: the projective Montgomery constants a24:= a + 2c and c24:=4c where
                 E': y^2 = x^3 + (a/c)*x^2 + x is a degree-(l_i) isogenous curve to E
         ------------------------------------------------------------------------------ '''
-
 
     def xEVAL(P, i):
 

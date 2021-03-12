@@ -5,6 +5,7 @@ from sidh.common import attrdict
 from sidh.fp import printl
 from sidh.constants import strategy_data
 
+
 @click.command()
 @click.pass_context
 def csidh_header(ctx):
@@ -16,7 +17,6 @@ def csidh_header(ctx):
     delta = algo.params.delta
     geometric_serie = algo.gae.geometric_serie
     rounds = algo.gae.rounds
-
 
     strategy_block_cost = algo.gae.strategy_block_cost
     basis = numpy.eye(n, dtype=int)
@@ -72,7 +72,9 @@ def csidh_header(ctx):
     except IOError:
 
         # print("// Strategies to be computed")
-        C_out, L_out, R_out, S_out, r_out = strategy_block_cost(L[::-1], m[::-1])
+        C_out, L_out, R_out, S_out, r_out = strategy_block_cost(
+            L[::-1], m[::-1]
+        )
         f = open(
             strategy_data
             + setting.algorithm
@@ -119,7 +121,9 @@ def csidh_header(ctx):
         S_string = "static uint32_t S%d[] " % (i)
 
         printl(
-            L_string, [L.index(l_i) for l_i in L_out[i]], len(L_out[i]) // k + 1
+            L_string,
+            [L.index(l_i) for l_i in L_out[i]],
+            len(L_out[i]) // k + 1,
         )
         if R_out[i] != []:
             printl(
@@ -133,7 +137,6 @@ def csidh_header(ctx):
             printl(S_string, S_out[i], len(S_out[i]) // k + 1)
         else:
             print("static uint32_t S%d[1];" % i)
-
 
     print("\n")
     print(
@@ -171,11 +174,15 @@ def csidh_header(ctx):
     tmp_sizes = tmp_sizes + "%3d\n\t};" % (len(L_out[len(L_out) - 1]))
     tmp_round = tmp_round + "%3d\n\t};" % (r_out[len(L_out) - 1])
 
-    print("// L_STRATEGY[i] determines the small odd primes l_i per each strategy")
+    print(
+        "// L_STRATEGY[i] determines the small odd primes l_i per each strategy"
+    )
     print(L_string)
     print("\n// W_STRATEGY[i] determines L \ L_STRATEGY[i]")
     print(R_string)
-    print("\n// S_STRATEGY[i] determines the optimal strategy for L_STRATEGY[i]")
+    print(
+        "\n// S_STRATEGY[i] determines the optimal strategy for L_STRATEGY[i]"
+    )
     print(S_string)
 
     print("\n// Number of primes for each strategy")

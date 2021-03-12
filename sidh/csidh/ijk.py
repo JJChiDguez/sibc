@@ -73,4 +73,3 @@ def csidh_ijk(ctx):
         % setting.prime[1:]
     )
     return attrdict(name='ijk', **locals())
-

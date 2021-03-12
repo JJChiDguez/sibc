@@ -99,7 +99,9 @@ def csidh_parameters(ctx):
             total_cost[2] += t[2]
 
             # assert(validate(B))
-            parameters[str(idx)].append((b, c, t, total_cost[0] + total_cost[1]))
+            parameters[str(idx)].append(
+                (b, c, t, total_cost[0] + total_cost[1])
+            )
 
         if global_L[idx] == 3:
             parameters[str(idx)] = (0, 0, None, None)
@@ -110,4 +112,3 @@ def csidh_parameters(ctx):
 
         print(parameters[str(idx)][0], parameters[str(idx)][1])
     return attrdict(name='print-parameters', **locals())
-

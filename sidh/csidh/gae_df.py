@@ -6,6 +6,7 @@ from math import log
 from sidh.math import isequal, bitlength, hamming_weight
 from sidh.constants import parameters
 
+
 class Gae_df(object):
     def __init__(self, prime, tuned, curve, formula):
         self.random = SystemRandom()
@@ -37,29 +38,45 @@ class Gae_df(object):
         self.basis = numpy.eye(n, dtype=int)
 
     def pubkey(self, sk):
-        C_out, L_out, R_out, S_out, r_out = self.strategy_block_cost(self.L[::-1], self.m[::-1])
+        C_out, L_out, R_out, S_out, r_out = self.strategy_block_cost(
+            self.L[::-1], self.m[::-1]
+        )
         temporal_m = list(set(self.m))
-        if (len(temporal_m) == 1) or ((len(temporal_m) == 2) and (0 in temporal_m)):
+        if (len(temporal_m) == 1) or (
+            (len(temporal_m) == 2) and (0 in temporal_m)
+        ):
             return self.GAE(
-                self.curve.A, sk, [L_out[0]], [R_out[0]], [S_out[0]], [temporal_m[-1]], self.m
+                self.curve.A,
+                sk,
+                [L_out[0]],
+                [R_out[0]],
+                [S_out[0]],
+                [temporal_m[-1]],
+                self.m,
             )
         else:
-            return self.GAE(self.curve.A, sk, L_out, R_out, S_out, r_out, self.m)
+            return self.GAE(
+                self.curve.A, sk, L_out, R_out, S_out, r_out, self.m
+            )
 
     def dh(self, sk, pk):
         assert self.curve.validate(pk), "public key does not validate"
         temporal_m = list(set(self.m))
-        C_out, L_out, R_out, S_out, r_out = self.strategy_block_cost(self.L[::-1], self.m[::-1])
+        C_out, L_out, R_out, S_out, r_out = self.strategy_block_cost(
+            self.L[::-1], self.m[::-1]
+        )
         temporal_m = list(set(self.m))
-        if (len(temporal_m) == 1) or ((len(temporal_m) == 2) and (0 in temporal_m)):
+        if (len(temporal_m) == 1) or (
+            (len(temporal_m) == 2) and (0 in temporal_m)
+        ):
             ss = self.GAE(
-              pk,
-              sk,
-              [L_out[0]],
-              [R_out[0]],
-              [S_out[0]],
-              [temporal_m[-1]],
-              self.m,
+                pk,
+                sk,
+                [L_out[0]],
+                [R_out[0]],
+                [S_out[0]],
+                [temporal_m[-1]],
+                self.m,
             )
         else:
             ss = self.GAE(pk, sk, L_out, R_out, S_out, r_out, self.m)
@@ -71,7 +88,10 @@ class Gae_df(object):
         """
         random_key(m) implements an uniform random sample from S(m_1) x S(m_2) x ... x S(m_n)
         """
-        return [2 * (self.random.randint(0, m_i) - (m_i // 2)) - (m_i % 2) for m_i in self.m ]
+        return [
+            2 * (self.random.randint(0, m_i) - (m_i // 2)) - (m_i % 2)
+            for m_i in self.m
+        ]
 
     def security(self, M, n):
         """
@@ -81,7 +101,6 @@ class Gae_df(object):
         output : bits of security that M brings
         """
         return sum(list([log(M[i] + 1, 2) for i in range(n)]))
-
 
     def dynamic_programming_algorithm(self, L, n):
         """
@@ -96,7 +115,8 @@ class Gae_df(object):
 
             # If the list of prime numbers doesn't have size n, then we return [],-1
             print(
-                "error:\tthe list of prime numbers has different size from %d." % n
+                "error:\tthe list of prime numbers has different size from %d."
+                % n
             )
             return [], -1
         else:
@@ -118,18 +138,35 @@ class Gae_df(object):
                                 self.C[len(Tuple[:b])][Tuple[:b]]
                                 + self.C[  # Subtriangle on the right side with b leaves
                                     len(Tuple[b:])
-                                ][Tuple[b:]]
+                                ][
+                                    Tuple[b:]
+                                ]
                                 + 2.0  # Subtriangle on the left side with (i - b) leaves
                                 * sum(
-                                    [self.C_xMUL[self.formula.global_L.index(t)] for t in Tuple[:b]]
+                                    [
+                                        self.C_xMUL[
+                                            self.formula.global_L.index(t)
+                                        ]
+                                        for t in Tuple[:b]
+                                    ]
                                 )
                                 + 2.0  # Weights corresponding with vertical edges required for connecting the vertex (0,0) with the subtriangle with b leaves
                                 * sum(
-                                    [self.formula.C_xEVAL[self.formula.global_L.index(t)] for t in Tuple[b:]]
+                                    [
+                                        self.formula.C_xEVAL[
+                                            self.formula.global_L.index(t)
+                                        ]
+                                        for t in Tuple[b:]
+                                    ]
                                 )
                                 + 1.0  # Weights corresponding with horizontal edges required for connecting the vertex (0,0) with the subtriangle with (i - b) leaves
                                 * sum(
-                                    [self.C_xMUL[self.formula.global_L.index(t)] for t in Tuple[b:]]
+                                    [
+                                        self.C_xMUL[
+                                            self.formula.global_L.index(t)
+                                        ]
+                                        for t in Tuple[b:]
+                                    ]
                                 ),  # Weights corresponding with horizontal edges required for connecting the vertex (0,0) with the subtriangle with (i - b) leaves
                             )
                             for b in range(1, i - 1)
@@ -145,12 +182,16 @@ class Gae_df(object):
                                 + 1.0  # Subtriangle on the left side with 1 leaf (only one vertex)
                                 * sum(
                                     [
-                                        self.C_xMUL[self.formula.global_L.index(t)]
+                                        self.C_xMUL[
+                                            self.formula.global_L.index(t)
+                                        ]
                                         for t in Tuple[: (i - 1)]
                                     ]
                                 )
                                 + 2.0  # Weights corresponding with vertical edges required for connecting the vertex (0,0) with the subtriangle with 1 leaf
-                                * self.formula.C_xEVAL[self.formula.global_L.index(Tuple[i - 1])]
+                                * self.formula.C_xEVAL[
+                                    self.formula.global_L.index(Tuple[i - 1])
+                                ]
                                 + 1.0  # Weights corresponding with horizontal edges required for connecting the vertex (0,0) with the subtriangle with (i - 1) leaves
                                 * self.C_xMUL[
                                     self.formula.global_L.index(Tuple[i - 1])
@@ -161,15 +202,15 @@ class Gae_df(object):
                             alpha, key=lambda t: self.curve.measure(t[1])
                         )  # We save the minimal cost corresponding to the triangle with leaves Tuple
                         self.S[i][Tuple] = (
-                            [b] + self.S[i - b][Tuple[b:]] + self.S[b][Tuple[:b]]
+                            [b]
+                            + self.S[i - b][Tuple[b:]]
+                            + self.S[b][Tuple[:b]]
                         )  # We save the optimal strategy corresponding to the triangle with leaves Tuple
 
             return (
                 self.S[n][tuple(L)],
                 self.C[n][tuple(L)],
             )  # The weight of the horizontal edges [(0,n-1),(0,n)] must be equal to C_xISOG[self.formula.global_L.index(L[0])].
-
-
 
     def evaluate_strategy(self, E, P, L, strategy, n, m, e):
         """
@@ -213,12 +254,18 @@ class Gae_df(object):
                 moves.append(
                     strategy[k]
                 )  # Number of vertical edges to be performed
-                T = list([list(ramifications[-1][0]), list(ramifications[-1][1])])
+                T = list(
+                    [list(ramifications[-1][0]), list(ramifications[-1][1])]
+                )
                 for j in range(prev, prev + strategy[k], 1):
                     T = list(
                         [
-                             self.curve.xMUL(T[0], E_i, self.formula.global_L.index(L[j])),
-                             self.curve.xMUL(T[1], E_i, self.formula.global_L.index(L[j])),
+                            self.curve.xMUL(
+                                T[0], E_i, self.formula.global_L.index(L[j])
+                            ),
+                            self.curve.xMUL(
+                                T[1], E_i, self.formula.global_L.index(L[j])
+                            ),
                         ]
                     )
 
@@ -235,13 +282,17 @@ class Gae_df(object):
                 moves.append(
                     strategy[k]
                 )  # Number of vertical edges (without ramifications) to be performed
-                T = list([list(ramifications[-1][0]), list(ramifications[-1][1])])
+                T = list(
+                    [list(ramifications[-1][0]), list(ramifications[-1][1])]
+                )
 
                 T[0][0], T[1][0] = self.fp.fp_cswap(T[0][0], T[1][0], c_i)
                 T[0][1], T[1][1] = self.fp.fp_cswap(T[0][1], T[1][1], c_i)
                 for j in range(prev, prev + strategy[k], 1):
                     T[0] = list(
-                         self.curve.xMUL(T[0], E_i, self.formula.global_L.index(L[j]))
+                        self.curve.xMUL(
+                            T[0], E_i, self.formula.global_L.index(L[j])
+                        )
                     )  # A single scalar multiplication is required
 
                 T[0][0], T[1][0] = self.fp.fp_cswap(T[0][0], T[1][0], c_i)
@@ -260,21 +311,31 @@ class Gae_df(object):
                 # Swap the torsion-(l_{n-j}) elliptic curve points on the current leaf
                 #                           T_- <- ramifications[-1][0]
                 #                           T_+ <- ramifications[-1][1]
-                ramifications[-1][0][0], ramifications[-1][1][0] = self.fp.fp_cswap(
+                (
+                    ramifications[-1][0][0],
+                    ramifications[-1][1][0],
+                ) = self.fp.fp_cswap(
                     ramifications[-1][0][0], ramifications[-1][1][0], c_i
                 )  # XT_+ <-> XT_-
-                ramifications[-1][0][1], ramifications[-1][1][1] = self.fp.fp_cswap(
+                (
+                    ramifications[-1][0][1],
+                    ramifications[-1][1][1],
+                ) = self.fp.fp_cswap(
                     ramifications[-1][0][1], ramifications[-1][1][1], c_i
                 )  # ZT_+ <-> ZT_-
 
-                if  self.curve.isinfinity(ramifications[-1][0]) == False:
+                if self.curve.isinfinity(ramifications[-1][0]) == False:
 
                     if self.formula_name != 'tvelu':
                         # This branchs corresponds with the use of the new velu's formulaes
 
                         E_prev = list(E_i)
                         if self.tuned:
-                            self.formula.set_parameters_velu(self.formula.sJ_list[pos], self.formula.sI_list[pos], pos)
+                            self.formula.set_parameters_velu(
+                                self.formula.sJ_list[pos],
+                                self.formula.sI_list[pos],
+                                pos,
+                            )
 
                         else:
                             # -------------------------------------------------------------
@@ -284,8 +345,18 @@ class Gae_df(object):
                                 b = 0
                                 c = 0
                             else:
-                                b = int(floor(sqrt(self.formula.global_L[pos] - 1) / 2.0))
-                                c = int(floor((self.formula.global_L[pos] - 1.0) / (4.0 * b)))
+                                b = int(
+                                    floor(
+                                        sqrt(self.formula.global_L[pos] - 1)
+                                        / 2.0
+                                    )
+                                )
+                                c = int(
+                                    floor(
+                                        (self.formula.global_L[pos] - 1.0)
+                                        / (4.0 * b)
+                                    )
+                                )
 
                             self.formula.set_parameters_velu(b, c, pos)
 
@@ -298,22 +369,33 @@ class Gae_df(object):
                     for j in range(0, len(moves) - 1, 1):
 
                         # Swap points in E[\pi - 1] and E[\pi + 1]
-                        ramifications[j][0][0], ramifications[j][1][0] = self.fp.fp_cswap(
+                        (
+                            ramifications[j][0][0],
+                            ramifications[j][1][0],
+                        ) = self.fp.fp_cswap(
                             ramifications[j][0][0], ramifications[j][1][0], c_i
                         )
-                        ramifications[j][0][1], ramifications[j][1][1] = self.fp.fp_cswap(
+                        (
+                            ramifications[j][0][1],
+                            ramifications[j][1][1],
+                        ) = self.fp.fp_cswap(
                             ramifications[j][0][1], ramifications[j][1][1], c_i
                         )
 
                         if self.formula_name == 'tvelu' or (
                             self.formula_name == 'hvelu'
-                            and self.formula.global_L[pos] <= self.formula.HYBRID_BOUND
+                            and self.formula.global_L[pos]
+                            <= self.formula.HYBRID_BOUND
                         ):
                             # This branchs corresponds with the use of the tradicional velu's formulaes
                             # T_- (or T_)
-                            ramifications[j][0] = self.formula.xEVAL(ramifications[j][0], pos)
+                            ramifications[j][0] = self.formula.xEVAL(
+                                ramifications[j][0], pos
+                            )
                             # T_+ or (T_+)
-                            ramifications[j][1] = self.formula.xEVAL(ramifications[j][1], pos)
+                            ramifications[j][1] = self.formula.xEVAL(
+                                ramifications[j][1], pos
+                            )
                         else:
                             # This branchs corresponds with the use of the new velu's formulaes
                             # T_- (or T_)
@@ -326,13 +408,21 @@ class Gae_df(object):
                             )
 
                         # Multiplying by the current small odd prime number in order to decrease the order of both points T_+ and T_-
-                        ramifications[j][1] =  self.curve.xMUL(ramifications[j][1], E_i, pos)
+                        ramifications[j][1] = self.curve.xMUL(
+                            ramifications[j][1], E_i, pos
+                        )
 
                         # Undo swap of points in E[\pi - 1] and E[\pi + 1]
-                        ramifications[j][0][0], ramifications[j][1][0] = self.fp.fp_cswap(
+                        (
+                            ramifications[j][0][0],
+                            ramifications[j][1][0],
+                        ) = self.fp.fp_cswap(
                             ramifications[j][0][0], ramifications[j][1][0], c_i
                         )
-                        ramifications[j][0][1], ramifications[j][1][1] = self.fp.fp_cswap(
+                        (
+                            ramifications[j][0][1],
+                            ramifications[j][1][1],
+                        ) = self.fp.fp_cswap(
                             ramifications[j][0][1], ramifications[j][1][1], c_i
                         )
 
@@ -348,58 +438,98 @@ class Gae_df(object):
 
                     for j in range(0, len(moves) - 1, 1):
 
-                        ramifications[j][0][0], ramifications[j][1][0] = self.fp.fp_cswap(
+                        (
+                            ramifications[j][0][0],
+                            ramifications[j][1][0],
+                        ) = self.fp.fp_cswap(
                             ramifications[j][0][0], ramifications[j][1][0], c_i
                         )
-                        ramifications[j][0][1], ramifications[j][1][1] = self.fp.fp_cswap(
+                        (
+                            ramifications[j][0][1],
+                            ramifications[j][1][1],
+                        ) = self.fp.fp_cswap(
                             ramifications[j][0][1], ramifications[j][1][1], c_i
                         )
-                        ramifications[j][1] =  self.curve.xMUL(ramifications[j][1], E_i, pos)
-                        ramifications[j][0][0], ramifications[j][1][0] = self.fp.fp_cswap(
+                        ramifications[j][1] = self.curve.xMUL(
+                            ramifications[j][1], E_i, pos
+                        )
+                        (
+                            ramifications[j][0][0],
+                            ramifications[j][1][0],
+                        ) = self.fp.fp_cswap(
                             ramifications[j][0][0], ramifications[j][1][0], c_i
                         )
-                        ramifications[j][0][1], ramifications[j][1][1] = self.fp.fp_cswap(
+                        (
+                            ramifications[j][0][1],
+                            ramifications[j][1][1],
+                        ) = self.fp.fp_cswap(
                             ramifications[j][0][1], ramifications[j][1][1], c_i
                         )
             else:
                 # This branch only depends on randomness
 
                 # At this step, ramifications[-1] is the i-th leaf
-                ramifications[-1][0][0], ramifications[-1][1][0] = self.fp.fp_cswap(
+                (
+                    ramifications[-1][0][0],
+                    ramifications[-1][1][0],
+                ) = self.fp.fp_cswap(
                     ramifications[-1][0][0], ramifications[-1][1][0], c_i
                 )
-                ramifications[-1][0][1], ramifications[-1][1][1] = self.fp.fp_cswap(
+                (
+                    ramifications[-1][0][1],
+                    ramifications[-1][1][1],
+                ) = self.fp.fp_cswap(
                     ramifications[-1][0][1], ramifications[-1][1][1], c_i
                 )
 
-                if  self.curve.isinfinity(ramifications[-1][0]) == False:
+                if self.curve.isinfinity(ramifications[-1][0]) == False:
 
                     for j in range(0, len(moves) - 1, 1):
 
-                        ramifications[j][0] =  self.curve.xMUL(ramifications[j][0], E_i, pos)
-                        ramifications[j][1] =  self.curve.xMUL(ramifications[j][1], E_i, pos)
+                        ramifications[j][0] = self.curve.xMUL(
+                            ramifications[j][0], E_i, pos
+                        )
+                        ramifications[j][1] = self.curve.xMUL(
+                            ramifications[j][1], E_i, pos
+                        )
                 else:
 
                     for j in range(0, len(moves) - 1, 1):
 
-                        ramifications[j][0][0], ramifications[j][1][0] = self.fp.fp_cswap(
+                        (
+                            ramifications[j][0][0],
+                            ramifications[j][1][0],
+                        ) = self.fp.fp_cswap(
                             ramifications[j][0][0], ramifications[j][1][0], c_i
                         )
-                        ramifications[j][0][1], ramifications[j][1][1] = self.fp.fp_cswap(
+                        (
+                            ramifications[j][0][1],
+                            ramifications[j][1][1],
+                        ) = self.fp.fp_cswap(
                             ramifications[j][0][1], ramifications[j][1][1], c_i
                         )
-                        ramifications[j][1] =  self.curve.xMUL(ramifications[j][1], E_i, pos)
-                        ramifications[j][0][0], ramifications[j][1][0] = self.fp.fp_cswap(
+                        ramifications[j][1] = self.curve.xMUL(
+                            ramifications[j][1], E_i, pos
+                        )
+                        (
+                            ramifications[j][0][0],
+                            ramifications[j][1][0],
+                        ) = self.fp.fp_cswap(
                             ramifications[j][0][0], ramifications[j][1][0], c_i
                         )
-                        ramifications[j][0][1], ramifications[j][1][1] = self.fp.fp_cswap(
+                        (
+                            ramifications[j][0][1],
+                            ramifications[j][1][1],
+                        ) = self.fp.fp_cswap(
                             ramifications[j][0][1], ramifications[j][1][1], c_i
                         )
 
             moves.pop()
             ramifications.pop()
 
-        pos = self.formula.global_L.index(L[0])  # Current element of self.formula.global_L to be required
+        pos = self.formula.global_L.index(
+            L[0]
+        )  # Current element of self.formula.global_L to be required
         s_i = sign(e[pos])  # Sign of e[pos]
         c_i = (s_i + 1) // 2  # Constant-swap of T_+ and T_-
 
@@ -412,14 +542,18 @@ class Gae_df(object):
             ramifications[0][0][1], ramifications[0][1][1], c_i
         )
 
-        if  self.curve.isinfinity(ramifications[0][0]) == False:
+        if self.curve.isinfinity(ramifications[0][0]) == False:
 
             if m[pos] > 0:
                 if self.formula_name != 'tvelu':
                     # This branchs corresponds with the use of the new velu's formulaes
 
                     if self.tuned:
-                        self.formula.set_parameters_velu(self.formula.sJ_list[pos], self.formula.sI_list[pos], pos)
+                        self.formula.set_parameters_velu(
+                            self.formula.sJ_list[pos],
+                            self.formula.sI_list[pos],
+                            pos,
+                        )
 
                     else:
                         # -------------------------------------------------------------
@@ -429,8 +563,17 @@ class Gae_df(object):
                             b = 0
                             c = 0
                         else:
-                            b = int(floor(sqrt(self.formula.global_L[pos] - 1) / 2.0))
-                            c = int(floor((self.formula.global_L[pos] - 1.0) / (4.0 * b)))
+                            b = int(
+                                floor(
+                                    sqrt(self.formula.global_L[pos] - 1) / 2.0
+                                )
+                            )
+                            c = int(
+                                floor(
+                                    (self.formula.global_L[pos] - 1.0)
+                                    / (4.0 * b)
+                                )
+                            )
 
                         self.formula.set_parameters_velu(b, c, pos)
 
@@ -447,9 +590,6 @@ class Gae_df(object):
 
         return E_i, v, u
 
-
-
-
     def geometric_serie(self, m, l):
         """
         geometric_serie()
@@ -462,7 +602,6 @@ class Gae_df(object):
         l_float = float(l)
         m_float = float(m)
         return floor((m_float * l_float) / (l_float - 1.0) + 0.5)
-
 
     def filtered(self, List, sublist):
         """
@@ -490,7 +629,9 @@ class Gae_df(object):
             e_min = min([e_i for e_i in tmp_e if e_i > 0])
             rounds_out.append(e_min)
             sublists_L.append([i for i in tmp_N if tmp_e[i] >= e_min])
-            sublists_C.append(self.filtered(tmp_N, sublists_L[len(sublists_L) - 1]))
+            sublists_C.append(
+                self.filtered(tmp_N, sublists_L[len(sublists_L) - 1])
+            )
             tmp_e = [(tmp_e[i] - e_min) for i in tmp_N]
 
         return rounds_out, sublists_L, sublists_C
@@ -518,31 +659,47 @@ class Gae_df(object):
 
                 T_p, T_m = self.curve.elligator(E_k)
                 for ii in range(0, self.curve.exponent_of_two, 1):
-                    T_p =  self.curve.xDBL(T_p, E_k)
-                    T_m =  self.curve.xDBL(T_m, E_k)
+                    T_p = self.curve.xDBL(T_p, E_k)
+                    T_m = self.curve.xDBL(T_m, E_k)
 
                 for l in R[j]:
-                    T_p =  self.curve.xMUL(T_p, E_k, self.formula.global_L.index(l))
-                    T_m =  self.curve.xMUL(T_m, E_k, self.formula.global_L.index(l))
+                    T_p = self.curve.xMUL(
+                        T_p, E_k, self.formula.global_L.index(l)
+                    )
+                    T_m = self.curve.xMUL(
+                        T_m, E_k, self.formula.global_L.index(l)
+                    )
 
                 E_k, m, e = self.evaluate_strategy(
-                    E_k, list([list(T_m), list(T_p)]), L[j], St[j], len(L[j]), m, e
+                    E_k,
+                    list([list(T_m), list(T_p)]),
+                    L[j],
+                    St[j],
+                    len(L[j]),
+                    m,
+                    e,
                 )
 
         # Multiplicative strategy on the set of unreached small odd prime numbers
-        unreached_sop = [self.formula.global_L[i] for i in range(len(self.formula.global_L)) if m[i] > 0]
-        remainder_sop = [l for l in self.formula.global_L if l not in unreached_sop]
+        unreached_sop = [
+            self.formula.global_L[i]
+            for i in range(len(self.formula.global_L))
+            if m[i] > 0
+        ]
+        remainder_sop = [
+            l for l in self.formula.global_L if l not in unreached_sop
+        ]
 
         while len(unreached_sop) > 0:
 
             T_p, T_m = self.curve.elligator(E_k)
             for ii in range(0, self.curve.exponent_of_two, 1):
-                T_p =  self.curve.xDBL(T_p, E_k)
-                T_m =  self.curve.xDBL(T_m, E_k)
+                T_p = self.curve.xDBL(T_p, E_k)
+                T_m = self.curve.xDBL(T_m, E_k)
 
             for l in remainder_sop:
-                T_p =  self.curve.xMUL(T_p, E_k, self.formula.global_L.index(l))
-                T_m =  self.curve.xMUL(T_m, E_k, self.formula.global_L.index(l))
+                T_p = self.curve.xMUL(T_p, E_k, self.formula.global_L.index(l))
+                T_m = self.curve.xMUL(T_m, E_k, self.formula.global_L.index(l))
 
             current_n = len(unreached_sop)
             E_k, m, e = self.evaluate_strategy(
@@ -567,14 +724,14 @@ class Gae_df(object):
                 if m[self.formula.global_L.index(unreached_sop[k])] == 0
             ]
 
-            unreached_sop = list(tmp_unreached)  # Removing elements from the batch
+            unreached_sop = list(
+                tmp_unreached
+            )  # Removing elements from the batch
             remainder_sop = (
                 remainder_sop + tmp_remainder
             )  # Adding elements to the complement of the batch
 
         return E_k
-
-
 
     def strategy_block_cost(self, L, e):
         """
@@ -599,7 +756,12 @@ class Gae_df(object):
             R_out.append([L[k] for k in tmp_Cs[j]])
             L_out.append([L[k] for k in tmp_Ls[j]])
 
-            bo_C = 2.0 * sum([self.C_xMUL[self.formula.global_L.index(L[k])] for k in tmp_Cs[j]])
+            bo_C = 2.0 * sum(
+                [
+                    self.C_xMUL[self.formula.global_L.index(L[k])]
+                    for k in tmp_Cs[j]
+                ]
+            )
             S_tmp, go_C = self.dynamic_programming_algorithm(
                 [L[k] for k in tmp_Ls[j]], len(tmp_Ls[j])
             )
@@ -607,7 +769,8 @@ class Gae_df(object):
             S_out.append(S_tmp)
             C_e = (
                 C_e
-                + (go_C + bo_C + elligator_cost + 2.0 * mul_fp_by_four) * tmp_r[j]
+                + (go_C + bo_C + elligator_cost + 2.0 * mul_fp_by_four)
+                * tmp_r[j]
             )
 
         return C_e, L_out, R_out, S_out, tmp_r
