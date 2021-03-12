@@ -26,14 +26,11 @@ class CSIDH_gae_test_base(object):
             'montgomery', self.prime, self.formula, self.style, self.exponent,
             self.tuned, self.multievaluation, self.verbose)
 
-    def test_genpubvalidate(self):
-        sk = self.c.gae.random_key()
-        pk = self.c.gae.pubkey(sk)
-        self.assertTrue(self.c.curve.validate(pk))
-
     def test_group_action_with_random_keys(self):
         sk_a, sk_b = self.c.gae.random_key(), self.c.gae.random_key()
         pk_a, pk_b = self.c.gae.pubkey(sk_a), self.c.gae.pubkey(sk_b)
+        self.assertTrue(self.c.curve.validate(pk_a))
+        self.assertTrue(self.c.curve.validate(pk_b))
         ss_a = self.c.gae.dh(sk_a, pk_b)
         ss_b = self.c.gae.dh(sk_b, pk_a)
         self.assertNotEqual(ss_a, ss_b)
