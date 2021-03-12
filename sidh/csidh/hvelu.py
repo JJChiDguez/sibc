@@ -1,5 +1,5 @@
-from sidh.csidh.poly_mul import poly_mul_init, product_tree, product_selfreciprocal_tree, poly_mul_middle, product
-from sidh.csidh.poly_redc import poly_redc_init, reciprocal, poly_redc, reciprocal_tree, multieval_scaled
+from sidh.csidh.poly_mul import Poly_mul
+from sidh.csidh.poly_redc import Poly_redc
 from sidh.math import isequal, bitlength, hamming_weight
 from sidh.constants import ijk_data
 
@@ -40,9 +40,10 @@ class Hvelu(object):
         self.prime = curve.prime
         self.curve = curve
         self.fp = self.curve.fp
-        poly_redc_init(self.fp)
-        poly_mul_init(curve)
         self.global_L = self.curve.L
+
+        self.poly_mul = Poly_mul(curve)
+        self.poly_redc = Poly_redc(self.poly_mul)
 
         self.C_xEVAL = list(
             map(self.cEVAL, self.global_L)
@@ -273,11 +274,11 @@ class Hvelu(object):
             hI = [
                 list([ self.fp.fp_sub(0, P2[0]), P2[1]])
             ]  # we only need to negate x-coordinate of each point
-            self.ptree_hI = product_tree(hI, self.sI)  # product tree of hI
+            self.ptree_hI = self.poly_mul.product_tree(hI, self.sI)  # product tree of hI
 
             if not self.SCALED_REMAINDER_TREE:
                 # Using remainder trees
-                self.ptree_hI = reciprocal_tree(
+                self.ptree_hI = self.poly_redc.reciprocal_tree(
                     {'rpoly': [1], 'rdeg': 0, 'fpoly': [1], 'fdeg': 0, 'a': 1},
                     2 * self.sJ + 1,
                     self.ptree_hI,
@@ -287,7 +288,7 @@ class Hvelu(object):
             else:
                 # Using scaled remainder trees
                 assert (2 * self.sJ - self.sI + 1) > self.sI
-                self.ptree_hI['reciprocal'], self.ptree_hI['a'] = reciprocal(
+                self.ptree_hI['reciprocal'], self.ptree_hI['a'] = self.poly_redc.reciprocal(
                     self.ptree_hI['poly'][::-1], self.sI + 1, 2 * self.sJ - self.sI + 1
                 )
                 self.ptree_hI['scaled'], self.ptree_hI['as'] = (
@@ -322,11 +323,11 @@ class Hvelu(object):
             hI = [
                 [ self.fp.fp_sub(0, iP[0]), iP[1]] for iP in I
             ]  # we only need to negate x-coordinate of each point
-            self.ptree_hI = product_tree(hI, self.sI)  # product tree of hI
+            self.ptree_hI = self.poly_mul.product_tree(hI, self.sI)  # product tree of hI
 
             if not self.SCALED_REMAINDER_TREE:
                 # Using remainder trees
-                self.ptree_hI = reciprocal_tree(
+                self.ptree_hI = self.poly_redc.reciprocal_tree(
                     {'rpoly': [1], 'rdeg': 0, 'fpoly': [1], 'fdeg': 0, 'a': 1},
                     2 * self.sJ + 1,
                     self.ptree_hI,
@@ -336,7 +337,7 @@ class Hvelu(object):
             else:
                 # Using scaled remainder trees
                 assert (2 * self.sJ - self.sI + 1) <= self.sI
-                self.ptree_hI['scaled'], ptree_hI['as'] = reciprocal(
+                self.ptree_hI['scaled'], ptree_hI['as'] = self.poly_redc.reciprocal(
                     ptree_hI['poly'][::-1], self.sI + 1, self.sI
                 )
                 self.ptree_hI['reciprocal'], self.ptree_hI['a'] = (
@@ -412,11 +413,11 @@ class Hvelu(object):
         hI = [
             [ self.fp.fp_sub(0, iP[0]), iP[1]] for iP in I
         ]  # we only need to negate x-coordinate of each point
-        self.ptree_hI = product_tree(hI, self.sI)  # product tree of hI
+        self.ptree_hI = self.poly_mul.product_tree(hI, self.sI)  # product tree of hI
 
         if not self.SCALED_REMAINDER_TREE:
             # Using scaled remainder trees
-            self.ptree_hI = reciprocal_tree(
+            self.ptree_hI = self.poly_redc.reciprocal_tree(
                 {'rpoly': [1], 'rdeg': 0, 'fpoly': [1], 'fdeg': 0, 'a': 1},
                 2 * sJ + 1,
                 self.ptree_hI,
@@ -426,7 +427,7 @@ class Hvelu(object):
         else:
             # Using scaled remainder trees
             if self.sI < (2 * self.sJ - self.sI + 1):
-                self.ptree_hI['reciprocal'], self.ptree_hI['a'] = reciprocal(
+                self.ptree_hI['reciprocal'], self.ptree_hI['a'] = self.poly_redc.reciprocal(
                     self.ptree_hI['poly'][::-1], self.sI + 1, 2 * self.sJ - self.sI + 1
                 )
                 self.ptree_hI['scaled'], self.ptree_hI['as'] = (
@@ -435,7 +436,7 @@ class Hvelu(object):
                 )
 
             else:
-                self.ptree_hI['scaled'], self.ptree_hI['as'] = reciprocal(
+                self.ptree_hI['scaled'], self.ptree_hI['as'] = self.poly_redc.reciprocal(
                     self.ptree_hI['poly'][::-1], self.sI + 1, self.sI
                 )
                 self.ptree_hI['reciprocal'], self.ptree_hI['a'] = (
@@ -520,10 +521,10 @@ class Hvelu(object):
             EJ_1[j] = [tadd, linear, tadd]
 
         # The faster way for multiplying is using a divide-and-conquer approach
-        poly_EJ_0 = product_selfreciprocal_tree(EJ_0, self.sJ)[
+        poly_EJ_0 = self.poly_mul.product_selfreciprocal_tree(EJ_0, self.sJ)[
             'poly'
         ]  # product tree of EJ_0 (we only require the root)
-        poly_EJ_1 = product_selfreciprocal_tree(EJ_1, self.sJ)[
+        poly_EJ_1 = self.poly_mul.product_selfreciprocal_tree(EJ_1, self.sJ)[
             'poly'
         ]  # product tree of EJ_1 (we only require the root)
 
@@ -539,15 +540,15 @@ class Hvelu(object):
         else:
             # Approach using scaled remainder trees
             if self.ptree_hI != None:
-                poly_EJ_0 = poly_redc(poly_EJ_0, 2 * self.sJ + 1, self.ptree_hI)
-                fg_0 = poly_mul_middle(self.ptree_hI['scaled'], self.sI, poly_EJ_0[::-1], self.sI)
-                remainders_EJ_0 = multieval_scaled(
+                poly_EJ_0 = self.poly_redc.poly_redc(poly_EJ_0, 2 * self.sJ + 1, self.ptree_hI)
+                fg_0 = self.poly_mul.poly_mul_middle(self.ptree_hI['scaled'], self.sI, poly_EJ_0[::-1], self.sI)
+                remainders_EJ_0 = self.poly_redc.multieval_scaled(
                     fg_0[::-1], self.sI, [1] + [0] * (self.sI - 1), self.sI, self.ptree_hI, self.sI
                 )
 
-                poly_EJ_1 = poly_redc(poly_EJ_1, 2 * self.sJ + 1, self.ptree_hI)
-                fg_1 = poly_mul_middle(self.ptree_hI['scaled'], self.sI, poly_EJ_1[::-1], self.sI)
-                remainders_EJ_1 = multieval_scaled(
+                poly_EJ_1 = self.poly_redc.poly_redc(poly_EJ_1, 2 * self.sJ + 1, self.ptree_hI)
+                fg_1 = self.poly_mul.poly_mul_middle(self.ptree_hI['scaled'], self.sI, poly_EJ_1[::-1], self.sI)
+                remainders_EJ_1 = self.poly_redc.multieval_scaled(
                     fg_1[::-1], self.sI, [1] + [0] * (self.sI - 1), self.sI, self.ptree_hI, self.sI
                 )
             else:
@@ -555,8 +556,8 @@ class Hvelu(object):
                 remainders_EJ_1 = []
 
         # Multipying all the remainders
-        r0 = product(remainders_EJ_0, self.sI)
-        r1 = product(remainders_EJ_1, self.sI)
+        r0 = self.poly_mul.product(remainders_EJ_0, self.sI)
+        r1 = self.poly_mul.product(remainders_EJ_1, self.sI)
 
         # ---------------------------------------------------------------------------------
         # Now, we proceed by computing the missing part which is determined by K
@@ -565,10 +566,10 @@ class Hvelu(object):
 
         # Case alpha = 1
         hK_0 = [[ self.fp.fp_sub(self.K[k][1], self.K[k][0])] for k in range(0, self.sK, 1)]
-        hK_0 = product(hK_0, self.sK)  # product of (Zk - Xk) for each k in K
+        hK_0 = self.poly_mul.product(hK_0, self.sK)  # product of (Zk - Xk) for each k in K
         # Case alpha = -1
         hK_1 = [[ self.fp.fp_add(self.K[k][1], self.K[k][0])] for k in range(0, self.sK, 1)]
-        hK_1 = product(hK_1, self.sK)  # product of (Zk + Xk) for each k in K
+        hK_1 = self.poly_mul.product(hK_1, self.sK)  # product of (Zk + Xk) for each k in K
 
         # --------------------------------------------------------------
         # Now, we have all the ingredients for computing the image curve
@@ -690,7 +691,7 @@ class Hvelu(object):
             EJ_0[j] = [constant, linear, quadratic]
 
         # The faster way for multiplying is using a divide-and-conquer approach
-        poly_EJ_0 = product_tree(EJ_0, self.sJ)[
+        poly_EJ_0 = self.poly_mul.product_tree(EJ_0, self.sJ)[
             'poly'
         ]  # product tree of EJ_0 (we only require the root)
         poly_EJ_1 = list(
@@ -709,15 +710,15 @@ class Hvelu(object):
         else:
             # Approach using scaled remainder trees
             if self.ptree_hI != None:
-                poly_EJ_0 = poly_redc(poly_EJ_0, 2 * self.sJ + 1, self.ptree_hI)
-                fg_0 = poly_mul_middle(self.ptree_hI['scaled'], self.sI, poly_EJ_0[::-1], self.sI)
-                remainders_EJ_0 = multieval_scaled(
+                poly_EJ_0 = self.poly_redc.poly_redc(poly_EJ_0, 2 * self.sJ + 1, self.ptree_hI)
+                fg_0 = self.poly_mul.poly_mul_middle(self.ptree_hI['scaled'], self.sI, poly_EJ_0[::-1], self.sI)
+                remainders_EJ_0 = self.poly_redc.multieval_scaled(
                     fg_0[::-1], self.sI, [1] + [0] * (self.sI - 1), self.sI, self.ptree_hI, self.sI
                 )
 
-                poly_EJ_1 = poly_redc(poly_EJ_1, 2 * self.sJ + 1, self.ptree_hI)
-                fg_1 = poly_mul_middle(self.ptree_hI['scaled'], self.sI, poly_EJ_1[::-1], self.sI)
-                remainders_EJ_1 = multieval_scaled(
+                poly_EJ_1 = self.poly_redc.poly_redc(poly_EJ_1, 2 * self.sJ + 1, self.ptree_hI)
+                fg_1 = self.poly_mul.poly_mul_middle(self.ptree_hI['scaled'], self.sI, poly_EJ_1[::-1], self.sI)
+                remainders_EJ_1 = self.poly_redc.multieval_scaled(
                     fg_1[::-1], self.sI, [1] + [0] * (self.sI - 1), self.sI, self.ptree_hI, self.sI
                 )
             else:
@@ -725,8 +726,8 @@ class Hvelu(object):
                 remainders_EJ_1 = []
 
         # Multipying all the remainders
-        r0 = product(remainders_EJ_0, self.sI)
-        r1 = product(remainders_EJ_1, self.sI)
+        r0 = self.poly_mul.product(remainders_EJ_0, self.sI)
+        r1 = self.poly_mul.product(remainders_EJ_1, self.sI)
 
         # ---------------------------------------------------------------------------------
         # Now, we proceed by computing the missing part which is determined by K
@@ -748,8 +749,8 @@ class Hvelu(object):
             # Case 1/alpha = Z/X
             hK_1[k] = [ self.fp.fp_add(t1, t2)]  # 2 * [(X*Xk) - (Z*Zk)]
 
-        hK_0 = product(hK_0, self.sK)  # product of (XZk - ZXk) for each k in K
-        hK_1 = product(hK_1, self.sK)  # product of (XXk - ZZk) for each k in K
+        hK_0 = self.poly_mul.product(hK_0, self.sK)  # product of (XZk - ZXk) for each k in K
+        hK_1 = self.poly_mul.product(hK_1, self.sK)  # product of (XXk - ZZk) for each k in K
 
         # ---------------------------------------------------------------------------------
         # Now, unifying all the computations

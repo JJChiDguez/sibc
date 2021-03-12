@@ -1,7 +1,6 @@
 from sidh.common import attrdict
-from sidh.csidh.poly_mul import product_selfreciprocal_tree, product_tree, product, poly_mul_init
-from sidh.csidh.poly_redc import multieval_unscaled
-from sidh.csidh.poly_redc import poly_redc_init, reciprocal, poly_redc, reciprocal_tree, multieval_scaled
+from sidh.csidh.poly_mul import Poly_mul
+from sidh.csidh.poly_redc import Poly_redc
 from sidh.math import hamming_weight, bitlength, isequal
 from sidh.constants import ijk_data, parameters
 
@@ -9,10 +8,9 @@ import numpy
 from sympy import symbols, floor, sqrt, sign
 
 def Svelu(curve, verbose):
-
     fp = curve.fp
-    poly_redc_init(fp)
-    poly_mul_init(curve)
+    poly_mul = Poly_mul(curve)
+    poly_redc = Poly_redc(poly_mul)
     global_L = curve.L
     prime = curve.prime
     n = parameters['csidh'][prime]['n']
@@ -118,11 +116,11 @@ def Svelu(curve, verbose):
             hI = [
                 list([fp.fp_sub(0, P2[0]), P2[1]])
             ]  # we only need to negate x-coordinate of each point
-            ptree_hI = product_tree(hI, sI)  # product tree of hI
+            ptree_hI = poly_mul.product_tree(hI, sI)  # product tree of hI
 
             if not SCALED_REMAINDER_TREE:
                 # Using remainder trees
-                ptree_hI = reciprocal_tree(
+                ptree_hI = poly_redc.reciprocal_tree(
                     {'rpoly': [1], 'rdeg': 0, 'fpoly': [1], 'fdeg': 0, 'a': 1},
                     2 * sJ + 1,
                     ptree_hI,
@@ -132,7 +130,7 @@ def Svelu(curve, verbose):
             else:
                 # Using scaled remainder trees
                 assert (2 * sJ - sI + 1) > sI
-                ptree_hI['reciprocal'], ptree_hI['a'] = reciprocal(
+                ptree_hI['reciprocal'], ptree_hI['a'] = poly_redc.reciprocal(
                     ptree_hI['poly'][::-1], sI + 1, 2 * sJ - sI + 1
                 )
                 ptree_hI['scaled'], ptree_hI['as'] = (
@@ -167,11 +165,11 @@ def Svelu(curve, verbose):
             hI = [
                 [fp.fp_sub(0, iP[0]), iP[1]] for iP in I
             ]  # we only need to negate x-coordinate of each point
-            ptree_hI = product_tree(hI, sI)  # product tree of hI
+            ptree_hI = poly_mul.product_tree(hI, sI)  # product tree of hI
 
             if not SCALED_REMAINDER_TREE:
                 # Using remainder trees
-                ptree_hI = reciprocal_tree(
+                ptree_hI = poly_redc.reciprocal_tree(
                     {'rpoly': [1], 'rdeg': 0, 'fpoly': [1], 'fdeg': 0, 'a': 1},
                     2 * sJ + 1,
                     ptree_hI,
@@ -181,7 +179,7 @@ def Svelu(curve, verbose):
             else:
                 # Using scaled remainder trees
                 assert (2 * sJ - sI + 1) <= sI
-                ptree_hI['scaled'], ptree_hI['as'] = reciprocal(
+                ptree_hI['scaled'], ptree_hI['as'] = poly_redc.reciprocal(
                     ptree_hI['poly'][::-1], sI + 1, sI
                 )
                 ptree_hI['reciprocal'], ptree_hI['a'] = (
@@ -257,11 +255,11 @@ def Svelu(curve, verbose):
         hI = [
             [fp.fp_sub(0, iP[0]), iP[1]] for iP in I
         ]  # we only need to negate x-coordinate of each point
-        ptree_hI = product_tree(hI, sI)  # product tree of hI
+        ptree_hI = poly_mul.product_tree(hI, sI)  # product tree of hI
 
         if not SCALED_REMAINDER_TREE:
             # Using scaled remainder trees
-            ptree_hI = reciprocal_tree(
+            ptree_hI = poly_redc.reciprocal_tree(
                 {'rpoly': [1], 'rdeg': 0, 'fpoly': [1], 'fdeg': 0, 'a': 1},
                 2 * sJ + 1,
                 ptree_hI,
@@ -271,7 +269,7 @@ def Svelu(curve, verbose):
         else:
             # Using scaled remainder trees
             if sI < (2 * sJ - sI + 1):
-                ptree_hI['reciprocal'], ptree_hI['a'] = reciprocal(
+                ptree_hI['reciprocal'], ptree_hI['a'] = poly_redc.reciprocal(
                     ptree_hI['poly'][::-1], sI + 1, 2 * sJ - sI + 1
                 )
                 ptree_hI['scaled'], ptree_hI['as'] = (
@@ -280,7 +278,7 @@ def Svelu(curve, verbose):
                 )
 
             else:
-                ptree_hI['scaled'], ptree_hI['as'] = reciprocal(
+                ptree_hI['scaled'], ptree_hI['as'] = poly_redc.reciprocal(
                     ptree_hI['poly'][::-1], sI + 1, sI
                 )
                 ptree_hI['reciprocal'], ptree_hI['a'] = (
@@ -373,34 +371,34 @@ def Svelu(curve, verbose):
             EJ_1[j] = [tadd, linear, tadd]
 
         # The faster way for multiplying is using a divide-and-conquer approach
-        poly_EJ_0 = product_selfreciprocal_tree(EJ_0, sJ)[
+        poly_EJ_0 = poly_mul.product_selfreciprocal_tree(EJ_0, sJ)[
             'poly'
         ]  # product tree of EJ_0 (we only require the root)
-        poly_EJ_1 = product_selfreciprocal_tree(EJ_1, sJ)[
+        poly_EJ_1 = poly_mul.product_selfreciprocal_tree(EJ_1, sJ)[
             'poly'
         ]  # product tree of EJ_1 (we only require the root)
 
         if not SCALED_REMAINDER_TREE:
             # Remainder tree computation
-            remainders_EJ_0 = multieval_unscaled(
+            remainders_EJ_0 = poly_redc.multieval_unscaled(
                 poly_EJ_0, 2 * sJ + 1, ptree_hI, sI
             )
-            remainders_EJ_1 = multieval_unscaled(
+            remainders_EJ_1 = poly_redc.multieval_unscaled(
                 poly_EJ_1, 2 * sJ + 1, ptree_hI, sI
             )
 
         else:
             # Approach using scaled remainder trees
             if ptree_hI != None:
-                poly_EJ_0 = poly_redc(poly_EJ_0, 2 * sJ + 1, ptree_hI)
+                poly_EJ_0 = poly_redc.poly_redc(poly_EJ_0, 2 * sJ + 1, ptree_hI)
                 fg_0 = poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_0[::-1], sI)
-                remainders_EJ_0 = multieval_scaled(
+                remainders_EJ_0 = poly_redc.multieval_scaled(
                     fg_0[::-1], sI, [1] + [0] * (sI - 1), sI, ptree_hI, sI
                 )
 
-                poly_EJ_1 = poly_redc(poly_EJ_1, 2 * sJ + 1, ptree_hI)
+                poly_EJ_1 = poly_redc.poly_redc(poly_EJ_1, 2 * sJ + 1, ptree_hI)
                 fg_1 = poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_1[::-1], sI)
-                remainders_EJ_1 = multieval_scaled(
+                remainders_EJ_1 = poly_redc.multieval_scaled(
                     fg_1[::-1], sI, [1] + [0] * (sI - 1), sI, ptree_hI, sI
                 )
             else:
@@ -408,8 +406,8 @@ def Svelu(curve, verbose):
                 remainders_EJ_1 = []
 
         # Multipying all the remainders
-        r0 = product(remainders_EJ_0, sI)
-        r1 = product(remainders_EJ_1, sI)
+        r0 = poly_mul.product(remainders_EJ_0, sI)
+        r1 = poly_mul.product(remainders_EJ_1, sI)
 
         # ---------------------------------------------------------------------------------
         # Now, we proceed by computing the missing part which is determined by K
@@ -418,10 +416,10 @@ def Svelu(curve, verbose):
 
         # Case alpha = 1
         hK_0 = [[fp.fp_sub(K[k][1], K[k][0])] for k in range(0, sK, 1)]
-        hK_0 = product(hK_0, sK)  # product of (Zk - Xk) for each k in K
+        hK_0 = poly_mul.product(hK_0, sK)  # product of (Zk - Xk) for each k in K
         # Case alpha = -1
         hK_1 = [[fp.fp_add(K[k][1], K[k][0])] for k in range(0, sK, 1)]
-        hK_1 = product(hK_1, sK)  # product of (Zk + Xk) for each k in K
+        hK_1 = poly_mul.product(hK_1, sK)  # product of (Zk + Xk) for each k in K
 
         # --------------------------------------------------------------
         # Now, we have all the ingredients for computing the image curve
@@ -543,7 +541,7 @@ def Svelu(curve, verbose):
             EJ_0[j] = [constant, linear, quadratic]
 
         # The faster way for multiplying is using a divide-and-conquer approach
-        poly_EJ_0 = product_tree(EJ_0, sJ)[
+        poly_EJ_0 = poly_mul.product_tree(EJ_0, sJ)[
             'poly'
         ]  # product tree of EJ_0 (we only require the root)
         poly_EJ_1 = list(
@@ -552,25 +550,25 @@ def Svelu(curve, verbose):
 
         if not SCALED_REMAINDER_TREE:
             # Remainder tree computation
-            remainders_EJ_0 = multieval_unscaled(
+            remainders_EJ_0 = poly_redc.multieval_unscaled(
                 poly_EJ_0, 2 * sJ + 1, ptree_hI, sI
             )
-            remainders_EJ_1 = multieval_unscaled(
+            remainders_EJ_1 = poly_redc.multieval_unscaled(
                 poly_EJ_1, 2 * sJ + 1, ptree_hI, sI
             )
 
         else:
             # Approach using scaled remainder trees
             if ptree_hI != None:
-                poly_EJ_0 = poly_redc(poly_EJ_0, 2 * sJ + 1, ptree_hI)
+                poly_EJ_0 = poly_redc.poly_redc(poly_EJ_0, 2 * sJ + 1, ptree_hI)
                 fg_0 = poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_0[::-1], sI)
-                remainders_EJ_0 = multieval_scaled(
+                remainders_EJ_0 = poly_redc.multieval_scaled(
                     fg_0[::-1], sI, [1] + [0] * (sI - 1), sI, ptree_hI, sI
                 )
 
-                poly_EJ_1 = poly_redc(poly_EJ_1, 2 * sJ + 1, ptree_hI)
+                poly_EJ_1 = poly_redc.poly_redc(poly_EJ_1, 2 * sJ + 1, ptree_hI)
                 fg_1 = poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_1[::-1], sI)
-                remainders_EJ_1 = multieval_scaled(
+                remainders_EJ_1 = poly_redc.multieval_scaled(
                     fg_1[::-1], sI, [1] + [0] * (sI - 1), sI, ptree_hI, sI
                 )
             else:
@@ -578,8 +576,8 @@ def Svelu(curve, verbose):
                 remainders_EJ_1 = []
 
         # Multipying all the remainders
-        r0 = product(remainders_EJ_0, sI)
-        r1 = product(remainders_EJ_1, sI)
+        r0 = poly_mul.product(remainders_EJ_0, sI)
+        r1 = poly_mul.product(remainders_EJ_1, sI)
 
         # ---------------------------------------------------------------------------------
         # Now, we proceed by computing the missing part which is determined by K
@@ -601,8 +599,8 @@ def Svelu(curve, verbose):
             # Case 1/alpha = Z/X
             hK_1[k] = [fp.fp_add(t1, t2)]  # 2 * [(X*Xk) - (Z*Zk)]
 
-        hK_0 = product(hK_0, sK)  # product of (XZk - ZXk) for each k in K
-        hK_1 = product(hK_1, sK)  # product of (XXk - ZZk) for each k in K
+        hK_0 = poly_mul.product(hK_0, sK)  # product of (XZk - ZXk) for each k in K
+        hK_1 = poly_mul.product(hK_1, sK)  # product of (XXk - ZZk) for each k in K
 
         # ---------------------------------------------------------------------------------
         # Now, unifying all the computations

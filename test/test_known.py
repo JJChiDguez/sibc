@@ -63,6 +63,7 @@ class known_df_p512(object):
         self.csidh = CSIDH(
             'montgomery', self.prime, self.formula, self.style, self.verbose, 2
         )
+
         self.coeff = self.csidh.curve.coeff
 
     def test_dh_AB(self):

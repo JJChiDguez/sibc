@@ -1,4 +1,5 @@
-make poly_* not use global fp
+remove file io from montgomery.py
+fork fp.py into benchmarking and non-benchmarking versions?
 use pkg_resources for finding data files
 fix bsidh commands and subcommands as documented in the README.md file
 consider and implement a modular fp backend:

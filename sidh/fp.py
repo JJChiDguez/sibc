@@ -17,6 +17,14 @@ class F_p(object):
             self.n = n
             self.exponent_of_two = exponent_of_two
 
+            p = (2 ** (exponent_of_two)) * reduce(
+                lambda x, y: (x * y), L
+            ) - 1  # p := 4 * l_0 * ... * l_n - 1
+            self.p = p
+            p_minus_one_halves = (p - 1) // 2  # (p - 1) / 2
+            validation_stop = sum([bitlength(l_i) for l_i in L]) / 2.0 + 2
+            self.p_minus_one_halves = p_minus_one_halves
+            self.validation_stop = validation_stop
         else:
             assert False, "bsidh not refactored yet"
 
@@ -46,16 +54,6 @@ class F_p(object):
 
             f.close()
 
-        if algorithm == 'csidh':
-            p = (2 ** (exponent_of_two)) * reduce(
-                lambda x, y: (x * y), L
-            ) - 1  # p := 4 * l_0 * ... * l_n - 1
-            self.p = p
-            p_minus_one_halves = (p - 1) // 2  # (p - 1) / 2
-            validation_stop = sum([bitlength(l_i) for l_i in L]) / 2.0 + 2
-            self.p_minus_one_halves = p_minus_one_halves
-            self.validation_stop = validation_stop
-        else:
 
             # pp = (2**exponent_of_twop) * reduce(lambda x,y : (x*y), [ Lp[i]**Ep[i] for i in range(0, np, 1)  ])
             pp = reduce(
