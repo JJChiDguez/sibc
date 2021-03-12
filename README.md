@@ -4,57 +4,104 @@
 At a combined computational expense of about *6l* field operations, Velu's formulae are used to construct and evaluate degree-*l* isogenies in the vast majority of isogeny-based primitive implementations. Recently, Bernstein, de Feo, Leroux and Smith introduced an new approach for solving this same problem at a reduced cost of just *O(sqrt(l))* field operations. In this work, we present a concrete computational analysis of these novel formulae, along with several algorithmic tricks that helped us to slightly, but noticeably, reduce their practical cost.
 
 
-## Compilation
+## Installation 
 
-The syntax compilation can be viewed by running one of the following three commands
+Install the `sidh` module which provides the `sidh` program:
+```
+sudo python3 setup.py install
+```
 
+For development:
+```
+sudo pip install -e . 
+```
+
+## Usage 
+The syntax compilation can be viewed by running one of the following three commands:
 ```bash
 # Corresponding with the key-exchange protocol
-python3 main.py -h or python3 main.py --help
+sidh --help
 # Corresponding with benchmarking (only for CSIDH, which has a variable running-time cost independent from the key)
-python3 main.py -h or python3 bench.py --help
+sidh csidh-bench
 # Corresponding with the costs of KPs (Kernel Point computation), xISOG (isogeny construction), and xEVAL (isogeny evaluation)
-python3 main.py -h or python3 test.py --help
+sidh csidh-test
 ```
 
-and any of the above commands should show:
-
+Usage for the `sidh` tool:
 ```bash
-usage: main.py [-h] -p PRIME -f FORMULAES -a ALGORITHM [-s STYLE] [-b BENCHMARK] [-v]
+$ sidh --help
+Usage: sidh [OPTIONS] COMMAND [ARGS]...
 
-Parses command.
+    ,-~~-.___.
+   / |  '     \
+  (  )         0
+   \_/-, ,----'
+      ====           //
+     /  \-'~;    /~~~(O)
+    /  __/~|   /       |
+  =(  _____| (_________|
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -p PRIME, --prime PRIME
-                        prime number configuration should be stored in pSUFFIX (sop folder is taken as default).
-  -f FORMULAES, --formulaes FORMULAES
-                        traditional (tvelu), sqrt (svelu), or hybrid (hvelu) velu formulaes to be used.
-  -a ALGORITHM, --algorithm ALGORITHM
-                        bsidh or csidh algorithm
-  -s STYLE, --style STYLE
-                        style to be used: wd1 (with dummy operations and a single torsion point), wd2 (with dummy operations and a two torsion point), or df (dummy-free approach).
-  -b BENCHMARK, --benchmark BENCHMARK
-                        number of experiments to be used in the benchmark.
-  -v, --verbose         Verbose mode.
+Options:
+  -p, --prime [b2|b3|b5|b6|p1024|p1792|p512|sv]
+                                  [default: p512]
+  -f, --formula [tvelu|svelu|hvelu]
+                                  [default: hvelu]
+  -a, --algorithm [csidh|bsidh]   [default: csidh]
+  -s, --style [wd1|wd2|df]        [default: df]
+  -e, --exponent [2]              [default: 2]
+  -c, --curvemodel [edwards|montgomery]
+                                  [default: montgomery]
+  -b, --benchmark INTEGER         [default: 128]
+  -v, --verbose                   Not the kind of verbosity you might expect
+                                  [default: False]
+
+  --version                       Show the version and exit.
+  --help                          Show this message and exit.
+
+Commands:
+  csidh-bench
+  csidh-bounds
+  csidh-header
+  csidh-ijk
+  csidh-main
+  csidh-parameters
+  csidh-sdacs
+  csidh-strategy
+  csidh-suitable-bounds
+  csidh-test
+  genkey                 Generate a secret key
+  print-strategy         draw graphs
 ```
 
-Notice, `csidh`  option requires the use of the flag `-s` (or `--style`). The verbose flag `-v` (or `--verbose`) requires to have stored the suitable parameters `#I`, `#J` and `#K` in the new velu's formulaes; in particular, let's assume we want those suitable parameters for a given prime `p`, then  one can store those parameters by running one of the following commands
+## sidh api
 
-```bash
-# CSIDH
-./autosearch.sh p csidh
-sh autosearch.sh p csidh
-bash autosearch.sh p csidh
-# BSIDH
-./autosearch.sh p bsidh
-sh autosearch.sh p bsidh
-bash autosearch.sh p bsidh
+Currently only CSIDH is available as a library function.
+
+### Basic shared secret generation
+```python3
+from sidh.csidh import CSIDH, default_parameters
+c = CSIDH(**default_parameters)
+
+# alice generates a key
+alice_secret_key = c.secret_key()
+alice_public_key = c.public_key(alice_secret_key)
+
+# bob generates a key
+bob_secret_key = c.secret_key()
+bob_public_key = c.public_key(bob_secret_key)
+
+# if either alice or bob use their secret key with the other's respective
+# public key, the resulting shared secrets are the same
+shared_secret_alice = c.dh(alice_secret_key, bob_public_key)
+shared_secret_bob = c.dh(bob_secret_key, alice_public_key)
+
+# Alice and bob produce an identical shared secret
+assert shared_secret_alice == shared_secret_bob
 ```
 
 ## Adding new primes
 
-The field characteristic `p` should be stored in directory `sop/`, and CSIDH and BSIDH have different structures (see below):
+The field characteristic `p` should be stored in directory `data/sop/`, and CSIDH and BSIDH have different structures (see below):
 
 ```bash
 # CSIDH format (here p = 2^c * l_1 * .... l_n - 1)
@@ -79,30 +126,30 @@ where `Re(X)` and `Im(X)` denote the real and imaginary parts of X with respect 
 
 ## Examples
 
-We summarize some examples of runs as follows
+We summarize some examples of runs as follows:
 
 ```bash
 # CSIDH
-python3 main.py -p p1024 -f tvelu -a csidh -s df
-python3 main.py -p p512 -f svelu -a csidh -s wd2
-python3 main.py -p p1792 -f hvelu -a csidh -s wd1 -v
+sidh -p p1024 -f tvelu -a csidh -s df csidh-main
+sidh -p p512 -f svelu -a csidh -s wd2 csidh-main
+sidh -p p1792 -f hvelu -a csidh -s wd1 -v csidh-main
 
-python3 bench.py -p p512 -f hvelu -a csidh -s wd2 -b 1024 -v
-python3 bench.py -p p512 -f hvelu -a csidh -s wd1 -b 1024 -v
-python3 bench.py -p p512 -f hvelu -a csidh -s df -b 1024 -v
+sidh -p p512 -f hvelu -a csidh -s wd2 -b 1024 -v csidh-bench 
+sidh -p p512 -f hvelu -a csidh -s wd1 -b 1024 -v csidh-bench 
+sidh -p p512 -f hvelu -a csidh -s df  -b 1024 -v csidh-bench 
 
-python3 test.py -p p1792 -f tvelu -a csidh
-python3 test.py -p p1792 -f svelu -a csidh
-python3 test.py -p p1792 -f hvelu -a csidh
+sidh -p p1792 -f tvelu -a csidh csidh-test
+sidh -p p1792 -f svelu -a csidh csidh-test
+sidh -p p1792 -f hvelu -a csidh csidh-test
 
-# BSIDH
-python3 main.py -p b6 -f tvelu -a bsidh
-python3 main.py -p b5 -f svelu -a bsidh
-python3 main.py -p b2 -f hvelu -a bsidh -v
+# BSIDH (all of these are currently not ported over to the click tui)
+sidh -p b6 -f tvelu -a bsidh
+sidh -p b5 -f svelu -a bsidh  <!- data missing for this ( /usr/share/python3-sidh/data/strategies/bsidh-b5-svelu-classical )
+sidh -p b2 -f hvelu -a bsidh -v
 
-python3 test.py -p b6 -f tvelu -a bsidh
-python3 test.py -p b6 -f svelu -a bsidh
-python3 test.py -p b6 -f hvelu -a bsidh
+sidh-test -p b6 -f tvelu -a bsidh
+sidh-test -p b6 -f svelu -a bsidh
+sidh-test -p b6 -f hvelu -a bsidh
 
 ```
 
@@ -110,38 +157,44 @@ Remark, our implementation allows us to plot each optimal strategy required:
 
 ```bash
 # CSIDH
-python3 print-strategy.py -p p1024 -f tvelu -a csidh -s df
-python3 print-strategy.py -p p512 -f svelu -a csidh -s wd2
-python3 print-strategy.py -p p1792 -f hvelu -a csidh -s wd1 -v
+sidh -p p1024 -f tvelu -a csidh -s df     print-strategy
+sidh -p p512 -f svelu -a csidh -s wd2     print-strategy
+sidh -p p1792 -f hvelu -a csidh -s wd1 -v print-strategy
 
 # BSIDH
-python3 print-strategy.py -p b6 -f tvelu -a bsidh
-python3 print-strategy.py -p b5 -f svelu -a bsidh
-python3 print-strategy.py -p b2 -f hvelu -a bsidh -v
+sidh-print-strategy -p b6 -f tvelu -a bsidh
+sidh-print-strategy -p b5 -f svelu -a bsidh <! data missing for this ( /usr/share/python3-sidh/data/strategies/bsidh-b5-svelu-classical )
+sidh-print-strategy -p b2 -f hvelu -a bsidh -v
 ```
 
 Additionally, one can created files with extension `.h` that includes all the required variables in a the sdacs, strategies, and velusqrt (at least for CSIDH implementations).
 
 ```bash
 # Suitable bounds with m = 5
-python3 bounds.py -a csidh -p p512 -s wd2 -f hvelu -b 5
+sidh -a csidh -p p512 -s wd2 -f hvelu -b 5 csidh-bounds
 # Strategies also with m = 5
-python3 header.py -a csidh -p p512 -s wd2 -f hvelu -v -b 5
+sidh -a csidh -p p512 -s wd2 -f hvelu -v -b 5 csidh-header
 # SDACs (the flag -s doesn't affects the output)
-python3 sdacs.py -a csidh -p p512 -s wd2 -f hvelu -v
+sidh -a csidh -p p512 -s wd2 -f hvelu -v csidh-sdacs
 # Optimal sizes of I, J, and K required in velusqrt (the flag -s doesn't affects the output)
-python3 ijk.py -a csidh -p p512 -s wd2 -f hvelu -v
+sidh -a csidh -p p512 -s wd2 -f hvelu -v csidh-ijk
 ```
 
 ## Remarks
 
 The primes labeled as `b2`, `b3`, `b5`, and `b6` correspond with the examples 2, 3, 5, and 6 of , respectively. In particular, we focused on primes such that `p = 3 mod 4`. Additionally, the product and squaring in `F_p[i]/(i^2 + 1)` were implemented using 3 and 2 products in `F_p`, respectively.
 
+## Changes
+
+Significant changes are listed in the [CHANGELOG](CHANGELOG) file.
+
 ## Authors
 
 1. **Gora Adj** <gora.adj@gmail.com,gora.adj@udl.cat>,
 2. **_Jesús-Javier Chi-Domínguez_** <jesus.chidominguez@tuni.fi>, <chidoys@gmail.com>, <jjchi@computacion.cs.cinvestav.mx>, and
 3. **_Francisco Rodríguez-Henríquez_** <francisco@cs.cinvestav.mx>.
+
+Additional contributors are listed in the [CONTRIBUTORS](CONTRIBUTORS) file.
 
 ## License
 

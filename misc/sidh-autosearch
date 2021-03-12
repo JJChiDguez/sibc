@@ -1,0 +1,8 @@
+#!/bin/bash
+
+prime=$1
+algorithm=$2
+
+( sidh-parameters -p $prime -f svelu -a $algorithm ) | tee $prime
+( tail -n +3 $prime ) | tee ijk-$prime
+rm $prime
