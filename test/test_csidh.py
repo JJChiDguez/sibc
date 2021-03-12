@@ -64,6 +64,7 @@ for prime in PRIMES:
                                 formula,
                                 style,
                                 ('classical', 'suitable')[tuned],
+                                ('no-multievaluation', 'multievaluation')[multievaluation],
                             ]
                         )
                     ] = cls
