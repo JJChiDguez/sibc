@@ -31,7 +31,7 @@ def csidh_header(ctx):
         # Maximum number of degree-(l_i) isogeny constructions is m (the same for each l_i)
         LABEL_m = 'with_same_bounds'
 
-    if setting.verbose:
+    if setting.tuned:
         verb = '-suitable'
     else:
         verb = '-classical'

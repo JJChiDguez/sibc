@@ -63,7 +63,7 @@ def csidh_test(ctx):
 
         if setting.formula != 'tvelu':
 
-            if setting.verbose:
+            if setting.tuned:
                 set_parameters_velu(sJ_list[idx], sI_list[idx], idx)
 
             else:

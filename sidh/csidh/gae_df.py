@@ -7,7 +7,7 @@ from sidh.math import isequal, bitlength, hamming_weight
 from sidh.constants import parameters
 
 class Gae_df(object):
-    def __init__(self, prime, verbose, curve, formula):
+    def __init__(self, prime, tuned, curve, formula):
         self.random = SystemRandom()
 
         # In order to achieve efficiency, the optimal strategies and their cost are saved in two global dictionaries (hash tables)
@@ -19,7 +19,7 @@ class Gae_df(object):
         self.formula = formula
         self.formula_name = formula.name
         self.fp = self.curve.fp
-        self.verbose = verbose
+        self.tuned = tuned
         self.L = L = parameters['csidh'][prime]['L']
         self.m = parameters['csidh'][prime]['df']['m']
         self.C_xMUL = self.curve.C_xMUL
@@ -273,7 +273,7 @@ class Gae_df(object):
                         # This branchs corresponds with the use of the new velu's formulaes
 
                         E_prev = list(E_i)
-                        if self.verbose:
+                        if self.tuned:
                             self.formula.set_parameters_velu(self.formula.sJ_list[pos], self.formula.sI_list[pos], pos)
 
                         else:
@@ -418,7 +418,7 @@ class Gae_df(object):
                 if self.formula_name != 'tvelu':
                     # This branchs corresponds with the use of the new velu's formulaes
 
-                    if self.verbose:
+                    if self.tuned:
                         self.formula.set_parameters_velu(self.formula.sJ_list[pos], self.formula.sI_list[pos], pos)
 
                     else:

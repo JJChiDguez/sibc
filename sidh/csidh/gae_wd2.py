@@ -6,7 +6,7 @@ from sidh.math import isequal, bitlength, hamming_weight
 from sidh.constants import parameters
 from sidh.common import attrdict
 
-def Gae_wd2(prime, verbose, curve, formula):
+def Gae_wd2(prime, tuned, curve, formula):
 
     fp = curve.fp
     L = global_L = curve.L
@@ -282,7 +282,7 @@ def Gae_wd2(prime, verbose, curve, formula):
                     if formula.name != 'tvelu':
                         # This branchs corresponds with the use of the new velu's formulaes
 
-                        if verbose:
+                        if tuned:
                             formula.set_parameters_velu(formula.sJ_list[pos], formula.sI_list[pos], pos)
 
                         else:
@@ -515,7 +515,7 @@ def Gae_wd2(prime, verbose, curve, formula):
                 if formula.name != 'tvelu':
                     # This branchs corresponds with the use of the new velu's formulaes
 
-                    if verbose:
+                    if tuned:
                         formula.set_parameters_velu(formula.sJ_list[pos], formula.sI_list[pos], pos)
 
                     else:

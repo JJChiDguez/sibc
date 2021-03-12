@@ -8,8 +8,7 @@ from sympy import floor, sqrt, sign
 
 class Hvelu(object):
     name = 'hvelu'
-    def __init__(self, curve, _verbose):
-
+    def __init__(self, curve, tuned, multievaluation):
         # Get cost of the isogeny constructions and evaluations
         self.sI_list = None
         self.sJ_list = None
@@ -34,8 +33,8 @@ class Hvelu(object):
         # An extra global variable which is used in xISOG and xEVAL
         self.XZJ4 = None
 
-        self.SCALED_REMAINDER_TREE = True
-        self.verbose = verbose = _verbose
+        self.SCALED_REMAINDER_TREE = multievaluation
+        self.tuned = tuned
 
         self.prime = curve.prime
         self.curve = curve
@@ -419,7 +418,7 @@ class Hvelu(object):
             # Using scaled remainder trees
             self.ptree_hI = self.poly_redc.reciprocal_tree(
                 {'rpoly': [1], 'rdeg': 0, 'fpoly': [1], 'fdeg': 0, 'a': 1},
-                2 * sJ + 1,
+                2 * self.sJ + 1,
                 self.ptree_hI,
                 self.sI,
             )  # reciprocal of the root is used to compute sons' reciprocals
@@ -530,10 +529,10 @@ class Hvelu(object):
 
         if not self.SCALED_REMAINDER_TREE:
             # Remainder tree computation
-            remainders_EJ_0 = multieval_unscaled(
+            remainders_EJ_0 = self.poly_redc.multieval_unscaled(
                 poly_EJ_0, 2 * self.sJ + 1, self.ptree_hI, self.sI
             )
-            remainders_EJ_1 = multieval_unscaled(
+            remainders_EJ_1 = self.poly_redc.multieval_unscaled(
                 poly_EJ_1, 2 * self.sJ + 1, self.ptree_hI, self.sI
             )
 
@@ -700,10 +699,10 @@ class Hvelu(object):
 
         if not self.SCALED_REMAINDER_TREE:
             # Remainder tree computation
-            remainders_EJ_0 = multieval_unscaled(
+            remainders_EJ_0 = self.poly_redc.multieval_unscaled(
                 poly_EJ_0, 2 * self.sJ + 1, self.ptree_hI, self.sI
             )
-            remainders_EJ_1 = multieval_unscaled(
+            remainders_EJ_1 = self.poly_redc.multieval_unscaled(
                 poly_EJ_1, 2 * self.sJ + 1, self.ptree_hI, self.sI
             )
 
@@ -795,7 +794,7 @@ class Hvelu(object):
 
     def cISOG_and_cEVAL(self):
 
-        if self.verbose:
+        if self.tuned:
 
             self.sI_list = []
             self.sJ_list = []
@@ -816,7 +815,7 @@ class Hvelu(object):
 
         for i in range(0, self.fp.n, 1):
 
-            if self.verbose:
+            if self.tuned:
                 self.set_parameters_velu(self.sJ_list[i], self.sI_list[i], i)
             else:
                 # Parameters sJ and sI correspond with the parameters b and b' from example 4.12 of https://eprint.iacr.org/2020/341

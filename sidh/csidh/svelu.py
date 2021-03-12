@@ -7,12 +7,13 @@ from sidh.constants import ijk_data, parameters
 import numpy
 from sympy import symbols, floor, sqrt, sign
 
-def Svelu(curve, verbose):
+def Svelu(curve, tuned, multievaluation):
     fp = curve.fp
     poly_mul = Poly_mul(curve)
     poly_redc = Poly_redc(poly_mul)
     global_L = curve.L
     prime = curve.prime
+    SCALED_REMAINDER_TREE = multievaluation
     n = parameters['csidh'][prime]['n']
 
 
@@ -49,7 +50,6 @@ def Svelu(curve, verbose):
     # An extra nonlocal variable which is used in xISOG and xEVAL
     XZJ4 = None
 
-    SCALED_REMAINDER_TREE = False
 
     # Next functions is used for setting the cardinalities sI, sJ, and sK
     def set_parameters_velu(b, c, i):
@@ -391,13 +391,13 @@ def Svelu(curve, verbose):
             # Approach using scaled remainder trees
             if ptree_hI != None:
                 poly_EJ_0 = poly_redc.poly_redc(poly_EJ_0, 2 * sJ + 1, ptree_hI)
-                fg_0 = poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_0[::-1], sI)
+                fg_0 = poly_mul.poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_0[::-1], sI)
                 remainders_EJ_0 = poly_redc.multieval_scaled(
                     fg_0[::-1], sI, [1] + [0] * (sI - 1), sI, ptree_hI, sI
                 )
 
                 poly_EJ_1 = poly_redc.poly_redc(poly_EJ_1, 2 * sJ + 1, ptree_hI)
-                fg_1 = poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_1[::-1], sI)
+                fg_1 = poly_mul.poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_1[::-1], sI)
                 remainders_EJ_1 = poly_redc.multieval_scaled(
                     fg_1[::-1], sI, [1] + [0] * (sI - 1), sI, ptree_hI, sI
                 )
@@ -561,13 +561,13 @@ def Svelu(curve, verbose):
             # Approach using scaled remainder trees
             if ptree_hI != None:
                 poly_EJ_0 = poly_redc.poly_redc(poly_EJ_0, 2 * sJ + 1, ptree_hI)
-                fg_0 = poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_0[::-1], sI)
+                fg_0 = poly_mul.poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_0[::-1], sI)
                 remainders_EJ_0 = poly_redc.multieval_scaled(
                     fg_0[::-1], sI, [1] + [0] * (sI - 1), sI, ptree_hI, sI
                 )
 
                 poly_EJ_1 = poly_redc.poly_redc(poly_EJ_1, 2 * sJ + 1, ptree_hI)
-                fg_1 = poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_1[::-1], sI)
+                fg_1 = poly_mul.poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_1[::-1], sI)
                 remainders_EJ_1 = poly_redc.multieval_scaled(
                     fg_1[::-1], sI, [1] + [0] * (sI - 1), sI, ptree_hI, sI
                 )
@@ -632,7 +632,7 @@ def Svelu(curve, verbose):
         nonlocal sI_list
         nonlocal sJ_list
 
-        if verbose:
+        if tuned:
 
             sI_list = []
             sJ_list = []
@@ -652,7 +652,7 @@ def Svelu(curve, verbose):
 
         for i in range(0, n, 1):
 
-            if verbose:
+            if tuned:
                 set_parameters_velu(sJ_list[i], sI_list[i], i)
             else:
                 # Parameters sJ and sI correspond with the parameters b and b' from example 4.12 of https://eprint.iacr.org/2020/341

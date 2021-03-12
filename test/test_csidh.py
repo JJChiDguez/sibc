@@ -1,8 +1,9 @@
 """
 This module creates test classes for all 54 permutations of prime, formula,
-style, and verbose.
+style, tuned, and multievaluation.
 
-These obviously take a long time to run.
+These obviously take a long time to run. pytest-xdist is useful for speeding up
+the test run with parallelized tests.
 
 You can run the tests with pytest and limit which are run using the -k option.
 For instance, to only run the test_genpubvalidate test on p512 with df and
@@ -19,12 +20,11 @@ FORMULAS = ('tvelu', 'svelu', 'hvelu')
 
 STYLES = ('df', 'wd1', 'wd2')
 
-
 class CSIDH_gae_test_base(object):
     def setUp(self):
         self.c = CSIDH(
-            'montgomery', self.prime, self.formula, self.style, self.verbose, 2
-        )
+            'montgomery', self.prime, self.formula, self.style, self.exponent,
+            self.tuned, self.multievaluation, self.verbose)
 
     def test_genpubvalidate(self):
         sk = self.c.gae.random_key()
@@ -43,23 +43,28 @@ class CSIDH_gae_test_base(object):
 for prime in PRIMES:
     for formula in FORMULAS:
         for style in STYLES:
-            for verbose in (False, True):
+            for tuned in (False, True):
+                for multievaluation in (False, True):
 
-                class cls(CSIDH_gae_test_base, TestCase):
-                    formula = formula
-                    style = style
-                    prime = prime
-                    verbose = verbose
+                    class cls(CSIDH_gae_test_base, TestCase):
+                        formula = formula
+                        style = style
+                        prime = prime
+                        tuned = tuned
+                        exponent = 2
+                        multievaluation = multievaluation
+                        verbose = False
 
-                globals()[
-                    'csidh_gae_'
-                    + '_'.join(
-                        [
-                            prime,
-                            formula,
-                            style,
-                            ('classical', 'suitable')[verbose],
-                        ]
-                    )
-                ] = cls
+
+                    globals()[
+                        'csidh_gae_'
+                        + '_'.join(
+                            [
+                                prime,
+                                formula,
+                                style,
+                                ('classical', 'suitable')[tuned],
+                            ]
+                        )
+                    ] = cls
 del cls

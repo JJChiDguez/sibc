@@ -1,4 +1,3 @@
-#x = dict(df=gae_df, wd1=gae_wd1, wd2=gae_wd2)
 from struct import pack, unpack
 
 from sidh.csidh.gae_df import Gae_df
@@ -12,8 +11,8 @@ from sidh.constants import parameters
 from sidh.common import attrdict
 
 default_parameters = dict(curvemodel='montgomery', prime='p512',
-                          formula='hvelu', style='wd2', verbose=False,
-                          exponent=2)
+                        formula='hvelu', style='wd2', exponent=2, tuned=False,
+                        multievaluation=False, verbose=False)
 
 class CSIDH(object):
     """
@@ -22,7 +21,7 @@ class CSIDH(object):
 
     Here is one group action test with random keys:
 
-    >>> csidh_tvelu_wd1 = CSIDH('montgomery', 'p512', 'tvelu', 'wd1', False, 2)
+    >>> csidh_tvelu_wd1 = CSIDH('montgomery', 'p512', 'tvelu', 'wd1', 2, False, False, False)
     >>> sk_a, sk_b = csidh_tvelu_wd1.secret_key(), csidh_tvelu_wd1.secret_key()
     >>> pk_a, pk_b = csidh_tvelu_wd1.public_key(sk_a), csidh_tvelu_wd1.public_key(sk_b)
     >>> csidh_tvelu_wd1.dh(sk_a, pk_b) == csidh_tvelu_wd1.dh(sk_b, pk_a)
@@ -48,16 +47,18 @@ class CSIDH(object):
 
     """
 
-    def __init__(self, curvemodel, prime, formula, style, verbose, exponent):
+    def __init__(self, curvemodel, prime, formula, style, tuned, exponent,
+                 multievaluation, verbose):
         self.curvemodel = curvemodel
         self.prime = prime
         self.style = style
         self._exponent = exponent
+        self.tuned = tuned
+        self.multievaluation = multievaluation
         self.fp = None
         self.params = attrdict(parameters['csidh'][prime])
         self.params.update(self.params[style])
 
-        # Where do we do our math? On a curve!
         if self.curvemodel == 'montgomery':
             self.curve = MontgomeryCurve(prime, style)
             self.fp = self.curve.fp
@@ -65,21 +66,19 @@ class CSIDH(object):
             self.curve = None
             raise NotImplemented
 
-        # Formulas for our algorithm
         if formula == 'hvelu':
-            self.formula = Hvelu(self.curve, verbose)
+            self.formula = Hvelu(self.curve, self.tuned, self.multievaluation)
         elif formula == 'tvelu':
             self.formula = Tvelu(self.curve)
         elif formula == 'svelu':
-            self.formula = Svelu(self.curve, verbose)
+            self.formula = Svelu(self.curve, self.tuned, self.multievaluation)
 
-        # Side channel protection styles
         if self.style == 'df':
-            self.gae = Gae_df(prime, verbose, self.curve, self.formula)
+            self.gae = Gae_df(prime, self.tuned, self.curve, self.formula)
         elif self.style == 'wd1':
-            self.gae = Gae_wd1(prime, verbose, self.curve, self.formula)
+            self.gae = Gae_wd1(prime, self.tuned, self.curve, self.formula)
         elif self.style == 'wd2':
-            self.gae = Gae_wd2(prime, verbose, self.curve, self.formula)
+            self.gae = Gae_wd2(prime, self.tuned, self.curve, self.formula)
         else:
             self.gae = NotImplemented
 
@@ -95,7 +94,6 @@ class CSIDH(object):
         return pack('<{}b'.format(len(k)), *k)
 
     def public_key(self, sk):
-        # unpack sk into list of ints
         sk = unpack('<{}b'.format(len(sk)), sk)
         xy = self.gae.pubkey(sk)
         x = self.curve.coeff(xy)

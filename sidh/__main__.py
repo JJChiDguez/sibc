@@ -54,12 +54,13 @@ from sidh.constants import parameters
    default='2',
     show_default=True,
 )
-#   @click.option(
-#       "-m",
-#       "--multievaluation",
-#       type=click.Choice(['???', '????']),
-#       default='???',
-#   )
+@click.option(
+    "-m",
+    "--multievaluation",
+    is_flag=True,
+    help="",
+    show_default=True,
+)
 @click.option(
     "-c",
     "--curvemodel",
@@ -71,6 +72,13 @@ from sidh.constants import parameters
     "-b",
     "--benchmark",
     default=128,
+    show_default=True,
+)
+@click.option(
+    "-t",
+    "--tuned",
+    is_flag=True,
+    help="",
     show_default=True,
 )
 @click.option(

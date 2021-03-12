@@ -17,3 +17,4 @@
   - these methods that consume and return bytes objects
 - sidh cli tools: pubkey, genkey, dh
   - these tools produce and consume base64 encoded byte values
+- CSIDH object and cli tool now have --tuned and --multievaluation options
