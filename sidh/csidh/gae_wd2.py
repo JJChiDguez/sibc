@@ -13,6 +13,8 @@ def Gae_wd2(prime, tuned, curve, formula):
     n = parameters['csidh'][prime]['n']
     m = parameters['csidh'][prime]['wd2']['m']
     temporal_m = list(set(m))
+    exponent_of_two = curve.exponent_of_two
+
     random = SystemRandom()
 
     # random_key() implements an uniform random sample from [-m_1,m_1] x ... x -[m_n, m_n]
@@ -621,7 +623,7 @@ def Gae_wd2(prime, tuned, curve, formula):
 
                 T_p, T_m = curve.elligator(E_k)
 
-                for ii in range(0, fp.exponent_of_two, 1):
+                for ii in range(0, exponent_of_two, 1):
                     T_p = curve.xDBL(T_p, E_k)
                     T_m = curve.xDBL(T_m, E_k)
 
@@ -641,7 +643,7 @@ def Gae_wd2(prime, tuned, curve, formula):
 
             T_p, T_m = curve.elligator(E_k)
 
-            for ii in range(0, fp.exponent_of_two, 1):
+            for ii in range(0, exponent_of_two, 1):
                 T_p = curve.xDBL(T_p, E_k)
                 T_m = curve.xDBL(T_m, E_k)
 
@@ -689,8 +691,8 @@ def Gae_wd2(prime, tuned, curve, formula):
 
         elligator_cost = numpy.array([7.0, 3.0, 10.0])  # Elligator cost
         mul_fp_by_four = (
-            numpy.array([4.0, 2.0, 4.0]) * fp.exponent_of_two
-        )  # Cost of computing x([2^fp.exponent_of_two]P)
+            numpy.array([4.0, 2.0, 4.0]) * exponent_of_two
+        )  # Cost of computing x([2^exponent_of_two]P)
 
         n = len(L)
         e_prime = [geometric_serie(e[k], L[k]) for k in range(n)]

@@ -125,18 +125,17 @@ class Hvelu(object):
                 y([2]P), y([3]P), ..., and y([d_i]P) where l_i = 2 * d_i + 1
         -------------------------------------------------------------------------
         '''
-        d = (self.fp.L[i] - 1) // 2
+        d = (self.curve.L[i] - 1) // 2
 
         self.K = [[0, 0] for j in range(d + 1)]
-        self.K[0] = list([ self.fp.fp_sub(P[0], P[1]), self.fp.fp_add(P[0], P[1])])  # 2a
+        self.K[0] = list([self.fp.fp_sub(P[0], P[1]), self.fp.fp_add(P[0], P[1])])  # 2a
         self.K[1] = self.yDBL(self.K[0], A)  # 4M + 2S + 4a
         for j in range(2, d, 1):
-            self.K[j] = self.yADD(self.K[j - 1], self.K[0], self.K[j - 2])  # 4M + 2S + 6a
+            self.K[j] = self.yADD(
+                self.K[j - 1], self.K[0], self.K[j - 2]
+            )  # 4M + 2S + 6a
 
         return self.K  # 2(l - 3)M + (l - 3)S + 3(l - 3)a
-
-
-
 
     def xISOG_t(self, A, i):
         '''
@@ -186,8 +185,6 @@ class Hvelu(object):
         C1 = self.fp.fp_sub(C0, C1)
 
         return [C0, C1]  # (l - 1 + 2*HW(l) - 2)M + 2(|l|_2 + 1)S + 2a
-
-
 
     def xEVAL_t(self, P, i):
         '''
@@ -800,7 +797,7 @@ class Hvelu(object):
             self.sJ_list = []
             f = open(ijk_data + self.prime)
 
-            for i in range(0, self.fp.n, 1):
+            for i in range(0, self.curve.n, 1):
 
                 bc = f.readline()
                 bc = [int(bci) for bci in bc.split()]
@@ -813,7 +810,7 @@ class Hvelu(object):
         A = [2, 4]
         T_p, T_m = self.curve.full_torsion_points(A)
 
-        for i in range(0, self.fp.n, 1):
+        for i in range(0, self.curve.n, 1):
 
             if self.tuned:
                 self.set_parameters_velu(self.sJ_list[i], self.sI_list[i], i)
@@ -831,7 +828,7 @@ class Hvelu(object):
 
             # Getting an orderl-l point
             Tp = list(T_p)
-            for j in range(i + 1, self.fp.n, 1):
+            for j in range(i + 1, self.curve.n, 1):
                 Tp = self.curve.xMUL(Tp, A, j)
 
             # Cost of xISOG() and KPs()

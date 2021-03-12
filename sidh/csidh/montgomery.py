@@ -28,11 +28,70 @@ def write_list_of_lists_of_ints_to_file(path, data):
         fh.writelines()
 
 def MontgomeryCurve(prime, style):
-    style = style
-    prime = prime
-    fp = F_p('csidh', prime)
-    L = parameters['csidh'][prime]['L']
-    A = parameters['csidh']['A']
+
+    if True: # algorithm == 'csidh':
+        # this is csidh/montgomery.py currently
+        A = parameters['csidh']['A']
+        L = parameters['csidh'][prime]['L']
+        n = parameters['csidh'][prime]['n']
+        exponent_of_two = parameters['csidh'][prime]['exponent_of_two']
+
+        p = (2 ** (exponent_of_two)) * reduce(
+            lambda x, y: (x * y), L
+        ) - 1  # p := 4 * l_0 * ... * l_n - 1
+        #p_minus_one_halves = (p - 1) // 2  # (p - 1) / 2
+        p_minus_one_halves = parameters['csidh'][prime]['p_minus_one_halves']
+        validation_stop = sum([bitlength(l_i) for l_i in L]) / 2.0 + 2
+    else:
+        assert False, "bsidh not refactored yet"
+        # this is for a possible future where we have a unified montgomery.py
+        # for csidh and bsidh. the code in this else block was moved from fp.py
+
+        f = open(sop_data + prime)
+
+        # The prime to be used
+        p = f.readline()
+        self.p = int(p, 16)
+
+        # List corresponding (p + 1)
+        Lp = f.readline()
+        Lp = [int(lp) for lp in Lp.split()]
+        # exponent_of_twop = Lp[0]
+        # Lp = Lp[1:]
+        Ep = f.readline()
+        Ep = [int(ep) for ep in Ep.split()]
+        assert len(Ep) == len(Lp)
+        np = len(Lp)
+
+        # List corresponding (p - 1)
+        Lm = f.readline()
+        Lm = [int(lm) for lm in Lm.split()]
+        Em = f.readline()
+        Em = [int(em) for em in Em.split()]
+        assert len(Em) == len(Lm)
+        nm = len(Lm)
+
+        f.close()
+
+
+        # pp = (2**exponent_of_twop) * reduce(lambda x,y : (x*y), [ Lp[i]**Ep[i] for i in range(0, np, 1)  ])
+        pp = reduce(
+            lambda x, y: (x * y), [Lp[i] ** Ep[i] for i in range(0, np, 1)]
+        )
+        pm = reduce(
+            lambda x, y: (x * y), [Lm[i] ** Em[i] for i in range(0, nm, 1)]
+        )
+        assert (p + 1) % pp == 0
+        assert (p - 1) % pm == 0
+
+        if p % 4 == 1:
+            print("// Case p = 1 mod 4 is not implemented yet!")
+            exit(-1)
+
+        p_minus_one_halves = (p - 1) // 2
+        p_minus_3_quarters = (p - 3) // 4
+
+    fp = F_p(p)
     #print("// Shortest Differential Addition Chains (SDAC) for each l_i;")
     # List of Small odd primes, L := [l_0, ..., l_{n-1}]
     #print("// SDAC's to be read from a file")
@@ -66,7 +125,7 @@ def MontgomeryCurve(prime, style):
         Ap = fp.fp_add(Ap, Ap)
         Cp = A[1]
 
-        u = random.randint(2, fp.p_minus_one_halves)
+        u = random.randint(2, p_minus_one_halves)
         u_squared = fp.fp_sqr(u)
 
         u_squared_plus_one = fp.fp_add(u_squared, 1)
@@ -321,18 +380,18 @@ def MontgomeryCurve(prime, style):
         while [0, 0] in output:
 
             T_p, T_m = elligator(A)
-            for i in range(0, fp.exponent_of_two, 1):
+            for i in range(0, exponent_of_two, 1):
                 T_p = xDBL(T_p, A)
 
-            if isfull_order(prime_factors(T_p, A, range(0, fp.n, 1))) and output[
+            if isfull_order(prime_factors(T_p, A, range(0, n, 1))) and output[
                 0
             ] == [0, 0]:
                 output[0] = list(T_p)
 
             if style != 'wd1':
-                for i in range(0, fp.exponent_of_two, 1):
+                for i in range(0, exponent_of_two, 1):
                     T_m = xDBL(T_m, A)
-                if isfull_order(prime_factors(T_m, A, range(0, fp.n, 1))) and output[
+                if isfull_order(prime_factors(T_m, A, range(0, n, 1))) and output[
                     1
                 ] == [0, 0]:
                     output[1] = list(T_m)
@@ -352,13 +411,13 @@ def MontgomeryCurve(prime, style):
         while True:
 
             T_p, _ = elligator(A)
-            for i in range(0, fp.exponent_of_two, 1):
+            for i in range(0, exponent_of_two, 1):
                 T_p = xDBL(T_p, A)
 
-            P = prime_factors(T_p, A, range(0, fp.n, 1))
+            P = prime_factors(T_p, A, range(0, n, 1))
 
             bits_of_the_order = 0
-            for i in range(0, fp.n, 1):
+            for i in range(0, n, 1):
 
                 if isinfinity(P[i]) == False:
 
@@ -368,7 +427,7 @@ def MontgomeryCurve(prime, style):
                         return False
 
                     bits_of_the_order += bitlength(L[i])
-                    if bits_of_the_order > fp.validation_stop:
+                    if bits_of_the_order > validation_stop:
                         return True
 
     return attrdict(**locals())

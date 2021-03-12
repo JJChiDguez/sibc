@@ -517,7 +517,7 @@ class Gae_df(object):
             for k in range(0, r[j], 1):
 
                 T_p, T_m = self.curve.elligator(E_k)
-                for ii in range(0, self.curve.fp.exponent_of_two, 1):
+                for ii in range(0, self.curve.exponent_of_two, 1):
                     T_p =  self.curve.xDBL(T_p, E_k)
                     T_m =  self.curve.xDBL(T_m, E_k)
 
@@ -536,7 +536,7 @@ class Gae_df(object):
         while len(unreached_sop) > 0:
 
             T_p, T_m = self.curve.elligator(E_k)
-            for ii in range(0, self.curve.fp.exponent_of_two, 1):
+            for ii in range(0, self.curve.exponent_of_two, 1):
                 T_p =  self.curve.xDBL(T_p, E_k)
                 T_m =  self.curve.xDBL(T_m, E_k)
 
@@ -582,7 +582,7 @@ class Gae_df(object):
         """
         elligator_cost = numpy.array([7.0, 3.0, 10.0])  # Elligator cost
         mul_fp_by_four = (
-            numpy.array([4.0, 2.0, 4.0]) * self.curve.fp.exponent_of_two
+            numpy.array([4.0, 2.0, 4.0]) * self.curve.exponent_of_two
         )  # Cost of computing x([2^exponent_of_two]P)
 
         n = len(L)

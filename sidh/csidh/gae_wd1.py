@@ -1,6 +1,6 @@
 from random import SystemRandom
 import numpy
-from sympy import symbols, floor, sqrt, sign
+from sympy import symbols, floor, sqrt, sign, log
 
 from sidh.math import isequal, bitlength, hamming_weight
 from sidh.constants import parameters
@@ -13,6 +13,7 @@ def Gae_wd1(prime, tuned, curve, formula):
     n = parameters['csidh'][prime]['n']
     m = parameters['csidh'][prime]['wd1']['m']
     temporal_m = list(set(m))
+    exponent_of_two = curve.exponent_of_two
 
     random = SystemRandom()
 
@@ -427,7 +428,7 @@ def Gae_wd1(prime, tuned, curve, formula):
           for k in range(0, r[j], 1):
 
               T_p, T_m = curve.elligator(E_k)
-              for ii in range(0, fp.exponent_of_two, 1):
+              for ii in range(0, exponent_of_two, 1):
                   T_p = curve.xDBL(T_p, E_k)
 
               for l in R[j]:
@@ -444,7 +445,7 @@ def Gae_wd1(prime, tuned, curve, formula):
       while len(unreached_sop) > 0:
 
           T_p, T_m = curve.elligator(E_k)
-          for ii in range(0, fp.exponent_of_two, 1):
+          for ii in range(0, exponent_of_two, 1):
               T_p = curve.xDBL(T_p, E_k)
 
           for l in remainder_sop:
@@ -490,7 +491,7 @@ def Gae_wd1(prime, tuned, curve, formula):
 
       elligator_cost = numpy.array([7.0, 3.0, 10.0])  # Elligator cost
       mul_fp_by_four = (
-          numpy.array([4.0, 2.0, 4.0]) * fp.exponent_of_two
+          numpy.array([4.0, 2.0, 4.0]) * exponent_of_two
       )  # Cost of computing x([2^exponent_of_two]P)
 
       n = len(L)

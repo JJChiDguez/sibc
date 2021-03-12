@@ -14,8 +14,7 @@ def Svelu(curve, tuned, multievaluation):
     global_L = curve.L
     prime = curve.prime
     SCALED_REMAINDER_TREE = multievaluation
-    n = parameters['csidh'][prime]['n']
-
+    n = parameters["csidh"][prime]["n"]
 
     cEVAL = lambda l: numpy.array([2.0 * (l - 1.0), 2.0, (l + 1.0)])
     cISOG = lambda l: numpy.array(
