@@ -20,11 +20,19 @@ FORMULAS = ('tvelu', 'svelu', 'hvelu')
 
 STYLES = ('df', 'wd1', 'wd2')
 
+
 class CSIDH_gae_test_base(object):
     def setUp(self):
         self.c = CSIDH(
-            'montgomery', self.prime, self.formula, self.style, self.exponent,
-            self.tuned, self.multievaluation, self.verbose)
+            'montgomery',
+            self.prime,
+            self.formula,
+            self.style,
+            self.exponent,
+            self.tuned,
+            self.multievaluation,
+            self.verbose,
+        )
 
     def test_group_action_with_random_keys(self):
         sk_a, sk_b = self.c.gae.random_key(), self.c.gae.random_key()
@@ -52,7 +60,6 @@ for prime in PRIMES:
                         multievaluation = multievaluation
                         verbose = False
 
-
                     globals()[
                         'csidh_gae_'
                         + '_'.join(
@@ -61,7 +68,9 @@ for prime in PRIMES:
                                 formula,
                                 style,
                                 ('classical', 'suitable')[tuned],
-                                ('no-multievaluation', 'multievaluation')[multievaluation],
+                                ('no-multievaluation', 'multievaluation')[
+                                    multievaluation
+                                ],
                             ]
                         )
                     ] = cls
