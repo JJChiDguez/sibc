@@ -16,6 +16,7 @@ tmp_dir = "./"  # Drop the files in the current working directory
 
 
 def csidh_get_sop_from_disk(prime):
+    assert prime in ('p512', 'p1024', 'p1792'), "unsupported prime for csidh"
     # List of Small odd primes, L := [l_0, ..., l_{n-1}]
     f = open(sop_data + prime)
     L = f.read()
@@ -38,6 +39,7 @@ def csidh_get_sop_from_disk(prime):
         p=p,
         p_minus_one_halves=p_minus_one_halves,
         validation_stop=validation_stop,
+        p_bits=int(prime[1:]),
     )
 
 
