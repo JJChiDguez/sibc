@@ -13,8 +13,8 @@ def csidh_sdacs(ctx):
     L = algo.params.L
     n = algo.params.n
     m = algo.params.m
-    exponent_of_two = algo.exponent_of_two
-    validation_stop = algo.fp.validation_stop
+    exponent_of_two = algo.curve.exponent_of_two
+    validation_stop = algo.curve.validation_stop
     SDACS = algo.curve.SDACS
 
     # ---
