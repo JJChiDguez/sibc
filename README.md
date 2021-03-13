@@ -186,7 +186,7 @@ The primes labeled as `b2`, `b3`, `b5`, and `b6` correspond with the examples 2,
 
 ## Changes
 
-Significant changes are listed in the [CHANGELOG](CHANGELOG) file.
+Significant changes are listed in the [CHANGELOG](CHANGELOG.md) file.
 
 ## Authors
 
