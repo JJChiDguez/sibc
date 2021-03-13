@@ -54,7 +54,7 @@ def csidh_main(ctx):
         L_out[j] = list([L[::-1][k] for k in L_out[j]])
 
     file_path = (
-        "../data/strategies/"
+        "data/strategies/"
         + setting.algorithm
         + '-'
         + setting.prime
@@ -66,7 +66,7 @@ def csidh_main(ctx):
         + LABEL_m
         + verb
     )
-    file_path = resource_filename(__name__, file_path)
+    file_path = resource_filename('sidh', file_path)
     try:
         f = open(file_path)
         print("// Strategies to be read from a file")
@@ -114,7 +114,7 @@ def csidh_main(ctx):
         Main
         ------------------------------------------------------------------------------------- '''
 
-    print("// Maximum number of degree-(\ell_i) isogeny constructions: m_i")
+    print("// Maximum number of degree-(\\ell_i) isogeny constructions: m_i")
     print("/*")
     printl("m", m, n // 3)
     print("*/")

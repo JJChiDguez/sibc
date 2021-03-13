@@ -135,7 +135,7 @@ def MontgomeryCurve(prime, style):
     # List of Small odd primes, L := [l_0, ..., l_{n-1}]
     # print("// SDAC's to be read from a file")
     #    path = sdacs_data + prime
-    path = resource_filename(__name__, "../data/sdacs/" + prime)
+    path = resource_filename('sidh', "data/sdacs/" + prime)
     SDACS = filename_to_list_of_lists_of_ints(path)
     if len(SDACS) == 0:
         print("// SDAC's to be computed")

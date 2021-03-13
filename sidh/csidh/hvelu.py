@@ -896,7 +896,7 @@ class Hvelu(object):
             self.sJ_list = []
             try:
                 f = open(
-                    resource_filename(__name__, '../data/ijk/' + self.prime)
+                    resource_filename('sidh', 'data/ijk/' + self.prime)
                 )
             except Exception as ex:
                 raise Exception(
