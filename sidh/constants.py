@@ -1,7 +1,7 @@
 import os
 from functools import reduce
 from .math import bitlength, is_prime
-from pkg_resources import resource_string
+from pkg_resources import resource_string, resource_filename
 
 base_path = "/usr/share/python3-sidh/data/"
 if not os.path.exists(base_path) and os.path.exists('./data'):
@@ -54,7 +54,7 @@ def csidh_get_sop_from_disk(prime):
 
 
 def bsidh_get_sop_from_disk(prime):
-    f = open(sop_data + prime)
+    f = open(resource_filename('sidh', 'data/sop/'+ prime))
 
     # The prime to be used
     p = f.readline()
