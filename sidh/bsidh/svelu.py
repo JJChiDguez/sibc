@@ -1,19 +1,31 @@
-from sidh.common import attrdict
+import numpy
+from sympy import floor, sqrt, sign
+from random import SystemRandom
+
 from sidh.bsidh.poly_mul import Poly_mul
 from sidh.bsidh.poly_redc import Poly_redc
-#from sidh.bsidh.poly_redc import *
+from sidh.common import attrdict
 from sidh.math import hamming_weight, bitlength, isequal
 from sidh.constants import ijk_data, parameters
+from pkg_resources import resource_filename
+from sidh.bsidh.montgomery import MontgomeryCurve
 
-import numpy
-from sympy import symbols, floor, sqrt, sign
 
 def Svelu(curve, tuned, multievaluation):
 
     tuned = tuned
     global_L = curve.global_L
     prime = curve.prime
+    fp = curve.fp
+    p = curve.p
+    np = curve.np
+    nm = curve.nm
+    Em = curve.Em
     Ep = curve.Ep
+    random = SystemRandom()
+    poly_mul = Poly_mul(curve)
+    poly_redc = Poly_redc(poly_mul)
+
 
     cEVAL = lambda l: numpy.array([2.0 * (l - 1.0), 2.0, (l + 1.0)])
     cISOG = lambda l: numpy.array(
@@ -45,7 +57,7 @@ def Svelu(curve, tuned, multievaluation):
     K = None
     sK = None
 
-    # An extra global variable which is used in xISOG and xEVAL
+    # An extra nonlocal variable which is used in xISOG and xEVAL
     XZJ4 = None
 
     SCALED_REMAINDER_TREE = True
@@ -53,9 +65,9 @@ def Svelu(curve, tuned, multievaluation):
     # Next functions is used for setting the cardinalities sI, sJ, and sK
     def set_parameters_velu(b, c, i):
 
-        global sJ
-        global sI
-        global sK
+        nonlocal sJ
+        nonlocal sI
+        nonlocal sK
 
         assert b <= c
 
@@ -79,12 +91,12 @@ def Svelu(curve, tuned, multievaluation):
     def KPs_s(P, A, i):
 
         # Global variables to be used
-        global J
-        global sJ
-        global ptree_hI
-        global sI
-        global K
-        global sK
+        nonlocal J
+        nonlocal sJ
+        nonlocal ptree_hI
+        nonlocal sI
+        nonlocal K
+        nonlocal sK
 
         # This functions computes all the independent data from the input of algorithm 2 of https://eprint.iacr.org/2020/341
         if sI == 0:
@@ -107,15 +119,15 @@ def Svelu(curve, tuned, multievaluation):
             # Branch corresponds with global_L[i] = 5 and global_L[i] = 7
             # Recall sJ > 0, then sJ = 1
             assert sJ == 1
-            P2 = xDBL(P, A)
+            P2 = curve.xDBL(P, A)
 
             J = [list(P)]
 
             I = [list(P2)]
             hI = [
-                list([fp2_sub([0, 0], P2[0]), P2[1]])
+                list([fp.fp2_sub([0, 0], P2[0]), P2[1]])
             ]  # we only need to negate x-coordinate of each point
-            ptree_hI = product_tree(hI, sI)  # product tree of hI
+            ptree_hI = poly_mul.product_tree(hI, sI)  # product tree of hI
 
             if not SCALED_REMAINDER_TREE:
                 # Using remainder trees
@@ -135,7 +147,7 @@ def Svelu(curve, tuned, multievaluation):
             else:
                 # Using scaled remainder trees
                 assert (2 * sJ - sI + 1) > sI
-                ptree_hI['reciprocal'], ptree_hI['a'] = reciprocal(
+                ptree_hI['reciprocal'], ptree_hI['a'] = poly_redc.reciprocal(
                     ptree_hI['poly'][::-1], sI + 1, 2 * sJ - sI + 1
                 )
                 ptree_hI['scaled'], ptree_hI['as'] = (
@@ -156,21 +168,21 @@ def Svelu(curve, tuned, multievaluation):
         assert sI > 1
         if sJ == 1:
             # This branch corresponds with global_L[i] = 11 and global_L[i] = 13
-            Q = xDBL(P, A)  # x([2]P)
-            Q2 = xDBL(Q, A)  # x([2]Q)
+            Q = curve.xDBL(P, A)  # x([2]P)
+            Q2 = curve.xDBL(Q, A)  # x([2]Q)
 
             J = [list(P)]
 
             I = [[0, 0]] * sI
             I[0] = list(Q)  # x(   Q)
-            I[1] = xADD(Q2, I[0], I[0])  # x([3]Q)
+            I[1] = curve.xADD(Q2, I[0], I[0])  # x([3]Q)
             for ii in range(2, sI, 1):
-                I[ii] = xADD(I[ii - 1], Q2, I[ii - 2])  # x([2**i + 1]Q)
+                I[ii] = curve.xADD(I[ii - 1], Q2, I[ii - 2])  # x([2**i + 1]Q)
 
             hI = [
-                [fp2_sub([0, 0], iP[0]), iP[1]] for iP in I
+                [fp.fp2_sub([0, 0], iP[0]), iP[1]] for iP in I
             ]  # we only need to negate x-coordinate of each point
-            ptree_hI = product_tree(hI, sI)  # product tree of hI
+            ptree_hI = poly_mul.product_tree(hI, sI)  # product tree of hI
 
             if not SCALED_REMAINDER_TREE:
                 # Using remainder trees
@@ -190,7 +202,7 @@ def Svelu(curve, tuned, multievaluation):
             else:
                 # Using scaled remainder trees
                 assert (2 * sJ - sI + 1) <= sI
-                ptree_hI['scaled'], ptree_hI['as'] = reciprocal(
+                ptree_hI['scaled'], ptree_hI['as'] = poly_redc.reciprocal(
                     ptree_hI['poly'][::-1], sI + 1, sI
                 )
                 ptree_hI['reciprocal'], ptree_hI['a'] = (
@@ -216,32 +228,32 @@ def Svelu(curve, tuned, multievaluation):
         # Computing [j]P for each j in {1, 3, ..., 2*sJ - 1}
         J = [[[0, 0], [0, 0]]] * sJ
         J[0] = list(P)  # x(   P)
-        P2 = xDBL(P, A)  # x([2]P)
-        J[1] = xADD(P2, J[0], J[0])  # x([3]P)
+        P2 = curve.xDBL(P, A)  # x([2]P)
+        J[1] = curve.xADD(P2, J[0], J[0])  # x([3]P)
         for jj in range(2, sJ, 1):
-            J[jj] = xADD(J[jj - 1], P2, J[jj - 2])  # x([2*jj + 1]P)
+            J[jj] = curve.xADD(J[jj - 1], P2, J[jj - 2])  # x([2*jj + 1]P)
 
         # -------------------------------------------------------
         # Computing [i]P for i in { (2*sJ) * (2i + 1) : 0 <= i < sI}
         bhalf_floor = sJ // 2
         bhalf_ceil = sJ - bhalf_floor
-        P4 = xDBL(P2, A)  # x([4]P)
-        P2[0], P4[0] = fp2_cswap(P2[0], P4[0], sJ % 2)  # Constant-time swap
-        P2[1], P4[1] = fp2_cswap(
+        P4 = curve.xDBL(P2, A)  # x([4]P)
+        P2[0], P4[0] = fp.fp2_cswap(P2[0], P4[0], sJ % 2)  # Constant-time swap
+        P2[1], P4[1] = fp.fp2_cswap(
             P2[1], P4[1], sJ % 2
         )  # x([4]P) <--- coditional swap ---> x([2]P)
-        Q = xADD(J[bhalf_ceil], J[bhalf_floor - 1], P2)  # Q := [2b]P
-        P2[0], P4[0] = fp2_cswap(P2[0], P4[0], sJ % 2)  # Constant-time swap
-        P2[1], P4[1] = fp2_cswap(
+        Q = curve.xADD(J[bhalf_ceil], J[bhalf_floor - 1], P2)  # Q := [2b]P
+        P2[0], P4[0] = fp.fp2_cswap(P2[0], P4[0], sJ % 2)  # Constant-time swap
+        P2[1], P4[1] = fp.fp2_cswap(
             P2[1], P4[1], sJ % 2
         )  # x([4]P) <--- coditional swap ---> x([2]P)
 
         I = [[[0, 0], [0, 0]]] * sI
         I[0] = list(Q)  # x(   Q)
-        Q2 = xDBL(Q, A)  # x([2]Q)
-        I[1] = xADD(Q2, I[0], I[0])  # x([3]Q)
+        Q2 = curve.xDBL(Q, A)  # x([2]Q)
+        I[1] = curve.xADD(Q2, I[0], I[0])  # x([3]Q)
         for ii in range(2, sI, 1):
-            I[ii] = xADD(I[ii - 1], Q2, I[ii - 2])  # x([2**i + 1]Q)
+            I[ii] = curve.xADD(I[ii - 1], Q2, I[ii - 2])  # x([2**i + 1]Q)
 
         # --------------------------------------------------------------
         # Computing [k]P for k in { 4*sJ*sI + 1, ..., l - 6, l - 4, l - 2}
@@ -254,7 +266,7 @@ def Svelu(curve, tuned, multievaluation):
             K[1] = list(P4)  # x([l - 4]P) = x([-4]P) = x([4]P)
 
         for k in range(2, sK, 1):
-            K[k] = xADD(K[k - 1], P2, K[k - 2])
+            K[k] = curve.xADD(K[k - 1], P2, K[k - 2])
 
         # ------------------------------------------------------------------------------------------------------
         #                   ~~~~~~~~               ~~~~~~~~
@@ -264,9 +276,9 @@ def Svelu(curve, tuned, multievaluation):
         # In order to avoid costly inverse computations in fp, we are gonna work with projective coordinates
 
         hI = [
-            [fp2_sub([0, 0], iP[0]), iP[1]] for iP in I
+            [fp.fp2_sub([0, 0], iP[0]), iP[1]] for iP in I
         ]  # we only need to negate x-coordinate of each point
-        ptree_hI = product_tree(hI, sI)  # product tree of hI
+        ptree_hI = poly_mul.product_tree(hI, sI)  # product tree of hI
 
         if not SCALED_REMAINDER_TREE:
             # Using scaled remainder trees
@@ -286,7 +298,7 @@ def Svelu(curve, tuned, multievaluation):
         else:
             # Using scaled remainder trees
             if sI < (2 * sJ - sI + 1):
-                ptree_hI['reciprocal'], ptree_hI['a'] = reciprocal(
+                ptree_hI['reciprocal'], ptree_hI['a'] = poly_redc.reciprocal(
                     ptree_hI['poly'][::-1], sI + 1, 2 * sJ - sI + 1
                 )
                 ptree_hI['scaled'], ptree_hI['as'] = (
@@ -295,7 +307,7 @@ def Svelu(curve, tuned, multievaluation):
                 )
 
             else:
-                ptree_hI['scaled'], ptree_hI['as'] = reciprocal(
+                ptree_hI['scaled'], ptree_hI['as'] = poly_redc.reciprocal(
                     ptree_hI['poly'][::-1], sI + 1, sI
                 )
                 ptree_hI['reciprocal'], ptree_hI['a'] = (
@@ -319,17 +331,17 @@ def Svelu(curve, tuned, multievaluation):
     # then it computes the isogenous Montgomery curve coefficient
     def xISOG_s(A, i):
 
-        global J
-        global sJ
-        global ptree_hI
-        global sI
-        global K
-        global sK
-        global XZJ4
+        nonlocal J
+        nonlocal sJ
+        nonlocal ptree_hI
+        nonlocal sI
+        nonlocal K
+        nonlocal sK
+        nonlocal XZJ4
 
-        AA = fp2_add(A[0], A[0])  # 2A' + 4C
-        AA = fp2_sub(AA, A[1])  # 2A'
-        AA = fp2_add(AA, AA)  # 4A'
+        AA = fp.fp2_add(A[0], A[0])  # 2A' + 4C
+        AA = fp.fp2_sub(AA, A[1])  # 2A'
+        AA = fp.fp2_add(AA, AA)  # 4A'
 
         # Polynomial D_j of algorithm 2 from https://eprint.iacr.org/2020/341 is not required,
         # but we need some some squares and products determined by list J
@@ -342,13 +354,13 @@ def Svelu(curve, tuned, multievaluation):
         XZJ4 = [0 for j in range(0, sJ, 1)]  # 2*Xj*Zj
         for j in range(0, sJ, 1):
 
-            SUB_SQUARED[j] = fp2_sub(J[j][0], J[j][1])  # (Xj - Zj)
-            SUB_SQUARED[j] = fp2_sqr(SUB_SQUARED[j])  # (Xj - Zj)^2
+            SUB_SQUARED[j] = fp.fp2_sub(J[j][0], J[j][1])  # (Xj - Zj)
+            SUB_SQUARED[j] = fp.fp2_sqr(SUB_SQUARED[j])  # (Xj - Zj)^2
 
-            ADD_SQUARED[j] = fp2_add(J[j][0], J[j][1])  # (Xj + Zj)
-            ADD_SQUARED[j] = fp2_sqr(ADD_SQUARED[j])  # (Xj + Zj)^2
+            ADD_SQUARED[j] = fp.fp2_add(J[j][0], J[j][1])  # (Xj + Zj)
+            ADD_SQUARED[j] = fp.fp2_sqr(ADD_SQUARED[j])  # (Xj + Zj)^2
 
-            XZJ4[j] = fp2_sub(SUB_SQUARED[j], ADD_SQUARED[j])  # -4*Xj*Zj
+            XZJ4[j] = fp.fp2_sub(SUB_SQUARED[j], ADD_SQUARED[j])  # -4*Xj*Zj
 
         # --------------------------------------------------------------------------------------------------
         #                   ~~~~~~~~
@@ -366,32 +378,32 @@ def Svelu(curve, tuned, multievaluation):
         for j in range(0, sJ, 1):
 
             # However, each SUB_SQUARED[j] and ADD_SQUARED[j] should be multiplied by C
-            tadd = fp2_mul(ADD_SQUARED[j], A[1])
-            tsub = fp2_mul(SUB_SQUARED[j], A[1])
+            tadd = fp.fp2_mul(ADD_SQUARED[j], A[1])
+            tsub = fp.fp2_mul(SUB_SQUARED[j], A[1])
 
             # We require the double of tadd and tsub
-            tadd2 = fp2_add(tadd, tadd)
-            tsub2 = fp2_add(tsub, tsub)
+            tadd2 = fp.fp2_add(tadd, tadd)
+            tsub2 = fp.fp2_add(tsub, tsub)
 
-            t1 = fp2_mul(XZJ4[j], AA)  #       A *(-4*Xj*Zj)
+            t1 = fp.fp2_mul(XZJ4[j], AA)  #       A *(-4*Xj*Zj)
 
             # Case alpha = 1
-            linear = fp2_sub(
+            linear = fp.fp2_sub(
                 t1, tadd2
             )  #       A *(-4*Xj*Zj)  - C * (2 * (Xj + Zj)^2)
             EJ_0[j] = [tsub, linear, tsub]
 
             # Case alpha = -1
-            linear = fp2_sub(
+            linear = fp.fp2_sub(
                 tsub2, t1
             )  #       C * (2 * (Xj - Zj)^2) - A *(-4*Xj*Zj)
             EJ_1[j] = [tadd, linear, tadd]
 
         # The faster way for multiplying is using a divide-and-conquer approach
-        poly_EJ_0 = product_selfreciprocal_tree(EJ_0, sJ)[
+        poly_EJ_0 = poly_mul.product_selfreciprocal_tree(EJ_0, sJ)[
             'poly'
         ]  # product tree of EJ_0 (we only require the root)
-        poly_EJ_1 = product_selfreciprocal_tree(EJ_1, sJ)[
+        poly_EJ_1 = poly_mul.product_selfreciprocal_tree(EJ_1, sJ)[
             'poly'
         ]  # product tree of EJ_1 (we only require the root)
 
@@ -407,9 +419,9 @@ def Svelu(curve, tuned, multievaluation):
         else:
             # Approach using scaled remainder trees
             if ptree_hI != None:
-                poly_EJ_0 = poly_redc(poly_EJ_0, 2 * sJ + 1, ptree_hI)
-                fg_0 = poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_0[::-1], sI)
-                remainders_EJ_0 = multieval_scaled(
+                poly_EJ_0 = poly_redc.poly_redc(poly_EJ_0, 2 * sJ + 1, ptree_hI)
+                fg_0 = poly_mul.poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_0[::-1], sI)
+                remainders_EJ_0 = poly_redc.multieval_scaled(
                     fg_0[::-1],
                     sI,
                     [[1, 0]] + [[0, 0]] * (sI - 1),
@@ -418,9 +430,9 @@ def Svelu(curve, tuned, multievaluation):
                     sI,
                 )
 
-                poly_EJ_1 = poly_redc(poly_EJ_1, 2 * sJ + 1, ptree_hI)
-                fg_1 = poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_1[::-1], sI)
-                remainders_EJ_1 = multieval_scaled(
+                poly_EJ_1 = poly_redc.poly_redc(poly_EJ_1, 2 * sJ + 1, ptree_hI)
+                fg_1 = poly_mul.poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_1[::-1], sI)
+                remainders_EJ_1 = poly_redc.multieval_scaled(
                     fg_1[::-1],
                     sI,
                     [[1, 0]] + [[0, 0]] * (sI - 1),
@@ -433,8 +445,8 @@ def Svelu(curve, tuned, multievaluation):
                 remainders_EJ_1 = []
 
         # Multipying all the remainders
-        r0 = product(remainders_EJ_0, sI)
-        r1 = product(remainders_EJ_1, sI)
+        r0 = poly_mul.product(remainders_EJ_0, sI)
+        r1 = poly_mul.product(remainders_EJ_1, sI)
 
         # ---------------------------------------------------------------------------------
         # Now, we proceed by computing the missing part which is determined by K
@@ -442,35 +454,35 @@ def Svelu(curve, tuned, multievaluation):
         # In other words, it is not required to compute the product of all Zk's with k In K
 
         # Case alpha = 1
-        hK_0 = [[fp2_sub(K[k][1], K[k][0])] for k in range(0, sK, 1)]
-        hK_0 = product(hK_0, sK)  # product of (Zk - Xk) for each k in K
+        hK_0 = [[fp.fp2_sub(K[k][1], K[k][0])] for k in range(0, sK, 1)]
+        hK_0 = poly_mul.product(hK_0, sK)  # product of (Zk - Xk) for each k in K
         # Case alpha = -1
-        hK_1 = [[fp2_add(K[k][1], K[k][0])] for k in range(0, sK, 1)]
-        hK_1 = product(hK_1, sK)  # product of (Zk + Xk) for each k in K
+        hK_1 = [[fp.fp2_add(K[k][1], K[k][0])] for k in range(0, sK, 1)]
+        hK_1 = poly_mul.product(hK_1, sK)  # product of (Zk + Xk) for each k in K
 
         # --------------------------------------------------------------
         # Now, we have all the ingredients for computing the image curve
-        A24m = fp2_sub(A[0], A[1])  # A' - 2C
+        A24m = fp.fp2_sub(A[0], A[1])  # A' - 2C
 
-        A24 = fp2_exp(A[0], global_L[i])  # (A' + 2C)^l
-        A24m = fp2_exp(A24m, global_L[i])  # (A' - 2C)^l
+        A24 = fp.fp2_exp(A[0], global_L[i])  # (A' + 2C)^l
+        A24m = fp.fp2_exp(A24m, global_L[i])  # (A' - 2C)^l
 
-        t24m = fp2_mul(
+        t24m = fp.fp2_mul(
             hK_1, r1
         )  # output of algorithm 2 with alpha =-1 and without the demoninator
-        t24m = fp2_sqr(t24m)  # raised at 2
-        t24m = fp2_sqr(t24m)  # raised at 4
-        t24m = fp2_sqr(t24m)  # raised at 8
+        t24m = fp.fp2_sqr(t24m)  # raised at 2
+        t24m = fp.fp2_sqr(t24m)  # raised at 4
+        t24m = fp.fp2_sqr(t24m)  # raised at 8
 
-        t24 = fp2_mul(
+        t24 = fp.fp2_mul(
             hK_0, r0
         )  # output of algorithm 2 with alpha = 1 and without the demoninator
-        t24 = fp2_sqr(t24)  # raised at 2
-        t24 = fp2_sqr(t24)  # raised at 4
-        t24 = fp2_sqr(t24)  # raised at 8
+        t24 = fp.fp2_sqr(t24)  # raised at 2
+        t24 = fp.fp2_sqr(t24)  # raised at 4
+        t24 = fp.fp2_sqr(t24)  # raised at 8
 
-        A24 = fp2_mul(A24, t24m)
-        A24m = fp2_mul(A24m, t24)
+        A24 = fp.fp2_mul(A24, t24m)
+        A24m = fp.fp2_mul(A24m, t24)
 
         # Now, we have d = (A24m / A24) where the image Montgomery cuve coefficient is
         #      B'   2*(1 + d)   2*(A24 + A24m)
@@ -478,12 +490,12 @@ def Svelu(curve, tuned, multievaluation):
         #      C      (1 - d)     (A24 - A24m)
         # However, we required B' + 2C = 4*A24 and 4C = 4 * (A24 - A24m)
 
-        t24m = fp2_sub(A24, A24m)  #   (A24 - A24m)
-        t24m = fp2_add(t24m, t24m)  # 2*(A24 - A24m)
-        t24m = fp2_add(t24m, t24m)  # 4*(A24 - A24m)
+        t24m = fp.fp2_sub(A24, A24m)  #   (A24 - A24m)
+        t24m = fp.fp2_add(t24m, t24m)  # 2*(A24 - A24m)
+        t24m = fp.fp2_add(t24m, t24m)  # 4*(A24 - A24m)
 
-        t24 = fp2_add(A24, A24)  # 2 * A24
-        t24 = fp2_add(t24, t24)  # 4 * A24
+        t24 = fp.fp2_add(A24, A24)  # 2 * A24
+        t24 = fp.fp2_add(t24, t24)  # 4 * A24
 
         # return [t24, t24m], ptree_hI, XZJ4
         return [t24, t24m]
@@ -491,9 +503,9 @@ def Svelu(curve, tuned, multievaluation):
 
     def xEVAL_s(P, A):
 
-        AA = fp2_add(A[0], A[0])  # 2A' + 4C
-        AA = fp2_sub(AA, A[1])  # 2A'
-        AA = fp2_add(AA, AA)  # 4A'
+        AA = fp.fp2_add(A[0], A[0])  # 2A' + 4C
+        AA = fp.fp2_sub(AA, A[1])  # 2A'
+        AA = fp.fp2_add(AA, AA)  # 4A'
 
         # --------------------------------------------------------------------------------------------------
         #                   ~~~~~~~~
@@ -507,59 +519,59 @@ def Svelu(curve, tuned, multievaluation):
         EJ_0 = [[[0, 0], [0, 0], [0, 0]] for j in range(0, sJ, 1)]
         # Notice, the corresponding EJ_1 that is determined by alpha = 1/x can be computed by using EJ_0
 
-        XZ_add = fp2_add(P[0], P[1])  # X + Z
-        XZ_sub = fp2_sub(P[0], P[1])  # X - Z
+        XZ_add = fp.fp2_add(P[0], P[1])  # X + Z
+        XZ_sub = fp.fp2_sub(P[0], P[1])  # X - Z
 
-        AXZ2 = fp2_mul(P[0], P[1])  # X * Z
-        t1 = fp2_sqr(P[0])  # X^2
-        t2 = fp2_sqr(P[1])  # Z^2
+        AXZ2 = fp.fp2_mul(P[0], P[1])  # X * Z
+        t1 = fp.fp2_sqr(P[0])  # X^2
+        t2 = fp.fp2_sqr(P[1])  # Z^2
 
-        CX2Z2 = fp2_add(t1, t2)  #      X^2 + Z^2
-        CX2Z2 = fp2_mul(CX2Z2, A[1])  # C * (X^2 + Z^2)
+        CX2Z2 = fp.fp2_add(t1, t2)  #      X^2 + Z^2
+        CX2Z2 = fp.fp2_mul(CX2Z2, A[1])  # C * (X^2 + Z^2)
 
-        AXZ2 = fp2_add(AXZ2, AXZ2)  #       2 * (X * Z)
-        CXZ2 = fp2_mul(AXZ2, A[1])  # C  * [2 * (X * Z)]
-        AXZ2 = fp2_mul(AXZ2, AA)  # A' * [2 * (X * Z)]
+        AXZ2 = fp.fp2_add(AXZ2, AXZ2)  #       2 * (X * Z)
+        CXZ2 = fp.fp2_mul(AXZ2, A[1])  # C  * [2 * (X * Z)]
+        AXZ2 = fp.fp2_mul(AXZ2, AA)  # A' * [2 * (X * Z)]
 
         for j in range(0, sJ, 1):
 
-            XZj_add = fp2_add(J[j][0], J[j][1])  # Xj + Zj
-            XZj_sub = fp2_sub(J[j][0], J[j][1])  # Xj - Zj
+            XZj_add = fp.fp2_add(J[j][0], J[j][1])  # Xj + Zj
+            XZj_sub = fp.fp2_sub(J[j][0], J[j][1])  # Xj - Zj
 
-            t1 = fp2_mul(XZ_sub, XZj_add)  # (X - Z) * (Xj + Zj)
-            t2 = fp2_mul(XZ_add, XZj_sub)  # (X + Z) * (Xj - Zj)
+            t1 = fp.fp2_mul(XZ_sub, XZj_add)  # (X - Z) * (Xj + Zj)
+            t2 = fp.fp2_mul(XZ_add, XZj_sub)  # (X + Z) * (Xj - Zj)
 
             # Computing the quadratic coefficient
-            quadratic = fp2_sub(t1, t2)  #   2 * [(X*Zj) - (Z*Xj)]
-            quadratic = fp2_sqr(quadratic)  # ( 2 * [(X*Zj) - (Z*Xj)] )^2
-            quadratic = fp2_mul(A[1], quadratic)  # C * ( 2 * [(X*Zj) - (Z*Xj)] )^2
+            quadratic = fp.fp2_sub(t1, t2)  #   2 * [(X*Zj) - (Z*Xj)]
+            quadratic = fp.fp2_sqr(quadratic)  # ( 2 * [(X*Zj) - (Z*Xj)] )^2
+            quadratic = fp.fp2_mul(A[1], quadratic)  # C * ( 2 * [(X*Zj) - (Z*Xj)] )^2
 
             # Computing the constant coefficient
-            constant = fp2_add(t1, t2)  #   2 * [(X*Xj) - (Z*Zj)]
-            constant = fp2_sqr(constant)  # ( 2 * [(X*Xj) - (Z*Zj)] )^2
-            constant = fp2_mul(A[1], constant)  # C * ( 2 * [(X*Xj) - (Z*Zj)] )^2
+            constant = fp.fp2_add(t1, t2)  #   2 * [(X*Xj) - (Z*Zj)]
+            constant = fp.fp2_sqr(constant)  # ( 2 * [(X*Xj) - (Z*Zj)] )^2
+            constant = fp.fp2_mul(A[1], constant)  # C * ( 2 * [(X*Xj) - (Z*Zj)] )^2
 
             # Computing the linear coefficient
             # ----------------------------------------------------------------------------------------------------------
             # C * [ (-2*Xj*Zj)*(alpha^2 + 1) + (-2*alpha)*(Xj^2 + Zj^2)] + [A' * (-2*Xj*Zj) * (2*X*Z)] where alpha = X/Z
-            t1 = fp2_add(J[j][0], J[j][1])  #     (Xj + Zj)
-            t1 = fp2_sqr(t1)  #     (Xj + Zj)^2
-            t1 = fp2_add(t1, t1)  # 2 * (Xj + Zj)^2
-            t1 = fp2_add(
+            t1 = fp.fp2_add(J[j][0], J[j][1])  #     (Xj + Zj)
+            t1 = fp.fp2_sqr(t1)  #     (Xj + Zj)^2
+            t1 = fp.fp2_add(t1, t1)  # 2 * (Xj + Zj)^2
+            t1 = fp.fp2_add(
                 t1, XZJ4[j]
             )  # 2 * (Xj + Zj)^2 - (4*Xj*Zj) := 2 * (Xj^2 + Zj^2)
-            t1 = fp2_mul(t1, CXZ2)  # [2 * (Xj^2 + Zj^2)] * (2 * [ C * (X * Z)])
+            t1 = fp.fp2_mul(t1, CXZ2)  # [2 * (Xj^2 + Zj^2)] * (2 * [ C * (X * Z)])
 
-            t2 = fp2_mul(CX2Z2, XZJ4[j])  # [C * (X^2 + Z^2)] * (-4 * Xj * Zj)
-            t1 = fp2_sub(
+            t2 = fp.fp2_mul(CX2Z2, XZJ4[j])  # [C * (X^2 + Z^2)] * (-4 * Xj * Zj)
+            t1 = fp.fp2_sub(
                 t2, t1
             )  # [C * (X^2 + Z^2)] * (-4 * Xj * Zj) - [2 * (Xj^2 + Zj^2)] * (2 * [ C * (X * Z)])
 
-            t2 = fp2_mul(AXZ2, XZJ4[j])  # (2 * [A' * (X * Z)]) * (-4 * Xj * Zj)
-            linear = fp2_add(
+            t2 = fp.fp2_mul(AXZ2, XZJ4[j])  # (2 * [A' * (X * Z)]) * (-4 * Xj * Zj)
+            linear = fp.fp2_add(
                 t1, t2
             )  # This is our desired equation but multiplied by 2
-            linear = fp2_add(
+            linear = fp.fp2_add(
                 linear, linear
             )  # This is our desired equation but multiplied by 4
             # ----------------------------------------------------------------------------------------------------------
@@ -568,7 +580,7 @@ def Svelu(curve, tuned, multievaluation):
             EJ_0[j] = [constant, linear, quadratic]
 
         # The faster way for multiplying is using a divide-and-conquer approach
-        poly_EJ_0 = product_tree(EJ_0, sJ)[
+        poly_EJ_0 = poly_mul.product_tree(EJ_0, sJ)[
             'poly'
         ]  # product tree of EJ_0 (we only require the root)
         poly_EJ_1 = list(
@@ -587,9 +599,9 @@ def Svelu(curve, tuned, multievaluation):
         else:
             # Approach using scaled remainder trees
             if ptree_hI != None:
-                poly_EJ_0 = poly_redc(poly_EJ_0, 2 * sJ + 1, ptree_hI)
-                fg_0 = poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_0[::-1], sI)
-                remainders_EJ_0 = multieval_scaled(
+                poly_EJ_0 = poly_redc.poly_redc(poly_EJ_0, 2 * sJ + 1, ptree_hI)
+                fg_0 = poly_mul.poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_0[::-1], sI)
+                remainders_EJ_0 = poly_redc.multieval_scaled(
                     fg_0[::-1],
                     sI,
                     [[1, 0]] + [[0, 0]] * (sI - 1),
@@ -598,9 +610,9 @@ def Svelu(curve, tuned, multievaluation):
                     sI,
                 )
 
-                poly_EJ_1 = poly_redc(poly_EJ_1, 2 * sJ + 1, ptree_hI)
-                fg_1 = poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_1[::-1], sI)
-                remainders_EJ_1 = multieval_scaled(
+                poly_EJ_1 = poly_redc.poly_redc(poly_EJ_1, 2 * sJ + 1, ptree_hI)
+                fg_1 = poly_mul.poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_1[::-1], sI)
+                remainders_EJ_1 = poly_redc.multieval_scaled(
                     fg_1[::-1],
                     sI,
                     [[1, 0]] + [[0, 0]] * (sI - 1),
@@ -613,8 +625,8 @@ def Svelu(curve, tuned, multievaluation):
                 remainders_EJ_1 = []
 
         # Multipying all the remainders
-        r0 = product(remainders_EJ_0, sI)
-        r1 = product(remainders_EJ_1, sI)
+        r0 = poly_mul.product(remainders_EJ_0, sI)
+        r1 = poly_mul.product(remainders_EJ_1, sI)
 
         # ---------------------------------------------------------------------------------
         # Now, we proceed by computing the missing part which is determined by K
@@ -625,33 +637,33 @@ def Svelu(curve, tuned, multievaluation):
         hK_1 = [[[0, 0]]] * sK
         for k in range(0, sK, 1):
 
-            XZk_add = fp2_add(K[k][0], K[k][1])  # Xk + Zk
-            XZk_sub = fp2_sub(K[k][0], K[k][1])  # Xk - Zk
-            t1 = fp2_mul(XZ_sub, XZk_add)  # (X - Z) * (Xk + Zk)
-            t2 = fp2_mul(XZ_add, XZk_sub)  # (X + Z) * (Xk - Zk)
+            XZk_add = fp.fp2_add(K[k][0], K[k][1])  # Xk + Zk
+            XZk_sub = fp.fp2_sub(K[k][0], K[k][1])  # Xk - Zk
+            t1 = fp.fp2_mul(XZ_sub, XZk_add)  # (X - Z) * (Xk + Zk)
+            t2 = fp.fp2_mul(XZ_add, XZk_sub)  # (X + Z) * (Xk - Zk)
 
             # Case alpha = X/Z
-            hK_0[k] = [fp2_sub(t1, t2)]  # 2 * [(X*Zk) - (Z*Xk)]
+            hK_0[k] = [fp.fp2_sub(t1, t2)]  # 2 * [(X*Zk) - (Z*Xk)]
 
             # Case 1/alpha = Z/X
-            hK_1[k] = [fp2_add(t1, t2)]  # 2 * [(X*Xk) - (Z*Zk)]
+            hK_1[k] = [fp.fp2_add(t1, t2)]  # 2 * [(X*Xk) - (Z*Zk)]
 
-        hK_0 = product(hK_0, sK)  # product of (XZk - ZXk) for each k in K
-        hK_1 = product(hK_1, sK)  # product of (XXk - ZZk) for each k in K
+        hK_0 = poly_mul.product(hK_0, sK)  # product of (XZk - ZXk) for each k in K
+        hK_1 = poly_mul.product(hK_1, sK)  # product of (XXk - ZZk) for each k in K
 
         # ---------------------------------------------------------------------------------
         # Now, unifying all the computations
-        XX = fp2_mul(
+        XX = fp.fp2_mul(
             hK_1, r1
         )  # output of algorithm 2 with 1/alpha = Z/X and without the demoninator
-        XX = fp2_sqr(XX)
-        XX = fp2_mul(XX, P[0])
+        XX = fp.fp2_sqr(XX)
+        XX = fp.fp2_mul(XX, P[0])
 
-        ZZ = fp2_mul(
+        ZZ = fp.fp2_mul(
             hK_0, r0
         )  # output of algorithm 2 with alpha = X/Z and without the demoninator
-        ZZ = fp2_sqr(ZZ)
-        ZZ = fp2_mul(ZZ, P[1])
+        ZZ = fp.fp2_sqr(ZZ)
+        ZZ = fp.fp2_mul(ZZ, P[1])
 
         return [XX, ZZ]
 
@@ -659,39 +671,39 @@ def Svelu(curve, tuned, multievaluation):
     # Degree-4 isogeny construction
     def xISOG_4(P):
 
-        global K
+        nonlocal K
         K = [[0, 0], [0, 0], [0, 0]]
 
-        K[1] = fp2_sub(P[0], P[1])
-        K[2] = fp2_add(P[0], P[1])
-        K[0] = fp2_sqr(P[1])
-        K[0] = fp2_add(K[0], K[0])
+        K[1] = fp.fp2_sub(P[0], P[1])
+        K[2] = fp.fp2_add(P[0], P[1])
+        K[0] = fp.fp2_sqr(P[1])
+        K[0] = fp.fp2_add(K[0], K[0])
 
-        C24 = fp2_sqr(K[0])
-        K[0] = fp2_add(K[0], K[0])
-        A24 = fp2_sqr(P[0])
-        A24 = fp2_add(A24, A24)
-        A24 = fp2_sqr(A24)
+        C24 = fp.fp2_sqr(K[0])
+        K[0] = fp.fp2_add(K[0], K[0])
+        A24 = fp.fp2_sqr(P[0])
+        A24 = fp.fp2_add(A24, A24)
+        A24 = fp.fp2_sqr(A24)
         return [A24, C24]
 
 
     # Degree-4 isogeny evaluation
     def xEVAL_4(Q):
 
-        t0 = fp2_add(Q[0], Q[1])
-        t1 = fp2_sub(Q[0], Q[1])
-        XQ = fp2_mul(t0, K[1])
-        ZQ = fp2_mul(t1, K[2])
-        t0 = fp2_mul(t0, t1)
-        t0 = fp2_mul(t0, K[0])
-        t1 = fp2_add(XQ, ZQ)
-        ZQ = fp2_sub(XQ, ZQ)
-        t1 = fp2_sqr(t1)
-        ZQ = fp2_sqr(ZQ)
-        XQ = fp2_add(t0, t1)
-        t0 = fp2_sub(ZQ, t0)
-        XQ = fp2_mul(XQ, t1)
-        ZQ = fp2_mul(ZQ, t0)
+        t0 = fp.fp2_add(Q[0], Q[1])
+        t1 = fp.fp2_sub(Q[0], Q[1])
+        XQ = fp.fp2_mul(t0, K[1])
+        ZQ = fp.fp2_mul(t1, K[2])
+        t0 = fp.fp2_mul(t0, t1)
+        t0 = fp.fp2_mul(t0, K[0])
+        t1 = fp.fp2_add(XQ, ZQ)
+        ZQ = fp.fp2_sub(XQ, ZQ)
+        t1 = fp.fp2_sqr(t1)
+        ZQ = fp.fp2_sqr(ZQ)
+        XQ = fp.fp2_add(t0, t1)
+        t0 = fp.fp2_sub(ZQ, t0)
+        XQ = fp.fp2_mul(XQ, t1)
+        ZQ = fp.fp2_mul(ZQ, t0)
 
         return [XQ, ZQ]
 
@@ -726,17 +738,17 @@ def Svelu(curve, tuned, multievaluation):
 
     def cISOG_and_cEVAL():
 
-        global C_xISOG
-        global C_xEVAL
+        nonlocal C_xISOG
+        nonlocal C_xEVAL
 
-        global sI_list
-        global sJ_list
+        nonlocal sI_list
+        nonlocal sJ_list
 
         if tuned:
 
             sI_list = []
             sJ_list = []
-            f = open(ijk_data + setting.prime)
+            f = open(resource_filename(__name__, '../data/ijk/' + prime))
 
             for i in range(0, np + nm, 1):
 
@@ -752,7 +764,8 @@ def Svelu(curve, tuned, multievaluation):
         A = [[0x8, 0x0], [0x4, 0x0]]
 
         # Reading public generators points
-        f = open(gen_data + setting.prime)
+        f = open(resource_filename(__name__, '../data/gen/' + prime))
+
         # x(PA), x(QA) and x(PA - QA)
         PQA = f.readline()
         PQA = [int(x, 16) for x in PQA.split()]
@@ -771,21 +784,21 @@ def Svelu(curve, tuned, multievaluation):
 
         for i in range(0, Ep[0] - 1, 1):
 
-            PA = xMUL(PA, A, 0)
-            QA = xMUL(QA, A, 0)
-            PQA = xMUL(PQA, A, 0)
+            PA = curve.xMUL(PA, A, 0)
+            QA = curve.xMUL(QA, A, 0)
+            PQA = curve.xMUL(PQA, A, 0)
 
         # Random kernels for counting the
-        T_p = Ladder3pt(random.randint(0, p - 1), PA, QA, PQA, A)
-        T_m = Ladder3pt(random.randint(0, p - 1), PB, QB, PQB, A)
+        T_p = curve.Ladder3pt(random.randint(0, p - 1), PA, QA, PQA, A)
+        T_m = curve.Ladder3pt(random.randint(0, p - 1), PB, QB, PQB, A)
 
         for i in range(0, np, 1):
             for j in range(0, Ep[i] - 1, 1):
-                T_p = xMUL(T_p, A, i)
+                T_p = curve.xMUL(T_p, A, i)
 
         for i in range(np, np + nm, 1):
             for j in range(0, Em[i - np] - 1, 1):
-                T_m = xMUL(T_m, A, i)
+                T_m = curve.xMUL(T_m, A, i)
 
         for i in range(0, np, 1):
 
@@ -807,37 +820,37 @@ def Svelu(curve, tuned, multievaluation):
             # Getting an orderl-l point
             Tp = list(T_p)
             for j in range(i + 1, np, 1):
-                Tp = xMUL(Tp, A, j)
+                Tp = curve.xMUL(Tp, A, j)
 
             # Cost of xISOG() and KPs()
-            set_zero_ops()
+            fp.fp.set_zero_ops()
             KPs(Tp, A, i)
-            t = get_ops()
+            t = fp.fp.get_ops()
             C_xISOG[i] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
 
-            set_zero_ops()
-            Tp[0], A[0] = fp2_cswap(Tp[0], A[0], global_L[i] == 4)
-            Tp[1], A[1] = fp2_cswap(Tp[1], A[1], global_L[i] == 4)
+            fp.fp.set_zero_ops()
+            Tp[0], A[0] = fp.fp2_cswap(Tp[0], A[0], global_L[i] == 4)
+            Tp[1], A[1] = fp.fp2_cswap(Tp[1], A[1], global_L[i] == 4)
             B = xISOG(A, i)
-            Tp[0], A[0] = fp2_cswap(Tp[0], A[0], global_L[i] == 4)
-            Tp[1], A[1] = fp2_cswap(Tp[1], A[1], global_L[i] == 4)
-            t = get_ops()
+            Tp[0], A[0] = fp.fp2_cswap(Tp[0], A[0], global_L[i] == 4)
+            Tp[1], A[1] = fp.fp2_cswap(Tp[1], A[1], global_L[i] == 4)
+            t = fp.fp.get_ops()
             C_xISOG[i] += numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
 
             # xEVAL: kernel point determined by the next isogeny evaluation
-            set_zero_ops()
+            fp.fp.set_zero_ops()
             if global_L[i] == 4:
                 T_p = xEVAL(T_p, 0)
             else:
                 T_p = xEVAL(T_p, A)
 
             # Cost of xEVAL
-            set_zero_ops()
+            fp.fp.set_zero_ops()
             if global_L[i] == 4:
                 T_m = xEVAL(T_m, 0)
             else:
                 T_m = xEVAL(T_m, A)
-            t = get_ops()
+            t = fp.fp.get_ops()
             C_xEVAL[i] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
 
             # Updating the new next curve
@@ -846,8 +859,8 @@ def Svelu(curve, tuned, multievaluation):
         # E[p - 1]
         # First, we look for a full torsion point
         A = [[0x8, 0x0], [0x4, 0x0]]
-        T_m = Ladder3pt(random.randint(0, p - 1), PA, QA, PQA, A)
-        T_p = Ladder3pt(random.randint(0, p - 1), PB, QB, PQB, A)
+        T_m = curve.Ladder3pt(random.randint(0, p - 1), PA, QA, PQA, A)
+        T_p = curve.Ladder3pt(random.randint(0, p - 1), PB, QB, PQB, A)
 
         for i in range(np, np + nm, 1):
 
@@ -869,32 +882,32 @@ def Svelu(curve, tuned, multievaluation):
             # Getting an orderl-l point
             Tp = list(T_p)
             for j in range(i + 1, np + nm, 1):
-                Tp = xMUL(Tp, A, j)
+                Tp = curve.xMUL(Tp, A, j)
 
             # Cost of xISOG() and KPs()
-            set_zero_ops()
+            fp.fp.set_zero_ops()
             KPs(Tp, A, i)
-            t = get_ops()
+            t = fp.fp.get_ops()
             C_xISOG[i] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
 
-            set_zero_ops()
+            fp.fp.set_zero_ops()
             B = xISOG(A, i)
-            t = get_ops()
+            t = fp.fp.get_ops()
             C_xISOG[i] += numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
 
             # xEVAL: kernel point determined by the next isogeny evaluation
-            set_zero_ops()
+            fp.fp.set_zero_ops()
             T_p = xEVAL(T_p, A)
 
             # Cost of xEVAL
-            set_zero_ops()
+            fp.fp.set_zero_ops()
             T_m = xEVAL(T_m, A)
-            t = get_ops()
+            t = fp.fp.get_ops()
             C_xEVAL[i] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
 
             # Updating the new next curve
             A = list(B)
-        set_zero_ops()
+        fp.fp.set_zero_ops()
         return None
 
 
