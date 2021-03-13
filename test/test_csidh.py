@@ -49,9 +49,10 @@ for prime in PRIMES:
     for formula in FORMULAS:
         for style in STYLES:
             for tuned in (False, True):
-                for multievaluation in (
-                    (False,) if formula == "tvelu" else (False, True)
-                ):
+                for multievaluation in (False, True):
+                    if formula == "tvelu" and (tuned or multievaluation):
+                        # tvelu doesn't have tuned or multievaluation modes
+                        continue
 
                     class cls(CSIDH_gae_test_base, TestCase):
                         formula = formula
