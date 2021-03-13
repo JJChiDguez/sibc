@@ -1,5 +1,6 @@
 import math
 from random import SystemRandom
+from pkg_resources import resource_filename
 
 import numpy
 
@@ -26,8 +27,8 @@ def filename_to_list_of_lists_of_ints(path):
 def write_list_of_lists_of_ints_to_file(path, data):
     with open(path, 'w') as fh:
         for line in data:
-            fh.writelines(' '.join(str(v) for v in v in line))
-        fh.writelines()
+            fh.writelines(' '.join(str(v) for v in line))
+        fh.writelines('')
 
 
 def MontgomeryCurve(prime, style):
@@ -94,10 +95,47 @@ def MontgomeryCurve(prime, style):
         p_minus_3_quarters = (p - 3) // 4
 
     fp = F_p(p)
+
+    def dacs(l, r0, r1, r2, chain):
+        '''
+        dacs()
+        inputs: a small odd prime number l, three integer numbers, and a list
+        output: all the differential additions chains corresponding with the input l
+
+        NOTE: this is a recursive approach
+        '''
+        if r2 == l:
+
+            return [(chain, r2)]
+        elif r2 < l and len(chain) <= 1.5 * math.log(l, 2):
+
+            return dacs(l, r0, r2, r2 + r0, chain + [1]) + dacs(
+                l, r1, r2, r2 + r1, chain + [0]
+            )
+        else:
+            return []
+
+    def sdac(l):
+        '''
+        sdac()
+        input: a small odd prime number l
+        output: the shortest differential additions chains corresponding with the input l
+
+        NOTE: this function uses a recursive function
+        '''
+        all_dacs = dacs(l, 1, 2, 3, [])
+        return min(all_dacs, key=lambda t: len(t[0]))[0]
+
+    def generate_sdacs(L):
+        return list(
+            map(sdac, L)
+        )  # Shortest Differential Addition Chains for each small odd prime l in L
+
     # print("// Shortest Differential Addition Chains (SDAC) for each l_i;")
     # List of Small odd primes, L := [l_0, ..., l_{n-1}]
     # print("// SDAC's to be read from a file")
-    path = sdacs_data + prime
+#    path = sdacs_data + prime
+    path = resource_filename(__name__, "../data/sdacs/" + prime)
     SDACS = filename_to_list_of_lists_of_ints(path)
     if len(SDACS) == 0:
         print("// SDAC's to be computed")
@@ -162,11 +200,6 @@ def MontgomeryCurve(prime, style):
             [Tm_X, C_times_u_squared_minus_one],
         )
 
-    def generate_sdacs(L):
-        return list(
-            map(sdac, L)
-        )  # Shortest Differential Addition Chains for each small odd prime l in L
-
     def measure(x):
         """
         SQR = 1.00
@@ -175,36 +208,6 @@ def MontgomeryCurve(prime, style):
         # In F_p, we have ADD_{F_p} = ADD x MUL_{F_p}
         """
         return x[0] + SQR * x[1] + ADD * x[2]
-
-    def dacs(l, r0, r1, r2, chain):
-        '''
-        dacs()
-        inputs: a small odd prime number l, three integer numbers, and a list
-        output: all the differential additions chains corresponding with the input l
-
-        NOTE: this is a recursive approach
-        '''
-        if r2 == l:
-
-            return [(chain, r2)]
-        elif r2 < l and len(chain) <= 1.5 * math.log(l, 2):
-
-            return dacs(l, r0, r2, r2 + r0, chain + [1]) + dacs(
-                l, r1, r2, r2 + r1, chain + [0]
-            )
-        else:
-            return []
-
-    def sdac(l):
-        '''
-        sdac()
-        input: a small odd prime number l
-        output: the shortest differential additions chains corresponding with the input l
-
-        NOTE: this function uses a recursive function
-        '''
-        all_dacs = dacs(l, 1, 2, 3, [])
-        return min(all_dacs, key=lambda t: len(t[0]))[0]
 
     def affine_to_projective(affine):
         """

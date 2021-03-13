@@ -1,3 +1,4 @@
+from pkg_resources import resource_filename
 import click
 from sympy import symbols, floor, sqrt, sign
 
@@ -44,18 +45,17 @@ def csidh_main(ctx):
     else:
         verb = '-classical'
 
-    try:
 
-        # List of Small Odd Primes, L := [l_0, ..., l_{n-1}]
-        m_prime = [geometric_serie(m[k], L[k]) for k in range(n)]
-        r_out, L_out, R_out = rounds(m_prime[::-1], n)
-        for j in range(0, len(r_out), 1):
+    # List of Small Odd Primes, L := [l_0, ..., l_{n-1}]
+    m_prime = [geometric_serie(m[k], L[k]) for k in range(n)]
+    r_out, L_out, R_out = rounds(m_prime[::-1], n)
+    for j in range(0, len(r_out), 1):
 
-            R_out[j] = list([L[::-1][k] for k in R_out[j]])
-            L_out[j] = list([L[::-1][k] for k in L_out[j]])
+        R_out[j] = list([L[::-1][k] for k in R_out[j]])
+        L_out[j] = list([L[::-1][k] for k in L_out[j]])
 
-        f = open(
-            strategy_data
+    file_path = (
+            "../data/strategies/"
             + setting.algorithm
             + '-'
             + setting.prime
@@ -65,8 +65,10 @@ def csidh_main(ctx):
             + setting.formula
             + '-'
             + LABEL_m
-            + verb
-        )
+            + verb)
+    file_path = resource_filename(__name__, file_path)
+    try:
+        f = open(file_path)
         print("// Strategies to be read from a file")
         S_out = []
         for i in range(0, len(r_out), 1):
@@ -83,20 +85,7 @@ def csidh_main(ctx):
         C_out, L_out, R_out, S_out, r_out = strategy_block_cost(
             L[::-1], m[::-1]
         )
-        f = open(
-            strategy_data
-            + setting.algorithm
-            + '-'
-            + setting.prime
-            + '-'
-            + setting.style
-            + '-'
-            + setting.formula
-            + '-'
-            + LABEL_m
-            + verb,
-            'w',
-        )
+        f = open( file_path, 'w')
         for i in range(0, len(r_out)):
 
             f.writelines(' '.join([str(tmp) for tmp in S_out[i]]) + '\n')

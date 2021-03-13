@@ -1,7 +1,7 @@
+from pkg_resources import resource_filename
 from sidh.csidh.poly_mul import Poly_mul
 from sidh.csidh.poly_redc import Poly_redc
 from sidh.math import isequal, bitlength, hamming_weight
-from sidh.constants import ijk_data
 
 import numpy
 from sympy import floor, sqrt, sign
@@ -894,7 +894,10 @@ class Hvelu(object):
 
             self.sI_list = []
             self.sJ_list = []
-            f = open(ijk_data + self.prime)
+            try:
+                f = open(resource_filename(__name__, '../data/ijk/' + self.prime))
+            except Exception as ex:
+                raise Exception("ijk data required for tuned mode not found: %r", ex)
 
             for i in range(0, self.curve.n, 1):
 

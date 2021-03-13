@@ -1,6 +1,7 @@
 import os
 from functools import reduce
 from .math import bitlength, is_prime
+from pkg_resources import resource_string
 
 base_path = "/usr/share/python3-sidh/data/"
 if not os.path.exists(base_path) and os.path.exists('./data'):
@@ -13,18 +14,14 @@ sop_data = base_path + "/sop/"
 ijk_data = base_path + "/ijk/"
 gen_data = base_path + "/gen/"
 tmp_dir = "./"  # Drop the files in the current working directory
-
-
 def csidh_get_sop_from_disk(prime):
     assert prime in ('p512', 'p1024', 'p1792'), "unsupported prime for csidh"
     # List of Small odd primes, L := [l_0, ..., l_{n-1}]
-    f = open(sop_data + prime)
-    L = f.read()
+    L = resource_string(__name__, "data/sop/" + prime)
     L = [int(l) for l in L.split()]
     exponent_of_two = L[0]  #   Exponent of cofactor-2
     L = list(L[1:])  #   Small Odd Primes l_i's
     n = len(L)  #   Number of l_i's to be used
-    f.close()
     p = (2 ** (exponent_of_two)) * reduce(
         lambda x, y: (x * y), L
     ) - 1  # p := 4 * l_0 * ... * l_n - 1
