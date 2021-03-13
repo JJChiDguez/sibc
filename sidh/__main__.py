@@ -53,8 +53,8 @@ from sidh.constants import parameters
 @click.option(
     "-e",
     "--exponent",
-    type=click.Choice(['2']),
-    default='2',
+    type=click.Choice(['5','10']),
+    default='10',
     show_default=True,
 )
 @click.option(
