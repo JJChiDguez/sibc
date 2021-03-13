@@ -160,7 +160,6 @@ def MontgomeryCurve(prime):
     )
     C_xMUL = list(map(cMUL, global_L))  # list of the costs of each [l]P
 
-
     def coeff(A):
         '''
         ----------------------------------------------------------------------
