@@ -134,7 +134,7 @@ def MontgomeryCurve(prime, style):
     # print("// Shortest Differential Addition Chains (SDAC) for each l_i;")
     # List of Small odd primes, L := [l_0, ..., l_{n-1}]
     # print("// SDAC's to be read from a file")
-#    path = sdacs_data + prime
+    #    path = sdacs_data + prime
     path = resource_filename(__name__, "../data/sdacs/" + prime)
     SDACS = filename_to_list_of_lists_of_ints(path)
     if len(SDACS) == 0:

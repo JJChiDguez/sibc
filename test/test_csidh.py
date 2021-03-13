@@ -1,5 +1,5 @@
 """
-This module creates test classes for all 108 permutations of prime, formula,
+This module creates test classes for all 81 permutations of prime, formula,
 style, tuned, and multievaluation.
 
 These obviously take a long time to run. pytest-xdist is useful for speeding up
@@ -78,3 +78,6 @@ for prime in PRIMES:
                         )
                     ] = cls
 del cls
+assert (
+    len([c for c in dir() if c.startswith('csidh_gae')]) == 81
+), "unexpected number of permutations"

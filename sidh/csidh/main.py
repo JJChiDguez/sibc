@@ -45,7 +45,6 @@ def csidh_main(ctx):
     else:
         verb = '-classical'
 
-
     # List of Small Odd Primes, L := [l_0, ..., l_{n-1}]
     m_prime = [geometric_serie(m[k], L[k]) for k in range(n)]
     r_out, L_out, R_out = rounds(m_prime[::-1], n)
@@ -55,17 +54,18 @@ def csidh_main(ctx):
         L_out[j] = list([L[::-1][k] for k in L_out[j]])
 
     file_path = (
-            "../data/strategies/"
-            + setting.algorithm
-            + '-'
-            + setting.prime
-            + '-'
-            + setting.style
-            + '-'
-            + setting.formula
-            + '-'
-            + LABEL_m
-            + verb)
+        "../data/strategies/"
+        + setting.algorithm
+        + '-'
+        + setting.prime
+        + '-'
+        + setting.style
+        + '-'
+        + setting.formula
+        + '-'
+        + LABEL_m
+        + verb
+    )
     file_path = resource_filename(__name__, file_path)
     try:
         f = open(file_path)
@@ -85,7 +85,7 @@ def csidh_main(ctx):
         C_out, L_out, R_out, S_out, r_out = strategy_block_cost(
             L[::-1], m[::-1]
         )
-        f = open( file_path, 'w')
+        f = open(file_path, 'w')
         for i in range(0, len(r_out)):
 
             f.writelines(' '.join([str(tmp) for tmp in S_out[i]]) + '\n')

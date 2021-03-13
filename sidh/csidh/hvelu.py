@@ -895,9 +895,13 @@ class Hvelu(object):
             self.sI_list = []
             self.sJ_list = []
             try:
-                f = open(resource_filename(__name__, '../data/ijk/' + self.prime))
+                f = open(
+                    resource_filename(__name__, '../data/ijk/' + self.prime)
+                )
             except Exception as ex:
-                raise Exception("ijk data required for tuned mode not found: %r", ex)
+                raise Exception(
+                    "ijk data required for tuned mode not found: %r", ex
+                )
 
             for i in range(0, self.curve.n, 1):
 

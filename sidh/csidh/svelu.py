@@ -667,7 +667,9 @@ def Svelu(curve, tuned, multievaluation):
             try:
                 f = open(resource_filename(__name__, '../data/ijk/' + prime))
             except Exception as ex:
-                raise Exception("ijk data required for tuned mode not found: %r", ex)
+                raise Exception(
+                    "ijk data required for tuned mode not found: %r", ex
+                )
 
             for i in range(0, n, 1):
 
