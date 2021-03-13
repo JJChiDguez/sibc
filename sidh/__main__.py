@@ -12,6 +12,8 @@ from sidh.csidh.sdacs import csidh_sdacs
 from sidh.csidh.suitable_bounds import csidh_suitable_bounds
 from sidh.csidh.test import csidh_test
 from sidh.csidh.main import csidh_main
+from sidh.bsidh.test import bsidh_test
+from sidh.bsidh.print_strategy import bsidh_strategy
 from sidh.printstrategy import print_strategy
 from sidh.timing import print_timing
 from sidh.common import attrdict
@@ -103,8 +105,9 @@ def main(ctx, **kwargs):
 
         algo = CSIDH(**algo_args)
     elif algorithm == 'bsidh':
-        click.echo('BSIDH not yet implemented; try again later')
-        raise Exit(1)
+        from sidh.bsidh import BSIDH
+        algo_args.pop('style')
+        algo = BSIDH(**algo_args)
     else:
         click.echo('algorithm not implemented')
         raise Exit(1)
@@ -153,6 +156,8 @@ main.add_command(csidh_sdacs)
 main.add_command(csidh_suitable_bounds)
 main.add_command(csidh_test)
 main.add_command(csidh_main)
+main.add_command(bsidh_test)
+main.add_command(bsidh_strategy)
 
 if __name__ == '__main__':
     main()

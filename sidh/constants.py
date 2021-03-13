@@ -94,7 +94,20 @@ def bsidh_get_sop_from_disk(prime):
 
     p_minus_one_halves = (p - 1) // 2
     p_minus_3_quarters = (p - 3) // 4
-    return  # FIXME do the bsidh part
+    return dict(
+        nm=nm,
+        np=np,
+        Lm=Lm,
+        Lp=Lp,
+        Ep=Ep,
+        Em=Em,
+        pp=pp,
+        pm=pm,
+        p=p,
+        p_minus_one_halves=p_minus_one_halves,
+        p_bits=int(prime[1:]),
+        p_minus_3_quarters=p_minus_3_quarters,
+    )
 
 
 parameters = dict(
@@ -244,5 +257,10 @@ parameters = dict(
             **csidh_get_sop_from_disk('p1792')
         ),
     ),
-    bsidh=dict(),  # FIXME
+    bsidh=dict(
+        A=[[0x8, 0x0], [0x4, 0x0]],
+        b2=dict(
+            **bsidh_get_sop_from_disk('b2')
+        ),
+    ),
 )

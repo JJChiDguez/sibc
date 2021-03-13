@@ -1,14 +1,5 @@
-from sidh.framework import *
-
-if setting.formulaes == 'tvelu':
-    print("// Not required for tradicional velu formulaes")
-    exit(0)
-
-elif setting.formulaes == 'svelu':
-    from sidh.bsidh.svelu import *
-
-else:
-    from sidh.bsidh.hvelu import *
+# This is only valid for svelu and hvelu - if we are called from tvelu, we
+# should exit!
 
 # Reading public generators points
 f = open(gen_data + setting.prime)
