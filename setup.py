@@ -13,22 +13,6 @@ else:
 with open("README.md", "r") as obj:
     long_description = obj.read()
 
-#   strategy_files = ["data/strategies/" + strategy for strategy in os.listdir('data/strategies/')]
-#   gen_files = ["data/gen/" + gen for gen in os.listdir('data/gen/')]
-#   ijk_files = ["data/ijk/" + ijk for ijk in os.listdir('data/ijk/')]
-#   sdacs_files = ["data/sdacs/" + sdacs for sdacs in os.listdir('data/sdacs/')]
-#   sop_files = ["data/sop/" + sop for sop in os.listdir('data/sop/')]
-#   figure_files = ["data/figures/" + figure for figure in os.listdir('data/figures/')]
-#   data_files = [
-#           ( "/usr/share/python3-sidh/data/gen/", gen_files,),
-#           ( "/usr/share/python3-sidh/data/ijk/", ijk_files,),
-#           ( "/usr/share/python3-sidh/data/sdacs/", sdacs_files),
-#           ( "/usr/share/python3-sidh/data/sop/", sop_files),
-#           ( "/usr/share/python3-sidh/data/strategies/", strategy_files),
-#           ( "/usr/share/python3-sidh/data/figure/", figure_files,),
-#           ( "/usr/bin/", ["misc/sidh-autosearch"]),
-#       ]
-
 setuptools.setup(
     name="sidh",
     version=__version__,
@@ -67,5 +51,4 @@ setuptools.setup(
     package_data = {
             "" : [ "data/*/*" ]
         }
-#    data_files=data_files,
 )
