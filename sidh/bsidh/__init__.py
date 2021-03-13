@@ -19,7 +19,7 @@ class BSIDH(object):
 
     Here is one group action test with random keys:
 
-    >>> bsidh_tvelu = BSIDH('montgomery', 'b6', 'tvelu', False, False, False)
+    >>> bsidh_tvelu = BSIDH('montgomery', 'b2', 'hvelu', False, False, False, False)
     >>> sk_a, sk_b = bsidh_tvelu.secret_key(), bsidh_tvelu.secret_key()
     >>> pk_a, pk_b = bsidh_tvelu.public_key(sk_a), bsidh_tvelu.public_key(sk_b)
     >>> bsidh_tvelu.dh(sk_a, pk_b) == bsidh_tvelu.dh(sk_b, pk_a)
@@ -73,21 +73,21 @@ class BSIDH(object):
 
     def dh(self, sk, pk):
         sk = unpack('<{}b'.format(len(sk)), sk)
-        pk = int.from_bytes(pk, 'little')
-        pk = self.curve.affine_to_projective(pk)
-        ss = self.curve.coeff(self.gae.dh(sk, pk)).to_bytes(length=64, byteorder='little')
+        pk = x, y = int.from_bytes(pk[:32], 'little'), int.from_bytes(pk[32:], 'little')
+        ss = self.curve.coeff(self.gae.dh(sk, pk)).to_bytes(length=32, byteorder='little')
         return ss
 
     def secret_key(self):
         k = self.gae.random_key()
-        return pack('<{}b'.format(len(k)), *k)
+        return k.to_bytes(length=32, byteorder='little')
 
     def public_key(self, sk):
-        sk = unpack('<{}b'.format(len(sk)), sk)
+        sk = int.from_bytes(sk, byteorder='little')
+        #unpack('<{}b'.format(len(sk)), sk)
         xy = self.gae.pubkey(sk)
-        x = self.curve.coeff(xy)
+        x, y = self.curve.coeff(xy)
         # this implies a y of 4 on the receiver side
-        return x.to_bytes(length=64, byteorder='little')
+        return x.to_bytes(length=32, byteorder='little')+y.to_bytes(length=32, byteorder='little')
 
 
 if __name__ == "__main__":
