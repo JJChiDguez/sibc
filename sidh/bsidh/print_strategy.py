@@ -1,7 +1,6 @@
 import click
 
 from sidh.common import attrdict
-from sidh.constants import strategy_data
 from sidh.bsidh.strategy import Gae
 
 from pkg_resources import resource_filename

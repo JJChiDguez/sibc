@@ -14,6 +14,7 @@ from sidh.csidh.test import csidh_test
 from sidh.csidh.main import csidh_main
 from sidh.bsidh.test import bsidh_test
 from sidh.bsidh.print_strategy import bsidh_strategy
+from sidh.bsidh.print_parameters import bsidh_parameters
 from sidh.printstrategy import print_strategy
 from sidh.timing import print_timing
 from sidh.common import attrdict
@@ -158,6 +159,7 @@ main.add_command(csidh_test)
 main.add_command(csidh_main)
 main.add_command(bsidh_test)
 main.add_command(bsidh_strategy)
+main.add_command(bsidh_parameters)
 
 if __name__ == '__main__':
     main()
