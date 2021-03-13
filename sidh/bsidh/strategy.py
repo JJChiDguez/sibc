@@ -190,7 +190,7 @@ def Gae(prime, tuned, curve, formula):
                 # This branchs corresponds with the use of the new velu's formulaes
 
                 if tuned:
-                    formula.set_parameters_velu(sJ_list[pos], sI_list[pos], pos)
+                    formula.set_parameters_velu(formula.sJ_list[pos], formula.sI_list[pos], pos)
 
                 else:
                     # -------------------------------------------------------------
@@ -270,7 +270,7 @@ def Gae(prime, tuned, curve, formula):
             # This branchs corresponds with the use of the new velu's formulaes
 
             if tuned:
-                formula.set_parameters_velu(sJ_list[pos], sI_list[pos], pos)
+                formula.set_parameters_velu(formula.sJ_list[pos], formula.sI_list[pos], pos)
 
             else:
                 # -------------------------------------------------------------
