@@ -207,7 +207,7 @@ def PrimeField(p : int):
 				self.field.fpmul += (hamming_weight(e) - 1)
 				return FiniteField(pow(self.x, e, self.field.p))
 
-		def is_square(self):
+		def issquare(self):
 			"""
 			Checking if a given element is a quadratic residue
 
@@ -220,7 +220,7 @@ def PrimeField(p : int):
 				- True if self is a quadratic residue; otherwise, False
 			-----
 			Usage:
-				- self.is_square()
+				- self.issquare()
 			Notes
 			-----
 				- This is a constant-time implementation by rasing to (p - 1) / 2
@@ -272,7 +272,7 @@ def PrimeField(p : int):
 			if self == 0:
 				return self
 
-			if not self.is_square():
+			if not self.issquare():
 				raise TypeError(f'The element {self} does not have square-root in the prime field {FiniteField.__name__}')
 
 			if self.field.p % 4 == 3:
@@ -285,7 +285,7 @@ def PrimeField(p : int):
 				s += 1
 
 			z = self.__class__(2)
-			while z.is_square():
+			while z.issquare():
 				z += 1
 
 			m = s
@@ -314,7 +314,14 @@ def PrimeField(p : int):
 
 	return FiniteField
 
-# ---> Next two functions should be moved to common.py
+# ---> Next three functions should be moved to common.py
+
+# constant-time swap (this function should be modified into bit opterations for ensrue constant-time)
+def cswap(x, y, b):
+    z = list([x, y])
+    z = list(z[:: (1 - 2 * b)])
+    return z[0], z[1]
+
 # Jacobi symbol used for checking if an integer has square-root in fp
 def jacobi(a, n):
 
