@@ -46,7 +46,7 @@ def MontgomeryCurve(prime, style):
         # p_minus_one_halves = (p - 1) // 2  # (p - 1) / 2
         p_minus_one_halves = parameters['csidh'][prime]['p_minus_one_halves']
         validation_stop = sum([bitlength(l_i) for l_i in L]) / 2.0 + 2
-        FieldClass = PrimeField
+        FiniteFieldClass = PrimeField
     else:
         assert False, "bsidh not refactored yet"
         # this is for a possible future where we have a unified montgomery.py
@@ -94,9 +94,9 @@ def MontgomeryCurve(prime, style):
 
         p_minus_one_halves = (p - 1) // 2
         p_minus_3_quarters = (p - 3) // 4
-        #FieldClass = QuadraticField
+        #FiniteFieldClass = QuadraticField
 
-    ff = FieldClass(p)
+    ff = FiniteFieldClass(p)
     # print("// Shortest Differential Addition Chains (SDAC) for each l_i;")
     # List of Small odd primes, L := [l_0, ..., l_{n-1}]
     # print("// SDAC's to be read from a file")
@@ -153,7 +153,7 @@ def MontgomeryCurve(prime, style):
         Tp_X = (Ap + alpha)
         Tm_X = (Ap * u_squared)
         Tm_X = (Tm_X + alpha)
-        Tm_X = (0 - Tm_X)
+        Tm_X = (-Tm_X)
 
         tmp = (tmp + u_squared_plus_one)
         Tp_X, Tm_X = cswap(Tp_X, Tm_X, not tmp.issquare())
@@ -355,11 +355,11 @@ def MontgomeryCurve(prime, style):
 
             return []
 
-    def isfull_order(seq):
+    def isfullorder(seq):
         tmp = [not isinfinity(seq_i) for seq_i in seq]
         return reduce(lambda x, y: (x and y), tmp)
 
-    def full_torsion_points(A):
+    def generators(A):
 
         output = [[0, 0], [0, 0]] if style != 'wd1' else [[0, 0], [1, 1]]
         while [0, 0] in output:
@@ -383,7 +383,7 @@ def MontgomeryCurve(prime, style):
 
         return output[0], output[1]
 
-    def CrissCross(alpha, beta, gamma, delta):
+    def crisscross(alpha, beta, gamma, delta):
 
         t_1 = (alpha * delta)
         t_2 = (beta * gamma)

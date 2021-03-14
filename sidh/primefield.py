@@ -273,7 +273,7 @@ def PrimeField(p : int):
 				return self
 
 			if not self.issquare():
-				raise TypeError(f'The element {self} does not have square-root in the prime field {FiniteField.__name__}')
+				raise TypeError(f'The element {self} does not have square-root in the {FiniteField.__name__}')
 
 			if self.field.p % 4 == 3:
 				return self ** int((self.field.p + 1) // 4)
