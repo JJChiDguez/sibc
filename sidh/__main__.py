@@ -109,6 +109,7 @@ def main(ctx, **kwargs):
     elif algorithm == 'bsidh':
         from sidh.bsidh import BSIDH
         algo_args.pop('style')
+        algo_args.pop('exponent')
         algo = BSIDH(**algo_args)
     else:
         click.echo('algorithm not implemented')

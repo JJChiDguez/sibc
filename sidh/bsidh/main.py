@@ -16,10 +16,6 @@ def bsidh_main(ctx):
     SIDm = algo.curve.SIDm
     SQR, ADD = algo.curve.SQR, algo.curve.ADD
     p = algo.params.p
-    np = algo.params.np
-    Ep = algo.params.Ep
-    nm = algo.params.nm
-    Em = algo.params.Em
     global_L = algo.curve.L
     coeff = curve.coeff
     random = SystemRandom()
@@ -95,7 +91,7 @@ def bsidh_main(ctx):
 
     # Alice's side
     print("// Private key corresponding to Alice")
-    a_private = algo.gae.random_key(p - 1)
+    a_private = algo.gae.random_key(p + 1)
     fp.fp.set_zero_ops()
     Ra = curve.Ladder3pt(a_private, PA, QA, PQA, A)
     print("// sk_a := 0x%X;" % a_private)

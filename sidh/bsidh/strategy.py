@@ -9,13 +9,42 @@ from sidh.common import attrdict
 
 
 def Gae(prime, tuned, curve, formula):
+    '''
+    >>> from sidh.bsidh.strategy import Gae
+    >>> from sidh.bsidh.montgomery import MontgomeryCurve
+    >>> from sidh.bsidh.hvelu import Hvelu
+    >>> import pdb
+    >>> prime = 'b2'
+    >>> tuned = False
+    >>> multievaluation = False
+    >>> curve = MontgomeryCurve(prime)
+    >>> formula = Hvelu(curve, tuned, multievaluation)
+    >>> gae = Gae(prime, tuned, curve, formula)
+    >>> sk_a = 0x642DCCC20D71FAFDFBA18D94E19777E8601494E718CB04E330C4BFE0181C209
+    >>> sk_b = 0x135EB57C05FD58E80531C7CDDE36F2A7BBA88C55E8A70A0A97917D554AFA1EB6
+    >>> pk_a = gae.pubkey_A(sk_a)
+    >>> a_curve = curve.coeff(pk_a)
+    >>> pk_b = gae.pubkey_B(sk_b)
+    >>> b_curve = curve.coeff(pk_b)
+    >>> ss_a = gae.dh_A(sk_a, pk_b)
+    >>> curve_ss_a = curve.coeff(ss_a)
+    >>> ss_b = gae.dh_B(sk_b, pk_a)
+    >>> curve_ss_b = curve.coeff(ss_b)
+    >>> assert curve_ss_a == curve_ss_b
+    '''
     fp = curve.fp
     global_L = curve.L
     n = curve.n
-    m = curve.p - 1
+    m = curve.p
     curve = curve
+    random = SystemRandom()
+    tuned_name = ('-classical','-suitable')[tuned]
+    SQR, ADD = curve.SQR, curve.ADD
 
-    f_name = 'data/strategies/bsidh-'+prime+'-'+formula.name+('-classical','-suitable')[tuned]
+    SIDp = curve.SIDp
+    SIDm = curve.SIDm
+
+    f_name = 'data/strategies/bsidh-'+prime+'-'+formula.name+tuned_name
     f = open(resource_filename('sidh', f_name))
     # Corresponding to the list of Small Isogeny Degree, Lp := [l_0, ...,
     # l_{n-1}] [We need to include case l=2 and l=4]
@@ -48,11 +77,18 @@ def Gae(prime, tuned, curve, formula):
 
     f.close()
 
+    # These are for nonlocal in the pk/dh functions
+    PA_b, QA_b, PQA_b = None, None, None
+    PB_a, QB_a, PQB_a = None, None, None
+
+
     A = [[0x8, 0x0], [0x4, 0x0]]
     a = curve.coeff(A)
 
-    random = SystemRandom()
     # random_key() implements an uniform random integer sample [this functions should be modified]
+    random = SystemRandom()
+    random_key_A = lambda m=m: random.randint(0, m+1)
+    random_key_B = lambda m=m: random.randint(0, m-1)
     random_key = lambda m=m: random.randint(0, m)
 
     # In order to achieve efficiency, the optimal strategies and their cost are saved in two global dictionaries (hash tables)
@@ -326,16 +362,47 @@ def Gae(prime, tuned, curve, formula):
 
         return E_i, S_out, T_out, ST_out
 
-    def pubkey(sk):
-        Rb = curve.Ladder3pt(sk, PB, QB, PQB, A)
-        pk, PA_b, QA_b, PQA_b = evaluate_strategy( True, PA, QA, PQA, A,
-                Rb, curve.SIDm[::-1], Sm, len(curve.SIDm))
-        return pk
+    def pubkey_A(sk_a):
+        nonlocal PB_a, QB_a, PQB_a
+        Ra = curve.Ladder3pt(sk_a, PA, QA, PQA, A)
+        pk_a, PB_a, QB_a, PQB_a = evaluate_strategy( True, PB, QB, PQB, A,
+                Ra, curve.SIDp[::-1], Sp, len(curve.SIDp))
+        #a_curve = curve.coeff(pk_a)
+        return pk_a
 
-    def dh(sk, pk):
-        Rb = curve.Ladder3pt(sk, PB, QB, PQB, pk)
-        ss, PA_b, QA_b, PQA_b = evaluate_strategy( True, PA, QA, PQA, pk,
+    def pubkey_B(sk_b):
+        nonlocal PA_b, QA_b, PQA_b
+        Rb = curve.Ladder3pt(sk_b, PB, QB, PQB, A)
+        pk_b, PA_b, QA_b, PQA_b = evaluate_strategy( True, PA, QA, PQA, A,
                 Rb, curve.SIDm[::-1], Sm, len(curve.SIDm))
-        return ss
+        #b_curve = curve.coeff(pk_b)
+        return pk_b
+
+    def dh_A(sk_a, pk_b):
+        # sk here is alice's secret key
+        # pk_b here is from bob (not processed by coeff)
+        nonlocal PA_b, QA_b, PQA_b
+        RB_a = curve.Ladder3pt(sk_a, PA_b, QA_b, PQA_b, pk_b)
+        ss_a, _, _, _ = evaluate_strategy( False, PB, QB, PQB, pk_b,
+                RB_a, curve.SIDp[::-1], Sp, len(curve.SIDp))
+        #ss_a_curve = curve.coeff(ss_a)
+        #return ss_a_curve
+        return ss_a
+
+    def dh_B(sk_b, pk_a):
+        # sk_b here is bob's secret key
+        # pk_a here is from alice (not processed by coeff)
+        nonlocal PB_a, QB_a, PQB_a
+        RA_b = curve.Ladder3pt(sk_b, PB_a, QB_a, PQB_a, pk_a)
+        ss_b, _, _, _ = evaluate_strategy( False, PA, QA, PQA, pk_a,
+                RA_b, curve.SIDm[::-1], Sm, len(curve.SIDm))
+        #ss_b_curve = curve.coeff(ss_b)
+        #return ss_b_curve
+        return ss_b
 
     return attrdict(locals())
+
+if __name__ == "__main__":
+    import doctest
+    import pdb
+    doctest.testmod()

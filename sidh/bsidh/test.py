@@ -152,7 +152,6 @@ def bsidh_test(ctx):
         curve.isfull_order(curve.prime_factors(ST, A, range(np, np + nm, 1))),
     )
 
-    # --------------------------------------------------------------------------------------------------------------------
     # Three point ladder: case (p + 1)
     S = [list(PA[0]), list(PA[1])]
     T = [list(QA[0]), list(QA[1])]
@@ -170,7 +169,8 @@ def bsidh_test(ctx):
     k = random.randint(0, p)
     R = curve.Ladder3pt(k, S, T, ST, A)
     # print("k := 0x%X;" % k)
-    # print("boolR, R := IsPoint(E, (0x%X + i * 0x%X) / (0x%X + i * 0x%X));" % (R[0][0], R[0][1], R[1][0], R[1][1]))
+    # print("boolR, R := IsPoint(E, (0x%X + i * 0x%X) / (0x%X + i * 0x%X));" %
+    # (R[0][0], R[0][1], R[1][0], R[1][1]))
 
     T_p = [list(R[0]), list(R[1])]
     T_m = [list(S[0]), list(S[1])]
@@ -195,8 +195,9 @@ def bsidh_test(ctx):
 
             else:
                 # -------------------------------------------------------------
-                # Parameters sJ and sI correspond with the parameters b and b' from example 4.12 of https://eprint.iacr.org/2020/341
-                # These paramters are required in KPs, xISOG, and xEVAL
+                # Parameters sJ and sI correspond with the parameters b and b'
+                # from example 4.12 of https://eprint.iacr.org/2020/341 These
+                # paramters are required in KPs, xISOG, and xEVAL
                 if global_L[idx] <= 4:
                     b = 0
                     c = 0
@@ -282,7 +283,6 @@ def bsidh_test(ctx):
     print("B := EllipticCurve(x^3 + (0x%X + i * 0x%X )* x^2 + x);" % (a[0], a[1]))
     print("assert(Random(B) * (p + 1) eq B!0);")
 
-    # --------------------------------------------------------------------------------------------------------------------
     A = [[0x8, 0x0], [0x4, 0x0]]
     # Three point ladder: case (p - 1)
     S = [list(PB[0]), list(PB[1])]
@@ -301,8 +301,8 @@ def bsidh_test(ctx):
     k = random.randint(0, p)
     R = curve.Ladder3pt(k, S, T, ST, A)
     # print("k := 0x%X;" % k)
-    # print("boolR, R := IsPoint(E, (0x%X + i * 0x%X) / (0x%X + i * 0x%X));" % (R[0][0], R[0][1], R[1][0], R[1][1]))
-
+    # print("boolR, R := IsPoint(E, (0x%X + i * 0x%X) / (0x%X + i * 0x%X));" %
+    # (R[0][0], R[0][1], R[1][0], R[1][1]))
     T_p = [list(R[0]), list(R[1])]
     T_m = [list(S[0]), list(S[1])]
     print(
@@ -326,8 +326,9 @@ def bsidh_test(ctx):
 
             else:
                 # -------------------------------------------------------------
-                # Parameters sJ and sI correspond with the parameters b and b' from example 4.12 of https://eprint.iacr.org/2020/341
-                # These paramters are required in KPs, xISOG, and xEVAL
+                # Parameters sJ and sI correspond with the parameters b and b'
+                # from example 4.12 of https://eprint.iacr.org/2020/341 These
+                # paramters are required in KPs, xISOG, and xEVAL
                 if global_L[idx] == 3:
                     b = 0
                     c = 0
