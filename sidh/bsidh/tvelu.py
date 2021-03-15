@@ -264,7 +264,7 @@ def Tvelu(curve):
         A = [[0x8, 0x0], [0x4, 0x0]]
 
         # Reading public generators points
-        f = open(resource_filename(__name__, '../data/gen/' + prime))
+        f = open(resource_filename('sidh', 'data/gen/' + prime))
         # x(PA), x(QA) and x(PA - QA)
         PQA = f.readline()
         PQA = [int(x, 16) for x in PQA.split()]

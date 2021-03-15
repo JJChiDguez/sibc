@@ -82,7 +82,7 @@ def MontgomeryCurve(prime):
         all_dacs = dacs(l, 1, 2, 3, [])
         return min(all_dacs, key=lambda t: len(t[0]))[0]
 
-    path = resource_filename(__name__, "../data/sdacs/" + prime)
+    path = resource_filename('sidh', "data/sdacs/" + prime)
     SDACS = filename_to_list_of_lists_of_ints(path)
     if len(SDACS) == 0:
         print("// SDAC's to be computed")

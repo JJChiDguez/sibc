@@ -748,7 +748,7 @@ def Svelu(curve, tuned, multievaluation):
 
             sI_list = []
             sJ_list = []
-            f = open(resource_filename(__name__, '../data/ijk/' + prime))
+            f = open(resource_filename('sidh', 'data/ijk/' + prime))
 
             for i in range(0, np + nm, 1):
 
@@ -764,7 +764,7 @@ def Svelu(curve, tuned, multievaluation):
         A = [[0x8, 0x0], [0x4, 0x0]]
 
         # Reading public generators points
-        f = open(resource_filename(__name__, '../data/gen/' + prime))
+        f = open(resource_filename('sidh', 'data/gen/' + prime))
 
         # x(PA), x(QA) and x(PA - QA)
         PQA = f.readline()

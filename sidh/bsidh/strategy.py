@@ -45,7 +45,7 @@ def Gae(prime, tuned, curve, formula):
     SIDm = curve.SIDm
 
     # Reading public generators points
-    f = open(resource_filename(__name__, '../data/gen/' + prime))
+    f = open(resource_filename('sidh', 'data/gen/' + prime))
 
     # x(PA), x(QA) and x(PA - QA)
     PQA = f.readline()

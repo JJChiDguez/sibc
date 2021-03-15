@@ -923,7 +923,7 @@ def Hvelu(curve, tuned, mutlievaluation):
             sI_list = []
             sJ_list = []
 
-            f = open(resource_filename(__name__, '../data/ijk/' + prime))
+            f = open(resource_filename('sidh', 'data/ijk/' + prime))
 
             for i in range(0, np + nm, 1):
 
@@ -939,7 +939,7 @@ def Hvelu(curve, tuned, mutlievaluation):
         A = [[0x8, 0x0], [0x4, 0x0]]
 
         # Reading public generators points
-        f = open(resource_filename(__name__, '../data/gen/' + prime))
+        f = open(resource_filename('sidh', 'data/gen/' + prime))
         # x(PA), x(QA) and x(PA - QA)
         PQA = f.readline()
         PQA = [int(x, 16) for x in PQA.split()]

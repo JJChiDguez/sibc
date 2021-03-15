@@ -28,7 +28,7 @@ def bsidh_test(ctx):
     print("Pr<x> := PolynomialRing(fp2);")
 
     # Reading public generators points
-    f = open(resource_filename(__name__, '../data/gen/' + setting.prime))
+    f = open(resource_filename('sidh', 'data/gen/' + setting.prime))
 
     # x(PA), x(QA) and x(PA - QA)
     PQA = f.readline()
