@@ -1,6 +1,7 @@
 sidh/__pycache__/*
 sidh/csidh/__pycache__/*
 sidh/bsidh/__pycache__/*
+sidh/montgomery/__pycache__/*
 test/__pycache__/*
 prime-filter.sh
 prime-search.sh

@@ -31,11 +31,12 @@ def write_list_of_lists_of_ints_to_file(path, data):
         fh.writelines()
 
 
+# MontgomeryCurve class determines the family of supersingular elliptic curves over GF(p)
 def MontgomeryCurve(prime, style):
 
     if True:  # algorithm == 'csidh':
         # this is montgomery.py currently
-        A = parameters['csidh']['A']
+        #A = parameters['csidh']['A'] <--- Not required
         L = parameters['csidh'][prime]['L']
         n = parameters['csidh'][prime]['n']
         exponent_of_two = parameters['csidh'][prime]['exponent_of_two']
