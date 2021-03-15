@@ -42,10 +42,10 @@ def bsidh_main(ctx):
         Sp, Cp = dynamic_programming_algorithm(SIDp[::-1], len(SIDp))
         # List of Small Isogeny Degree, Lm := [l_0, ..., l_{n-1}]
         Sm, Cm = dynamic_programming_algorithm(SIDm[::-1], len(SIDm))
-       #f = open(f_name, 'w')
-       #f.writelines(' '.join([str(tmp) for tmp in Sp]) + '\n')
-       #f.writelines(' '.join([str(tmp) for tmp in Sm]) + '\n')
-       #f.close()
+        f = open(f_name, 'w')
+        f.writelines(' '.join([str(tmp) for tmp in Sp]) + '\n')
+        f.writelines(' '.join([str(tmp) for tmp in Sm]) + '\n')
+        f.close()
     print(
         "// All the experiments are assuming S = %1.6f x M and a = %1.6f x M. The curve.measures are given in millions of field operations.\n"
         % (SQR, ADD)

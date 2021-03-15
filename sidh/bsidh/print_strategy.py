@@ -1,9 +1,7 @@
 import click
+from pkg_resources import resource_filename
 
 from sidh.common import attrdict
-from sidh.bsidh.strategy import Gae
-
-from pkg_resources import resource_filename
 
 
 @click.command()
@@ -17,8 +15,8 @@ def bsidh_strategy(ctx):
 
     f_name = 'data/strategies/'+setting.algorithm+'-'+setting.prime+'-'+algo.formula.name+tuned_name
     try:
-        f = open(resource_filename('sidh', f_name))
         print("// Strategies to be read from a file")
+        f = open(resource_filename('sidh', f_name))
         # Corresponding to the list of Small Isogeny Degree, Lp := [l_0, ...,
         # l_{n-1}] [We need to include case l=2 and l=4]
         tmp = f.readline()
@@ -37,8 +35,8 @@ def bsidh_strategy(ctx):
         # List of Small Isogeny Degree, Lm := [l_0, ..., l_{n-1}]
         Sm, Cm = algo.gae.dynamic_programming_algorithm(SIDm[::-1], len(SIDm))
 
-        f_name = 'data/strategies/x'+setting.algorithm+'-'+setting.prime+'-'+algo.formula.name+tuned_name
-        f = open(f_name, 'w',)
+        f_name = 'data/strategies/'+setting.algorithm+'-'+setting.prime+'-'+algo.formula.name+tuned_name
+        f = open(f_name, 'w')
 
         f.writelines(' '.join([str(tmp) for tmp in Sp]) + '\n')
         f.writelines(' '.join([str(tmp) for tmp in Sm]) + '\n')
