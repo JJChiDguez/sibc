@@ -404,5 +404,4 @@ def Gae(prime, tuned, curve, formula):
 
 if __name__ == "__main__":
     import doctest
-    import pdb
-    doctest.testmod()
+    doctest.testmod(verbose=True)
