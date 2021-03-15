@@ -18,7 +18,7 @@ def doc(s):
             return self.desc
     return __doc
 
-def Isogeny(name : str):
+def MontgomeryIsogeny(name : str):
 
     cutoff = 83
     cutoff_string = f' with cutoff ell <= {cutoff}' if name == 'hvelu' else ''
