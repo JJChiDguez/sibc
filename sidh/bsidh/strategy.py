@@ -222,7 +222,7 @@ def Gae(prime, tuned, curve, formula):
                 k += 1
 
             # Deciding which velu variant will be used
-            if formula != 'tvelu':
+            if formula.name != 'tvelu':
                 # This branchs corresponds with the use of the new velu's formulaes
 
                 if tuned:
@@ -239,7 +239,8 @@ def Gae(prime, tuned, curve, formula):
                         b = int(floor(sqrt(global_L[pos] - 1) / 2.0))
                         c = int(floor((global_L[pos] - 1.0) / (4.0 * b)))
 
-                    formula.set_parameters_velu(b, c, pos)
+                    if formula.name != 'tvelu':
+                        formula.set_parameters_velu(b, c, pos)
 
             # Kernel Points computation
             formula.KPs(ramifications[-1], E_i, pos)

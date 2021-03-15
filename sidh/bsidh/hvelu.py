@@ -305,7 +305,7 @@ def Hvelu(curve, tuned, mutlievaluation):
             else:
                 # Using scaled remainder trees
                 assert (2 * sJ - sI + 1) > sI
-                ptree_hI['reciprocal'], ptree_hI['a'] = reciprocal(
+                ptree_hI['reciprocal'], ptree_hI['a'] = poly_redc.reciprocal(
                     ptree_hI['poly'][::-1], sI + 1, 2 * sJ - sI + 1
                 )
                 ptree_hI['scaled'], ptree_hI['as'] = (
@@ -360,7 +360,7 @@ def Hvelu(curve, tuned, mutlievaluation):
             else:
                 # Using scaled remainder trees
                 assert (2 * sJ - sI + 1) <= sI
-                ptree_hI['scaled'], ptree_hI['as'] = reciprocal(
+                ptree_hI['scaled'], ptree_hI['as'] = poly_redc.reciprocal(
                     ptree_hI['poly'][::-1], sI + 1, sI
                 )
                 ptree_hI['reciprocal'], ptree_hI['a'] = (
@@ -456,7 +456,7 @@ def Hvelu(curve, tuned, mutlievaluation):
         else:
             # Using scaled remainder trees
             if sI < (2 * sJ - sI + 1):
-                ptree_hI['reciprocal'], ptree_hI['a'] = reciprocal(
+                ptree_hI['reciprocal'], ptree_hI['a'] = poly_redc.reciprocal(
                     ptree_hI['poly'][::-1], sI + 1, 2 * sJ - sI + 1
                 )
                 ptree_hI['scaled'], ptree_hI['as'] = (
@@ -465,7 +465,7 @@ def Hvelu(curve, tuned, mutlievaluation):
                 )
 
             else:
-                ptree_hI['scaled'], ptree_hI['as'] = reciprocal(
+                ptree_hI['scaled'], ptree_hI['as'] = poly_redc.reciprocal(
                     ptree_hI['poly'][::-1], sI + 1, sI
                 )
                 ptree_hI['reciprocal'], ptree_hI['a'] = (
@@ -577,9 +577,9 @@ def Hvelu(curve, tuned, mutlievaluation):
         else:
             # Approach using scaled remainder trees
             if ptree_hI != None:
-                poly_EJ_0 = poly_redc(poly_EJ_0, 2 * sJ + 1, ptree_hI)
-                fg_0 = poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_0[::-1], sI)
-                remainders_EJ_0 = multieval_scaled(
+                poly_EJ_0 = poly_redc.poly_redc(poly_EJ_0, 2 * sJ + 1, ptree_hI)
+                fg_0 = poly_mul.poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_0[::-1], sI)
+                remainders_EJ_0 = poly_redc.multieval_scaled(
                     fg_0[::-1],
                     sI,
                     [[1, 0]] + [[0, 0]] * (sI - 1),
@@ -588,9 +588,9 @@ def Hvelu(curve, tuned, mutlievaluation):
                     sI,
                 )
 
-                poly_EJ_1 = poly_redc(poly_EJ_1, 2 * sJ + 1, ptree_hI)
-                fg_1 = poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_1[::-1], sI)
-                remainders_EJ_1 = multieval_scaled(
+                poly_EJ_1 = poly_redc.poly_redc(poly_EJ_1, 2 * sJ + 1, ptree_hI)
+                fg_1 = poly_mul.poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_1[::-1], sI)
+                remainders_EJ_1 = poly_redc.multieval_scaled(
                     fg_1[::-1],
                     sI,
                     [[1, 0]] + [[0, 0]] * (sI - 1),
@@ -757,9 +757,9 @@ def Hvelu(curve, tuned, mutlievaluation):
         else:
             # Approach using scaled remainder trees
             if ptree_hI != None:
-                poly_EJ_0 = poly_redc(poly_EJ_0, 2 * sJ + 1, ptree_hI)
-                fg_0 = poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_0[::-1], sI)
-                remainders_EJ_0 = multieval_scaled(
+                poly_EJ_0 = poly_redc.poly_redc(poly_EJ_0, 2 * sJ + 1, ptree_hI)
+                fg_0 = poly_mul.poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_0[::-1], sI)
+                remainders_EJ_0 = poly_redc.multieval_scaled(
                     fg_0[::-1],
                     sI,
                     [[1, 0]] + [[0, 0]] * (sI - 1),
@@ -768,9 +768,9 @@ def Hvelu(curve, tuned, mutlievaluation):
                     sI,
                 )
 
-                poly_EJ_1 = poly_redc(poly_EJ_1, 2 * sJ + 1, ptree_hI)
-                fg_1 = poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_1[::-1], sI)
-                remainders_EJ_1 = multieval_scaled(
+                poly_EJ_1 = poly_redc.poly_redc(poly_EJ_1, 2 * sJ + 1, ptree_hI)
+                fg_1 = poly_mul.poly_mul_middle(ptree_hI['scaled'], sI, poly_EJ_1[::-1], sI)
+                remainders_EJ_1 = poly_redc.multieval_scaled(
                     fg_1[::-1],
                     sI,
                     [[1, 0]] + [[0, 0]] * (sI - 1),
