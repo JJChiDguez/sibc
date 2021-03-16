@@ -1,45 +1,22 @@
 from random import SystemRandom
 from sidh.math import bitlength, hamming_weight, is_prime
+from sidh.common import check, doc
 from sidh.primefield import PrimeField
-from functools import wraps
 
 def tostring(a):
 	if a.re == 0 and a.im == 0: return '0'
 	if a.re == 0:
 		if a.im == 1:
-			return 'i'
+			return 'u'
 		else:
-			return f'{a.im}*i'
+			return f'{a.im}*u'
 	elif a.im == 0:
 		return f'{a.re}'
 	else:
 		if a.im == 1:
-			return f'{a.re} + i'
+			return f'{a.re} + u'
 		else:
-			return f'{a.re} + {a.im}*i'
-
-def check(func):
-	@wraps(func)
-	def method(self, other):
-		if type(self) is not type(other):
-			other = self.__class__(other)
-		else:
-			if self.field.p != other.field.p:
-				raise ValueError
-		return func(self, other)
-
-	return method
-
-def doc(s):
-	class __doc(object):
-		def __init__(self,f):
-			self.func = f
-			self.desc = s
-		def __call__(self,*args,**kwargs):
-			return self.func(*args,**kwargs)
-		def __repr__(self):
-			return self.desc
-	return __doc
+			return f'{a.re} + {a.im}*u'
 
 def QuadraticField(p : int):
 	"""
@@ -61,7 +38,7 @@ def QuadraticField(p : int):
 		raise TypeError(f'The prime number {p} is congruent with 1 modulo 4, which is not implemented yet!')
 
 	basefield = PrimeField(p)
-	NAME = 'Quadratic Field GF(p²) of characteristic p = 0x%X' % (p)
+	NAME = 'Quadratic Field GF(p²) := GF(p)[u]/(u²+1) of characteristic p = 0x%X' % (p)
 	@doc(NAME)
 	class FiniteField():
 
@@ -302,7 +279,7 @@ def QuadraticField(p : int):
 	FiniteField.fp2sqr = 0  # Number of field squarings performed
 	FiniteField.fp2mul = 0  # Number of field multiplications performed
 	FiniteField.p = p
-	FiniteField.i = FiniteField([0,1])
+	FiniteField.u = FiniteField([0,1])
 	FiniteField.basefield = basefield
 	FiniteField.__name__ = NAME
 
