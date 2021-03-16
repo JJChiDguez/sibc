@@ -1,6 +1,6 @@
 from sidh.constants import parameters
 # Next library is used for printing polynomials
-from sympy import floor, sqrt, log
+from math import floor, sqrt, log
 
 from sidh.common import attrdict
 from functools import reduce
