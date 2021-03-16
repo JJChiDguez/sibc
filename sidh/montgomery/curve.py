@@ -4,14 +4,15 @@ from random import SystemRandom
 import numpy
 
 # Loading the library corresponding to the arithmetic in GF(p)
-from sidh.primefield import PrimeField, cswap   # <--- cswap should be later imported from common
-#from sidh.quadraticfield import QuadraticField # <--- fp2 classes not integrated for now
+from sidh.primefield import PrimeField
+# Loading the library corresponding to the arithmetic in GF(p²)
+from sidh.quadraticfield import QuadraticField
 
 from functools import reduce
 
 from sidh.constants import sdacs_data, bitlength, parameters
 from sidh.common import attrdict
-
+from sidh.math import cswap
 
 def filename_to_list_of_lists_of_ints(path):
     res = []
@@ -32,11 +33,10 @@ def write_list_of_lists_of_ints_to_file(path, data):
 
 
 # MontgomeryCurve class determines the family of supersingular elliptic curves over GF(p)
-def MontgomeryCurve(prime, style):
+def MontgomeryCurve(prime):
 
-    if True:  # algorithm == 'csidh':
-        # this is montgomery.py currently
-        #A = parameters['csidh']['A'] <--- Not required
+    if prime in parameters['csidh'].keys():
+        # CSIDH only requires the factorization of p + 1
         L = parameters['csidh'][prime]['L']
         n = parameters['csidh'][prime]['n']
         exponent_of_two = parameters['csidh'][prime]['exponent_of_two']
@@ -47,122 +47,24 @@ def MontgomeryCurve(prime, style):
         # p_minus_one_halves = (p - 1) // 2  # (p - 1) / 2
         p_minus_one_halves = parameters['csidh'][prime]['p_minus_one_halves']
         validation_stop = sum([bitlength(l_i) for l_i in L]) / 2.0 + 2
-        FiniteFieldClass = PrimeField
+        field = PrimeField(p)
+
+    elif prime in parameters['bsidh'].keys():
+        # B-SIDH only requires the factorization of p + 1 and p - 1
+        nm = parameters['bsidh'][prime]['nm']
+        np = parameters['bsidh'][prime]['np']
+        Lp = parameters['bsidh'][prime]['Lp']
+        Lm = parameters['bsidh'][prime]['Lm']
+        Ep = parameters['bsidh'][prime]['Ep']
+        Em = parameters['bsidh'][prime]['Em']
+        L = list(Lp + Lm)
+        n = len(L)
+        p = parameters['bsidh'][prime]['p']
+        p_minus_one_halves = parameters['bsidh'][prime]['p_minus_one_halves']
+        p_minus_3_quarters = parameters['bsidh'][prime]['p_minus_3_quarters']
+        field = QuadraticField(p)
     else:
-        assert False, "bsidh not refactored yet"
-        # this is for a possible future where we have a unified montgomery.py
-        # for csidh and bsidh. the code in this else block was moved from fp.py
-
-        f = open(sop_data + prime)
-
-        # The prime to be used
-        p = f.readline()
-        self.p = int(p, 16)
-
-        # List corresponding (p + 1)
-        Lp = f.readline()
-        Lp = [int(lp) for lp in Lp.split()]
-        # exponent_of_twop = Lp[0]
-        # Lp = Lp[1:]
-        Ep = f.readline()
-        Ep = [int(ep) for ep in Ep.split()]
-        assert len(Ep) == len(Lp)
-        np = len(Lp)
-
-        # List corresponding (p - 1)
-        Lm = f.readline()
-        Lm = [int(lm) for lm in Lm.split()]
-        Em = f.readline()
-        Em = [int(em) for em in Em.split()]
-        assert len(Em) == len(Lm)
-        nm = len(Lm)
-
-        f.close()
-
-        # pp = (2**exponent_of_twop) * reduce(lambda x,y : (x*y), [ Lp[i]**Ep[i] for i in range(0, np, 1)  ])
-        pp = reduce(
-            lambda x, y: (x * y), [Lp[i] ** Ep[i] for i in range(0, np, 1)]
-        )
-        pm = reduce(
-            lambda x, y: (x * y), [Lm[i] ** Em[i] for i in range(0, nm, 1)]
-        )
-        assert (p + 1) % pp == 0
-        assert (p - 1) % pm == 0
-
-        if p % 4 == 1:
-            print("// Case p = 1 mod 4 is not implemented yet!")
-            exit(-1)
-
-        p_minus_one_halves = (p - 1) // 2
-        p_minus_3_quarters = (p - 3) // 4
-        #FiniteFieldClass = QuadraticField
-
-    ff = FiniteFieldClass(p)
-    # print("// Shortest Differential Addition Chains (SDAC) for each l_i;")
-    # List of Small odd primes, L := [l_0, ..., l_{n-1}]
-    # print("// SDAC's to be read from a file")
-    path = sdacs_data + prime
-    SDACS = filename_to_list_of_lists_of_ints(path)
-    if len(SDACS) == 0:
-        print("// SDAC's to be computed")
-        SDACS = generate_sdacs(L)
-        print("// Storing SDAC's in a file")
-        write_list_of_lists_of_ints_to_file(path, SDACS)
-    SDACS_LENGTH = list(map(len, SDACS))
-
-    cMUL = lambda l: numpy.array(
-        [
-            4.0 * (SDACS_LENGTH[L.index(l)] + 2),
-            2.0 * (SDACS_LENGTH[L.index(l)] + 2),
-            6.0 * (SDACS_LENGTH[L.index(l)] + 2) - 2.0,
-        ]
-    )
-    C_xmul = list(map(cMUL, L))  # list of the costs of each [l]P
-
-    SQR = 1.00
-    ADD = 0.00
-
-    random = SystemRandom()
-
-    def elligator(A):
-
-        Ap = (A[0] + A[0])
-        Ap = (Ap - A[1])
-        Ap = (Ap + Ap)
-        Cp = A[1]
-
-        u = ff(random.randint(2, p_minus_one_halves))
-        u_squared = (u ** 2)
-
-        u_squared_plus_one = (u_squared + 1)
-        u_squared_minus_one = (u_squared - 1)
-
-        C_times_u_squared_minus_one = (Cp * u_squared_minus_one)
-        AC_times_u_squared_minus_one = (Ap * C_times_u_squared_minus_one)
-
-        tmp = (Ap ** 2)
-        tmp = (tmp * u_squared)
-        aux = (C_times_u_squared_minus_one ** 2)
-        tmp = (tmp + aux)
-        tmp = (AC_times_u_squared_minus_one * tmp)
-
-        alpha, beta = 0, u
-        alpha, beta = cswap(alpha, beta, tmp == 0)
-        u_squared_plus_one = (alpha * u_squared_plus_one)
-        alpha = (alpha * C_times_u_squared_minus_one)
-
-        Tp_X = (Ap + alpha)
-        Tm_X = (Ap * u_squared)
-        Tm_X = (Tm_X + alpha)
-        Tm_X = (-Tm_X)
-
-        tmp = (tmp + u_squared_plus_one)
-        Tp_X, Tm_X = cswap(Tp_X, Tm_X, not tmp.issquare())
-
-        return (
-            [Tp_X, C_times_u_squared_minus_one],
-            [Tm_X, C_times_u_squared_minus_one],
-        )
+        assert False, "only CSIDH and B-SIDH are currently implemented"
 
     def generate_sdacs(L):
         return list(
@@ -171,6 +73,7 @@ def MontgomeryCurve(prime, style):
 
     def measure(x):
         """
+        Field additions, multiplications, and squarings
         SQR = 1.00
         # In F_p, we have SQR_{F_p} = SQR x MUL_{F_p}
         ADD = 0.00
@@ -208,13 +111,118 @@ def MontgomeryCurve(prime, style):
         all_dacs = dacs(l, 1, 2, 3, [])
         return min(all_dacs, key=lambda t: len(t[0]))[0]
 
+    # Shortest Differential Addition Chains (SDACs) for each l_i
+    path = sdacs_data + prime
+    SDACS = filename_to_list_of_lists_of_ints(path)
+    if len(SDACS) == 0:
+        print("// SDAC's to be computed")
+        SDACS = generate_sdacs(L)
+        print("// Storing SDAC's in a file")
+        write_list_of_lists_of_ints_to_file(path, SDACS)
+    SDACS_LENGTH = list(map(len, SDACS))
+
+    cMUL = lambda l: numpy.array(
+        [
+            4.0 * (SDACS_LENGTH[L.index(l)] + 2),
+            2.0 * (SDACS_LENGTH[L.index(l)] + 2),
+            6.0 * (SDACS_LENGTH[L.index(l)] + 2) - 2.0,
+        ]
+    )
+    C_xmul = list(map(cMUL, L))  # list of the costs of each [l]P
+
+    SQR = 1.00
+    ADD = 0.00
+
+    random = SystemRandom()
+
+    def jinvariant(A):
+        '''
+        -------------------------------------------------------------------------
+        jinvariant()
+        input : projective Montgomery constants A24 := A + 2C and C24 := 4C where
+                E : y^2 = x^3 + (A/C)*x^2 + x
+        output: the j-invariant of E
+        -------------------------------------------------------------------------
+        '''
+        A4_squared = (A[0] + A[0])              # (2 * A24)
+        A4_squared = (A4_squared - A[1])        # (2 * A24) - C24
+        A4_squared = (A4_squared + A4_squared)  # 4*A = 2[(2 * A24) - C24]
+
+        # Now, we have A = A' / C' := A4 / A[1] = (4*A) / (4*C)
+        A4_squared = (A4_squared ** 2)  # (A')^2
+        C4_squared = (A[1] ** 2)        # (C')^2
+        t = (C4_squared + C4_squared)   # 2 * [(C')^2]
+
+        num = (C4_squared + t)      # 3 * [(C')^2]
+        num = (A4_squared - num)    # (A')^2 - 3 * [(C')^2]
+        s = (num ** 2)              # { (A')^2 - 3 * [(C')^2] }^2
+        num = (num * s)             # { (A')^2 - 3 * [(C')^2] }^3
+
+        C4_squared = (C4_squared ** 2)  # (C')^4
+        den = (t + t)                   # 4 * [(C')^2]
+        den = (A4_squared - den)        # (A')^2 - 4 * [(C')^2]
+        den = (den * C4_squared)        # {(A')^2 - 4 * [(C')^2] } * [(C')^4]
+        den = (den ** -1)               # 1 / {(A')^2 - 4 * [(C')^2] } * [(C')^4]
+
+        num = (num * den)  # j := { (A')^2 - 3 * [(C')^2] }^3 / {(A')^2 - 4 * [(C')^2] } * [(C')^4]
+        num = (num + num)  #   2*j
+        num = (num + num)  #   4*j
+        num = (num + num)  #   8*j
+        num = (num + num)  #  16*j
+        num = (num + num)  #  32*j
+        num = (num + num)  #  64*j
+        num = (num + num)  # 128*j
+        num = (num + num)  # 256*j
+        return num
+
+    def elligator(A):
+        ''' elligator() samples two points on E[pi + 1] or E[pi - 1] '''
+        Ap = (A[0] + A[0])
+        Ap = (Ap - A[1])
+        Ap = (Ap + Ap)
+        Cp = A[1]
+
+        u = field(random.randint(2, p_minus_one_halves))
+        u_squared = (u ** 2)
+
+        u_squared_plus_one = (u_squared + 1)
+        u_squared_minus_one = (u_squared - 1)
+
+        C_times_u_squared_minus_one = (Cp * u_squared_minus_one)
+        AC_times_u_squared_minus_one = (Ap * C_times_u_squared_minus_one)
+
+        tmp = (Ap ** 2)
+        tmp = (tmp * u_squared)
+        aux = (C_times_u_squared_minus_one ** 2)
+        tmp = (tmp + aux)
+        tmp = (AC_times_u_squared_minus_one * tmp)
+
+        alpha, beta = 0, u
+        alpha, beta = cswap(alpha, beta, tmp == 0)
+        u_squared_plus_one = (alpha * u_squared_plus_one)
+        alpha = (alpha * C_times_u_squared_minus_one)
+
+        Tp_X = (Ap + alpha)
+        Tm_X = (Ap * u_squared)
+        Tm_X = (Tm_X + alpha)
+        Tm_X = (-Tm_X)
+
+        tmp = (tmp + u_squared_plus_one)
+        Tp_X, Tm_X = cswap(Tp_X, Tm_X, not tmp.issquare())
+
+        return (
+            [Tp_X, C_times_u_squared_minus_one],
+            [Tm_X, C_times_u_squared_minus_one],
+        )
+
     def affine_to_projective(affine):
-        """
+        '''
+        affine_to_projective()
         input : the affine Montgomery coefficient A=A'/C with C=1
         output: projective Montgomery constants A24 := A' + 2C and C24 := 4C
                 where E : y^2 = x^3 + (A'/C)*x^2 + x
-        """
-        return [affine + ff(2), ff(4)]
+        '''
+        return [affine + field(2), field(4)]
 
     def coeff(A):
         '''
@@ -234,13 +242,11 @@ def MontgomeryCurve(prime, style):
         return output
 
     def isinfinity(P):
-        """
-        isinfinity(P) determines if x(P) := (XP : ZP) = (1 : 0)
-        """
+        ''' isinfinity(P) determines if x(P) := (XP : ZP) = (1 : 0) '''
         return P[1] == 0
 
     def isequal(P, Q):
-        """ isequal(P, Q) determines if x(P) = x(Q) """
+        ''' isequal(P, Q) determines if x(P) = x(Q) '''
         return (P[0] * Q[1]) == (P[1] * Q[0])
 
     def xdbl(P, A):
@@ -289,7 +295,12 @@ def MontgomeryCurve(prime, style):
         Z = (PQ[0] * d)
         return [X, Z]
 
-    # Modificar esta parte para usar cadenas de addicion
+    def xdbladd(P, Q, PQ, A):
+        ''' xdbladd() computes both of x([2]P) and x(P + Q) '''
+        S = xadd(P, Q, PQ)
+        T = xdbl(P, A)
+        return T, S
+
     def xmul(P, A, j):
         '''
         ----------------------------------------------------------------------
@@ -315,6 +326,26 @@ def MontgomeryCurve(prime, style):
             R[2] = list(T)
 
         return R[2]
+
+    def Ladder3pt(m, P, Q, PQ, A):
+        ''' Ladder3pt() computes x(P + [m]Q) '''
+        X0 = list([field(Q[0]), field(Q[1])])
+        X1 = list([field(P[0]), field(P[1])])
+        X2 = list([field(PQ[0]), field(PQ[1])])
+        t = 0x1
+        for i in range(0, bitlength(p), 1):
+            # In C-code implementations this branch should be implemented with cswap's
+            X1, X2 = cswap(X1, X2, t & m == 0)
+            X0, X1 = xdbladd(X0, X1, X2, A)
+            X1, X2 = cswap(X1, X2, t & m == 0)
+            """
+            if t & m != 0:
+                X0, X1 = xdbladd(X0, X1, X2, A)
+            else:
+                X0, X2 = xdbladd(X0, X2, X1, A)
+            """
+            t <<= 1
+        return X1
 
     def cofactor_multiples(P, A, points):
         '''
@@ -357,41 +388,42 @@ def MontgomeryCurve(prime, style):
             return []
 
     def isfullorder(seq):
+        ''' isfullorder() checks if the point at infinity belongs or not to a given list '''
         tmp = [not isinfinity(seq_i) for seq_i in seq]
         return reduce(lambda x, y: (x and y), tmp)
 
     def generators(A):
-
-        output = [[0, 0], [0, 0]] if style != 'wd1' else [[0, 0], [1, 1]]
+        ''' generators() looks for two full-order poinst on E[pi + 1] or E[pi - 1] '''
+        output = [[0, 0], [0, 0]]
         while [0, 0] in output:
 
             T_p, T_m = elligator(A)
             for i in range(0, exponent_of_two, 1):
                 T_p = xdbl(T_p, A)
 
-            if isfull_order(cofactor_multiples(T_p, A, range(0, n, 1))) and output[
+            if isfullorder(cofactor_multiples(T_p, A, range(0, n, 1))) and output[
                 0
             ] == [0, 0]:
                 output[0] = list(T_p)
 
-            if style != 'wd1':
-                for i in range(0, exponent_of_two, 1):
-                    T_m = xdbl(T_m, A)
-                if isfull_order(
-                    cofactor_multiples(T_m, A, range(0, n, 1))
-                ) and output[1] == [0, 0]:
-                    output[1] = list(T_m)
+            for i in range(0, exponent_of_two, 1):
+                T_m = xdbl(T_m, A)
+
+            if isfullorder(cofactor_multiples(T_m, A, range(0, n, 1))) and output[
+                1
+            ] == [0, 0]:
+                output[1] = list(T_m)
 
         return output[0], output[1]
 
     def crisscross(alpha, beta, gamma, delta):
-
+        ''' crisscross() computes a*c + b*d, and a*c - b*d '''
         t_1 = (alpha * delta)
         t_2 = (beta * gamma)
         return (t_1 + t_2), (t_1 - t_2)
 
     def issupersingular(A):
-
+        ''' issupersingular() verifies supersingularity '''
         while True:
 
             T_p, _ = elligator(A)

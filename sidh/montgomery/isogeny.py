@@ -1,7 +1,6 @@
-from sidh.primefield import cswap          # <--- cswap should be later imported from common
-from sidh.polymul import Poly_mul   # <-- to be updated
+from sidh.polymul import PolyMul
 from sidh.polyredc import Poly_redc # <-- to be updated
-from sidh.math import isequal, bitlength, hamming_weight
+from sidh.math import isequal, bitlength, hamming_weight, cswap
 from sidh.constants import ijk_data
 
 import numpy
