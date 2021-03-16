@@ -2,6 +2,11 @@ from random import SystemRandom
 from sidh.math import bitlength, hamming_weight, is_prime
 from sidh.common import check, doc
 
+def init_runtime(field):
+	field.fpadd = 0
+	field.fpsqr = 0
+	field.fpmul = 0
+
 def PrimeField(p : int):
 	"""
 	Prime Field class constructor
@@ -79,8 +84,8 @@ def PrimeField(p : int):
 			else:
 				return -neg.x
 
-		def __str__(self): return str(self.x)
-		def __repr__(self): return str(self.x)
+		def __str__(self): return hex(self.x)
+		def __repr__(self): return hex(self.x)
  
 		def __divmod__(self, divisor):
 			q,r = divmod(self.x, divisor.x)
@@ -222,5 +227,12 @@ def PrimeField(p : int):
 	FiniteField.fpmul = 0  # Number of field multiplications performed
 	FiniteField.p = p
 	FiniteField.__name__ = NAME
+
+	FiniteField.show_runtime = lambda label: print(
+		"| %s: %7dM + %7dS + %7da"
+		% (label, FiniteField.fpmul, FiniteField.fpsqr, FiniteField.fpadd),
+		end="\t",
+    )
+	FiniteField.init_runtime = lambda: init_runtime(FiniteField)
 
 	return FiniteField

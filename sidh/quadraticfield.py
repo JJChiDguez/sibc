@@ -9,14 +9,14 @@ def tostring(a):
 		if a.im == 1:
 			return 'u'
 		else:
-			return f'{a.im}*u'
+			return f'{hex(a.im)}*u'
 	elif a.im == 0:
-		return f'{a.re}'
+		return f'{hex(a.re)}'
 	else:
 		if a.im == 1:
-			return f'{a.re} + u'
+			return f'{hex(a.re)} + u'
 		else:
-			return f'{a.re} + {a.im}*u'
+			return f'{hex(a.re)} + {hex(a.im)}*u'
 
 def QuadraticField(p : int):
 	"""
@@ -197,7 +197,7 @@ def QuadraticField(p : int):
 			alpha = (alpha * self)
 			# ---
 			alpha_conjugated = FiniteField(alpha)
-			alpha_conjugated.im = (-alpha_conjugated.im)
+			alpha_conjugated.im = (0 - alpha_conjugated.im)
 			# ---
 			a0 = (alpha * alpha_conjugated)
 			return not (a0.im == 0 and a0.re == -1)
@@ -230,7 +230,7 @@ def QuadraticField(p : int):
 			# --- inversions
 			S1 = (S1 ** -1)
 			# --- additions
-			S2 = (-self.im)
+			S2 = (0 - self.im)
 			b_re = (S1 * self.re)
 			b_im = (S1 * S2)
 			return FiniteField([b_re, b_im])
@@ -259,7 +259,7 @@ def QuadraticField(p : int):
 			alpha = (alpha * self)
 
 			alpha_conjugated = FiniteField(alpha)
-			alpha_conjugated.im = (-alpha_conjugated.im)
+			alpha_conjugated.im = (0 - alpha_conjugated.im)
 
 			a0 = (alpha * alpha_conjugated)
 			if a0.im == 0 and a0.re == -1:

@@ -1,5 +1,10 @@
+from pkg_resources import resource_filename
+
+# Related polynomial multiplication procedures
 from sidh.polymul import PolyMul
-from sidh.polyredc import Poly_redc # <-- to be updated
+# Related polynomial reduction procedures
+from sidh.polyredc import PolyRedc
+
 from sidh.math import isequal, bitlength, hamming_weight, cswap
 from sidh.constants import ijk_data
 
@@ -17,7 +22,7 @@ def doc(s):
             return self.desc
     return __doc
 
-def MontgomeryIsogeny(name : str):
+def MontgomeryIsogeny(name : str, precomputation = False):
 
     cutoff = 83
     cutoff_string = f' with cutoff ell <= {cutoff}' if name == 'hvelu' else ''
@@ -26,9 +31,28 @@ def MontgomeryIsogeny(name : str):
     class Formulae():
 
         def __init__(self, curve, tuned, multievaluation):
+            self.name = name
+
             # Get cost of the isogeny constructions and evaluations
-            self.sI_list = None
-            self.sJ_list = None
+            if tuned:
+                # Reading tuned velusqrt parameters from the stored data
+                self.sI_list = []
+                self.sJ_list = []
+                path = resource_filename('sidh', "data/ijk/" + curve.name)
+                f = open(path)
+
+                for i in range(0, curve.n, 1):
+
+                    bc = f.readline()
+                    bc = [int(bci) for bci in bc.split()]
+                    self.sJ_list.append(bc[0])
+                    self.sI_list.append(bc[1])
+
+                f.close()
+
+            else:
+                self.sI_list = None
+                self.sJ_list = None
 
             # Tradicional velu formulas will be used for l_i <= self.HYBRID_BOUND
             self.HYBRID_BOUND = {'tvelu':max(curve.L), 'svelu':1, 'hvelu':cutoff}[name]
@@ -50,33 +74,33 @@ def MontgomeryIsogeny(name : str):
             # An extra global variable which is used in xisog and xeval
             self.XZJ4 = None
 
-            self.SCALED_REMAINDER_TREE = multievaluation
+            self.SCALED_MULTIEVALUATION = multievaluation
             self.tuned = tuned
 
             self.prime = curve.prime
             self.curve = curve
-            self.ff = self.curve.ff # <--- this must removed/updated later
+            self.field = self.curve.field
             self.L = self.curve.L
 
-            self.poly_mul = Poly_mul(curve)
-            self.poly_redc = Poly_redc(self.poly_mul)
+            self.poly_mul = PolyMul(self.field)
+            self.poly_redc = PolyRedc(self.poly_mul)
 
-            self.C_xeval = list(
-                map(self.cEVAL, self.L)
+            self.c_xeval = list(
+                map(self.ceval, self.L)
             )  # list of the costs of each degree-l isogeny evaluation
-            self.C_xisog = C_xisog = list(
-                map(self.cISOG, self.L)
+            self.c_xisog = list(
+                map(self.cisog, self.L)
             )  # list of the costs of each degree-l isogeny construction
 
             # Now, we proceed to store all the correct costs
-            if name != 'tvelu':
-                self.velusqrt_cost()  # FIXME: not for general use, right?
+            if name != 'tvelu' and precomputation:
+                self.velusqrt_cost()
 
-        def cEVAL(self, l):
-            numpy.array([2.0 * (l - 1.0), 2.0, (l + 1.0)])
+        def ceval(self, l):
+            return numpy.array([2.0 * (l - 1.0), 2.0, (l + 1.0)])
 
-        def cISOG(self, l):
-            numpy.array(
+        def cisog(self, l):
+            return numpy.array(
                 [
                     (
                         3.0 * l
@@ -263,7 +287,7 @@ def MontgomeryIsogeny(name : str):
             # This functions computes all the independent data from the input of algorithm 2 of https://eprint.iacr.org/2020/341
             if self.sI == 0:
 
-                # Case global_L[i] = 3 is super very special case (nothing to do)
+                # Case L[i] = 3 is super very special case (nothing to do)
                 self.J = []
                 self.ptree_hI = None
                 self.K = [list(P)]
@@ -278,22 +302,22 @@ def MontgomeryIsogeny(name : str):
             assert self.sK >= 0
 
             if self.sI == 1:
-                # Branch corresponds with global_L[i] = 5 and global_L[i] = 7
+                # Branch corresponds with L[i] = 5 and L[i] = 7
                 # Recall sJ > 0, then sJ = 1
                 assert self.sJ == 1
-                P2 = self.xdbl(P, A)
+                P2 = self.curve.xdbl(P, A)
 
                 self.J = [list(P)]
 
                 I = [list(P2)]
                 hI = [
-                    list([(-P2[0]), P2[1]])
+                    list([(0 - P2[0]), P2[1]])
                 ]  # we only need to negate x-coordinate of each point
                 self.ptree_hI = self.poly_mul.product_tree(
                     hI, self.sI
                 )  # product tree of hI
 
-                if not self.SCALED_REMAINDER_TREE:
+                if not self.SCALED_MULTIEVALUATION:
                     # Using remainder trees
                     self.ptree_hI = self.poly_redc.reciprocal_tree(
                         {'rpoly': [1], 'rdeg': 0, 'fpoly': [1], 'fdeg': 0, 'a': 1},
@@ -330,26 +354,26 @@ def MontgomeryIsogeny(name : str):
             # At this step, sI > 1
             assert self.sI > 1
             if self.sJ == 1:
-                # This branch corresponds with global_L[i] = 11 and global_L[i] = 13
-                Q = self.xdbl(P, A)  # x([2]P)
-                Q2 = self.xdbl(Q, A)  # x([2]Q)
+                # This branch corresponds with L[i] = 11 and L[i] = 13
+                Q = self.curve.xdbl(P, A)  # x([2]P)
+                Q2 = self.curve.xdbl(Q, A)  # x([2]Q)
 
                 self.J = [list(P)]
 
-                I = [[0, 0]] * sI
+                I = [[0, 0]] * self.sI
                 I[0] = list(Q)  # x(   Q)
-                I[1] = self.xadd(Q2, I[0], I[0])  # x([3]Q)
+                I[1] = self.curve.xadd(Q2, I[0], I[0])  # x([3]Q)
                 for ii in range(2, self.sI, 1):
-                    I[ii] = self.xadd(I[ii - 1], Q2, I[ii - 2])  # x([2**i + 1]Q)
+                    I[ii] = self.curve.xadd(I[ii - 1], Q2, I[ii - 2])  # x([2**i + 1]Q)
 
                 hI = [
-                    [(-iP[0]), iP[1]] for iP in I
+                    [(0 - iP[0]), iP[1]] for iP in I
                 ]  # we only need to negate x-coordinate of each point
                 self.ptree_hI = self.poly_mul.product_tree(
                     hI, self.sI
                 )  # product tree of hI
 
-                if not self.SCALED_REMAINDER_TREE:
+                if not self.SCALED_MULTIEVALUATION:
                     # Using remainder trees
                     self.ptree_hI = self.poly_redc.reciprocal_tree(
                         {'rpoly': [1], 'rdeg': 0, 'fpoly': [1], 'fdeg': 0, 'a': 1},
@@ -448,13 +472,13 @@ def MontgomeryIsogeny(name : str):
             # In order to avoid costly inverse computations in fp, we are gonna work with projective coordinates
 
             hI = [
-                [(-iP[0]), iP[1]] for iP in I
+                [(0 - iP[0]), iP[1]] for iP in I
             ]  # we only need to negate x-coordinate of each point
             self.ptree_hI = self.poly_mul.product_tree(
                 hI, self.sI
             )  # product tree of hI
 
-            if not self.SCALED_REMAINDER_TREE:
+            if not self.SCALED_MULTIEVALUATION:
                 # Using scaled remainder trees
                 self.ptree_hI = self.poly_redc.reciprocal_tree(
                     {'rpoly': [1], 'rdeg': 0, 'fpoly': [1], 'fdeg': 0, 'a': 1},
@@ -582,7 +606,7 @@ def MontgomeryIsogeny(name : str):
                 'poly'
             ]  # product tree of EJ_1 (we only require the root)
 
-            if not self.SCALED_REMAINDER_TREE:
+            if not self.SCALED_MULTIEVALUATION:
                 # Remainder tree computation
                 remainders_EJ_0 = self.poly_redc.multieval_unscaled(
                     poly_EJ_0, 2 * self.sJ + 1, self.ptree_hI, self.sI
@@ -791,7 +815,7 @@ def MontgomeryIsogeny(name : str):
                 poly_EJ_0[::-1]
             )  # product tree of EJ_1(x) = x^{2b + 1} EJ_0(1/X)
 
-            if not self.SCALED_REMAINDER_TREE:
+            if not self.SCALED_MULTIEVALUATION:
                 # Remainder tree computation
                 remainders_EJ_0 = self.poly_redc.multieval_unscaled(
                     poly_EJ_0, 2 * self.sJ + 1, self.ptree_hI, self.sI
@@ -906,21 +930,6 @@ def MontgomeryIsogeny(name : str):
 
         def velusqrt_cost(self):
 
-            if self.tuned:
-
-                self.sI_list = []
-                self.sJ_list = []
-                f = open(ijk_data + self.prime)
-
-                for i in range(0, self.curve.n, 1):
-
-                    bc = f.readline()
-                    bc = [int(bci) for bci in bc.split()]
-                    self.sJ_list.append(bc[0])
-                    self.sI_list.append(bc[1])
-
-                f.close()
-
             # First, we look for a full torsion point
             A = [2, 4]
             T_p, T_m = self.curve.generators(A)
@@ -947,40 +956,39 @@ def MontgomeryIsogeny(name : str):
                     Tp = self.curve.xmul(Tp, A, j)
 
                 # Cost of xisog() and kps()
-                self.ff.set_zero_ops()
+                self.field.init_runtime()
                 self.kps(Tp, A, i)
-                t = self.ff.get_ops()
-                self.C_xisog[i] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
+                t = [self.field.fpmul, self.field.sqr, self.field.add]
+                self.c_xisog[i] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
 
-                self.ff.set_zero_ops()
+                self.field.init_runtime()
                 B = self.xisog(A, i)
-                t = self.ff.get_ops()
-                self.C_xisog[i] += numpy.array(
+                t = [self.field.fpmul, self.field.sqr, self.field.add]
+                self.c_xisog[i] += numpy.array(
                     [t[0] * 1.0, t[1] * 1.0, t[2] * 1.0]
                 )
 
                 # xeval: kernel point determined by the next isogeny evaluation
-                self.ff.set_zero_ops()
+                self.field.init_runtime()
                 if self.L[i] <= self.HYBRID_BOUND:
                     T_p = self.xeval(T_p, i)
                 else:
                     T_p = self.xeval(T_p, A)
 
                 # Cost of xeval
-                self.ff.set_zero_ops()
+                self.field.init_runtime()
                 if self.L[i] <= self.HYBRID_BOUND:
                     T_m = self.xeval(T_m, i)
                 else:
                     T_m = self.xeval(T_m, A)
 
-                t = self.ff.get_ops()
-                self.C_xeval[i] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
+                t = [self.field.fpmul, self.field.sqr, self.field.add]
+                self.c_xeval[i] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
 
                 # Updating the new next curve
                 A = list(B)
 
-            self.ff.set_zero_ops()
-            #assert self.curve.coeff(A) == 0x6
+            self.field.init_runtime()
             return None
 
     Formulae.__name__ = NAME

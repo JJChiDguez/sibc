@@ -36,6 +36,7 @@ def write_list_of_lists_of_ints_to_file(path, data):
 # MontgomeryCurve class determines the family of supersingular elliptic curves over GF(p)
 def MontgomeryCurve(prime):
 
+    name = prime
     if prime in parameters['csidh'].keys():
         # CSIDH only requires the factorization of p + 1
         L = parameters['csidh'][prime]['L']
@@ -122,14 +123,14 @@ def MontgomeryCurve(prime):
         write_list_of_lists_of_ints_to_file(path, SDACS)
     SDACS_LENGTH = list(map(len, SDACS))
 
-    cMUL = lambda l: numpy.array(
+    cmul = lambda l: numpy.array(
         [
             4.0 * (SDACS_LENGTH[L.index(l)] + 2),
             2.0 * (SDACS_LENGTH[L.index(l)] + 2),
             6.0 * (SDACS_LENGTH[L.index(l)] + 2) - 2.0,
         ]
     )
-    C_xmul = list(map(cMUL, L))  # list of the costs of each [l]P
+    c_xmul = list(map(cmul, L))  # list of the costs of each [l]P
 
     SQR = 1.00
     ADD = 0.00
@@ -206,7 +207,7 @@ def MontgomeryCurve(prime):
         Tp_X = (Ap + alpha)
         Tm_X = (Ap * u_squared)
         Tm_X = (Tm_X + alpha)
-        Tm_X = (-Tm_X)
+        Tm_X = (0 - Tm_X)
 
         tmp = (tmp + u_squared_plus_one)
         Tp_X, Tm_X = cswap(Tp_X, Tm_X, not tmp.issquare())
