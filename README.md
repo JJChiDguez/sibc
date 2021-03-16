@@ -1,8 +1,13 @@
-# On the Velu's formulae and its applications to CSIDH and B-SIDH constant-time implementations
+# On the Velu's formulae and its applications to CSIDH and BSIDH constant-time implementations
 
-
-At a combined computational expense of about *6l* field operations, Velu's formulae are used to construct and evaluate degree-*l* isogenies in the vast majority of isogeny-based primitive implementations. Recently, Bernstein, de Feo, Leroux and Smith introduced an new approach for solving this same problem at a reduced cost of just *O(sqrt(l))* field operations. In this work, we present a concrete computational analysis of these novel formulae, along with several algorithmic tricks that helped us to slightly, but noticeably, reduce their practical cost.
-
+At a combined computational expense of about *6l* field operations, Velu's
+formulae are used to construct and evaluate degree-*l* isogenies in the vast
+majority of isogeny-based primitive implementations. Recently, Bernstein, de
+Feo, Leroux and Smith introduced an new approach for solving this same problem
+at a reduced cost of just *O(sqrt(l))* field operations. In this work, we
+present a concrete computational analysis of these novel formulae, along with
+several algorithmic tricks that helped us to slightly, but noticeably, reduce
+their practical cost.
 
 ## Installation 
 
@@ -21,14 +26,20 @@ The syntax compilation can be viewed by running one of the following three comma
 ```bash
 # Corresponding with the key-exchange protocol
 sidh --help
-# Corresponding with benchmarking (only for CSIDH, which has a variable running-time cost independent from the key)
+
+# Corresponding with benchmarking (only for CSIDH, which has a variable
+# running-time cost independent from the key)
 sidh csidh-bench
-# Corresponding with the costs of KPs (Kernel Point computation), xISOG (isogeny construction), and xEVAL (isogeny evaluation)
+
+# Corresponding with the costs of KPs (Kernel Point computation), xISOG
+# (isogeny construction), and xEVAL (isogeny evaluation)
 sidh csidh-test
 ```
 
 Usage for the `sidh` tool:
 ```bash
+
+
 $ sidh --help
 Usage: sidh [OPTIONS] COMMAND [ARGS]...
 
@@ -48,10 +59,12 @@ Options:
                                   [default: hvelu]
   -a, --algorithm [csidh|bsidh]   [default: csidh]
   -s, --style [wd1|wd2|df]        [default: df]
-  -e, --exponent [2]              [default: 2]
+  -e, --exponent [5|10]           [default: 10]
+  -m, --multievaluation           [default: False]
   -c, --curvemodel [edwards|montgomery]
                                   [default: montgomery]
   -b, --benchmark INTEGER         [default: 128]
+  -t, --tuned                     [default: False]
   -v, --verbose                   Not the kind of verbosity you might expect
                                   [default: False]
 
@@ -59,25 +72,39 @@ Options:
   --help                          Show this message and exit.
 
 Commands:
+  bsidh-main
+  bsidh-parameters
+  bsidh-strategy
+  bsidh-test
   csidh-bench
   csidh-bounds
+  csidh-dh               Derive shared secret key from CSIDH sk, CSIDH pk
+  csidh-genkey           Generate random CSIDH secret key
   csidh-header
   csidh-ijk
   csidh-main
   csidh-parameters
+  csidh-pubkey           Derive CSIDH public key from CSIDH secret key
   csidh-sdacs
   csidh-strategy
   csidh-suitable-bounds
   csidh-test
-  genkey                 Generate a secret key
   print-strategy         draw graphs
+  print-timing
 ```
 
-## sidh api
+## SIDH cryptographic API
 
-Currently only CSIDH is available as a library function.
+CSIDH and BSIDH objects are available from the `sidh` package and module.
 
-### Basic shared secret generation
+Automatically generated documentation is available with pydoc after `sidh` is
+installed:
+```
+pydoc3 sidh.csidh
+pydoc3 sidh.bsidh
+```
+
+### Basic shared secret generation example with CSIDH
 ```python3
 from sidh.csidh import CSIDH, default_parameters
 c = CSIDH(**default_parameters)
@@ -101,7 +128,8 @@ assert shared_secret_alice == shared_secret_bob
 
 ## Adding new primes
 
-The field characteristic `p` should be stored in directory `data/sop/`, and CSIDH and BSIDH have different structures (see below):
+The field characteristic `p` should be stored in directory `data/sop/`, and
+CSIDH and BSIDH have different structures (see below):
 
 ```bash
 # CSIDH format (here p = 2^c * l_1 * .... l_n - 1)
@@ -115,18 +143,26 @@ l'_1 l'_2 ... l'_m
 e'_1 e'_2 ... e'_m
 ```
 
-For the case of BSIDH, `M := (4^c * l_1^{e_1} * l_2^{e_2} * ... * l_n^{e_n})` must divide `(p + 1)`, and `N := (l'_1^{e'_1} * l'_2^{e'_2} * ... * l'_n^{e'_n})` must divide `(p-1)`. Additionally, the order-`M` generators `PA`, `QA` and `PQA := PA - QA` should be stored in directory `gen/` as projective x-coordinate points. Similarly, the order-`N` generators `PB`, `QB` and `PQB := PB - QB` also should be stored it the same directory. Both 3-tuples of points must be stored in a single file with the following syntax:
+For the case of BSIDH, `M := (4^c * l_1^{e_1} * l_2^{e_2} * ... * l_n^{e_n})`
+must divide `(p + 1)`, and `N := (l'_1^{e'_1} * l'_2^{e'_2} * ... *
+l'_n^{e'_n})` must divide `(p-1)`. Additionally, the order-`M` generators `PA`,
+`QA` and `PQA := PA - QA` should be stored in directory `gen/` as projective
+x-coordinate points. Similarly, the order-`N` generators `PB`, `QB` and `PQB :=
+PB - QB` also should be stored it the same directory. Both 3-tuples of points
+must be stored in a single file with the following syntax:
 
 ```bash
 Re(x(PA)) Im(x(PA)) Re(x(QA)) Im(x(QA)) Re(x(PQA)) Im(x(PQA))
 Re(x(PB)) Im(x(PB)) Re(x(QB)) Im(x(QB)) Re(x(PQB)) Im(x(PQB))
 ```
 
-where `Re(X)` and `Im(X)` denote the real and imaginary parts of X with respect to `F_p[i]/(i^2 + 1)`, respectively. Moreover, all the above twelve integers should be stored in hexadecimal."
+where `Re(X)` and `Im(X)` denote the real and imaginary parts of X with respect
+to `F_p[i]/(i^2 + 1)`, respectively. Moreover, all the above twelve integers
+should be stored in hexadecimal."
 
 ## Examples
 
-We summarize some examples of runs as follows:
+We summarize some examples of runs of the `sidh` tool as follows:
 
 ```bash
 # CSIDH
@@ -142,15 +178,10 @@ sidh -p p1792 -f tvelu -a csidh csidh-test
 sidh -p p1792 -f svelu -a csidh csidh-test
 sidh -p p1792 -f hvelu -a csidh csidh-test
 
-# BSIDH (all of these are currently not ported over to the click tui)
-sidh -p b6 -f tvelu -a bsidh
-sidh -p b5 -f svelu -a bsidh  <!- data missing for this ( /usr/share/python3-sidh/data/strategies/bsidh-b5-svelu-classical )
-sidh -p b2 -f hvelu -a bsidh -v
-
-sidh-test -p b6 -f tvelu -a bsidh
-sidh-test -p b6 -f svelu -a bsidh
-sidh-test -p b6 -f hvelu -a bsidh
-
+# BSIDH
+sidh -p b2 -f tvelu -a bsidh bsidh-test
+sidh -p b2 -f svelu -a bsidh bsidh-test
+sidh -p b2 -f hvelu -a bsidh -t bsidh-test
 ```
 
 Remark, our implementation allows us to plot each optimal strategy required:
@@ -161,13 +192,15 @@ sidh -p p1024 -f tvelu -a csidh -s df     print-strategy
 sidh -p p512 -f svelu -a csidh -s wd2     print-strategy
 sidh -p p1792 -f hvelu -a csidh -s wd1 -v print-strategy
 
-# BSIDH (b6 and b5 are not yet functional)
+# BSIDH
 sidh -a bsidh -p b2 -f tvelu bsidh-strategy
 sidh -a bsidh -t -p b2 -f svelu bsidh-strategy
 sidh -a bsidh -t -p b2 -f hvelu bsidh-strategy
 ```
 
-Additionally, one can created files with extension `.h` that includes all the required variables in a the sdacs, strategies, and velusqrt (at least for CSIDH implementations).
+Additionally, one can created files with extension `.h` that includes all the
+required variables in a the sdacs, strategies, and velusqrt (at least for CSIDH
+implementations).
 
 ```bash
 # Suitable bounds with m = 5
@@ -180,9 +213,16 @@ sidh -a csidh -p p512 -s wd2 -f hvelu -v csidh-sdacs
 sidh -a csidh -p p512 -s wd2 -f hvelu -v csidh-ijk
 ```
 
+## BSIDH primes
+Currently only `b2` is implemented and tested in the current API. Extending
+this to other primes is straight-forward.
+
 ## Remarks
 
-The primes labeled as `b2`, `b3`, `b5`, and `b6` correspond with the examples 2, 3, 5, and 6 of , respectively. In particular, we focused on primes such that `p = 3 mod 4`. Additionally, the product and squaring in `F_p[i]/(i^2 + 1)` were implemented using 3 and 2 products in `F_p`, respectively.
+The primes labeled as `b2`, `b3`, `b5`, and `b6` correspond with the examples
+2, 3, 5, and 6 of , respectively. In particular, we focused on primes such that
+`p = 3 mod 4`. Additionally, the product and squaring in `F_p[i]/(i^2 + 1)`
+were implemented using 3 and 2 products in `F_p`, respectively.
 
 ## Changes
 
@@ -198,10 +238,14 @@ Additional contributors are listed in the [CONTRIBUTORS](CONTRIBUTORS) file.
 
 ## License
 
-This project is licensed under the GNU general public license - see the [LICENSE](LICENSE) file for details
+This project is licensed under the GNU general public license - see the
+[LICENSE](LICENSE) file for details.
 
 ## Funding
 
-This project has received funding from the European Research Council (ERC) under the European Union's Horizon 2020 research and innovation programme (grant agreement No 804476). 
+This project has received funding from the European Research Council (ERC)
+under the European Union's Horizon 2020 research and innovation programme
+(grant agreement No 804476). 
 
-The third author received partial funds from the Mexican Science council CONACyT project 313572.
+The third author received partial funds from the Mexican Science council
+CONACyT project 313572.

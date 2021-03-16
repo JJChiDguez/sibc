@@ -120,8 +120,8 @@ def main(ctx, **kwargs):
 
 @main.command()
 @click.pass_context
-def genkey(ctx):
-    "Generate a secret key"
+def csidh_genkey(ctx):
+    "Generate random CSIDH secret key"
     algo = ctx.meta['sidh.kwargs']['algo']
     click.echo(b64encode(algo.secret_key()))
 
@@ -129,8 +129,8 @@ def genkey(ctx):
 @main.command()
 @click.argument('secret_key', type=click.File())
 @click.pass_context
-def pubkey(ctx, secret_key):
-    "Generate a public key from a secret key"
+def csidh_pubkey(ctx, secret_key):
+    "Derive CSIDH public key from CSIDH secret key"
     algo = ctx.meta['sidh.kwargs']['algo']
     click.echo(b64encode(algo.public_key(b64decode(secret_key.read()))))
 
@@ -139,8 +139,8 @@ def pubkey(ctx, secret_key):
 @click.argument('secret_key', type=click.File())
 @click.argument('public_key', type=str)
 @click.pass_context
-def dh(ctx, secret_key, public_key):
-    "Generate a shared secret between a secret key and a public key"
+def csidh_dh(ctx, secret_key, public_key):
+    "Derive shared secret key from CSIDH sk, CSIDH pk"
     algo = ctx.meta['sidh.kwargs']['algo']
     click.echo(
         b64encode(algo.dh(b64decode(secret_key.read()), b64decode(public_key)))
