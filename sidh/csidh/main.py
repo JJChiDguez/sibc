@@ -2,7 +2,7 @@ from pkg_resources import resource_filename
 import click
 from sympy import symbols, floor, sqrt, sign
 
-from sidh.common import attrdict
+from sidh.common import attrdict, geometric_serie, rounds
 from sidh.constants import strategy_data
 from sidh.fp import printl
 
@@ -12,18 +12,14 @@ from sidh.fp import printl
 def csidh_main(ctx):
     algo = ctx.meta['sidh.kwargs']['algo']
     setting = ctx.meta['sidh.kwargs']
-    full_torsion_points = algo.curve.full_torsion_points
     coeff = algo.curve.coeff
     p = algo.params.p
-    global_L = L = algo.params.L
+    L = algo.params.L
     m = algo.params.m
     n = algo.params.n
-    geometric_serie = algo.gae.geometric_serie
-    rounds = algo.gae.rounds
     SQR, ADD = algo.curve.SQR, algo.curve.ADD
-    set_zero_ops = algo.fp.set_zero_ops
-    get_ops = algo.fp.get_ops
-    validate = algo.curve.validate
+    init_runtime = algo.field.init_runtime
+    validate = algo.curve.issupersingular
     measure = algo.curve.measure
     GAE = algo.gae.GAE
     strategy_block_cost = algo.gae.strategy_block_cost
@@ -107,8 +103,8 @@ def csidh_main(ctx):
     print("fp2<i> := ext<fp | x^2 + 1>;")
     print("P<x> := PolynomialRing(fp2);")
 
-    A = [2, 4]
-    print("public_coeff := 0x%X;\n" % coeff(A))
+    A = [ algo.curve.field(2), algo.curve.field(4)]
+    print("public_coeff := %s;\n" % coeff(A))
 
     ''' -------------------------------------------------------------------------------------
         Main
@@ -127,7 +123,7 @@ def csidh_main(ctx):
     )
 
     # ------------------------------------------------------------------------- Alice
-    set_zero_ops()
+    init_runtime()
     public_validation = validate(A)
     assert public_validation
 
@@ -138,19 +134,19 @@ def csidh_main(ctx):
     printl("sk_a", a_private, n // 3)
     print("*/")
 
-    RUNNING_TIME = get_ops()
+    
     print("// Public key corresponding to Alice")
     print(
         "// public key validation cost  :\t%2.3fM + %2.3fS + %2.3fa = %2.3fM,"
         % (
-            RUNNING_TIME[0] / (10.0 ** 6),
-            RUNNING_TIME[1] / (10.0 ** 6),
-            RUNNING_TIME[2] / (10.0 ** 6),
-            measure(RUNNING_TIME) / (10.0 ** 6),
+            algo.field.fpmul / (10.0 ** 6),
+            algo.field.fpsqr / (10.0 ** 6),
+            algo.field.fpadd / (10.0 ** 6),
+            measure([algo.field.fpmul, algo.field.fpsqr, algo.field.fpadd]) / (10.0 ** 6),
         )
     )
 
-    set_zero_ops()
+    init_runtime()
     if (len(temporal_m) == 1) or (
         (len(temporal_m) == 2) and (0 in temporal_m)
     ):
@@ -166,21 +162,21 @@ def csidh_main(ctx):
     else:
         a_public = GAE(A, a_private, L_out, R_out, S_out, r_out, m)
 
-    RUNNING_TIME = get_ops()
+    
     print(
         "// group action evaluation cost:\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
         % (
-            RUNNING_TIME[0] / (10.0 ** 6),
-            RUNNING_TIME[1] / (10.0 ** 6),
-            RUNNING_TIME[2] / (10.0 ** 6),
-            measure(RUNNING_TIME) / (10.0 ** 6),
+            algo.field.fpmul / (10.0 ** 6),
+            algo.field.fpsqr / (10.0 ** 6),
+            algo.field.fpadd / (10.0 ** 6),
+            measure([algo.field.fpmul, algo.field.fpsqr, algo.field.fpadd]) / (10.0 ** 6),
         )
     )
-    print("pk_a := %r;\n" % list(map(hex, a_public)))
-    print("pk_a := 0x%X;\n" % coeff(a_public))
+    #print("pk_a := %r;\n" % list(map(hex, a_public)))
+    print("pk_a := %s;\n" % coeff(a_public))
 
     # ------------------------------------------------------------------------- Bob
-    set_zero_ops()
+    init_runtime()
 
     b_private = random_key(m)
 
@@ -189,22 +185,22 @@ def csidh_main(ctx):
     printl("sk_b", b_private, n // 3)
     print("*/")
 
-    set_zero_ops()
+    init_runtime()
     public_validation = validate(A)
     assert public_validation
-    RUNNING_TIME = get_ops()
+    
     print("// Public key corresponding to Bob")
     print(
         "// public key validation cost  :\t%2.3fM + %2.3fS + %2.3fa = %2.3fM,"
         % (
-            RUNNING_TIME[0] / (10.0 ** 6),
-            RUNNING_TIME[1] / (10.0 ** 6),
-            RUNNING_TIME[2] / (10.0 ** 6),
-            measure(RUNNING_TIME) / (10.0 ** 6),
+            algo.field.fpmul / (10.0 ** 6),
+            algo.field.fpsqr / (10.0 ** 6),
+            algo.field.fpadd / (10.0 ** 6),
+            measure([algo.field.fpmul, algo.field.fpsqr, algo.field.fpadd]) / (10.0 ** 6),
         )
     )
 
-    set_zero_ops()
+    init_runtime()
     if (len(temporal_m) == 1) or (
         (len(temporal_m) == 2) and (0 in temporal_m)
     ):
@@ -220,18 +216,18 @@ def csidh_main(ctx):
     else:
         b_public = GAE(A, b_private, L_out, R_out, S_out, r_out, m)
 
-    RUNNING_TIME = get_ops()
+    
     print(
         "// group action evaluation cost:\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
         % (
-            RUNNING_TIME[0] / (10.0 ** 6),
-            RUNNING_TIME[1] / (10.0 ** 6),
-            RUNNING_TIME[2] / (10.0 ** 6),
-            measure(RUNNING_TIME) / (10.0 ** 6),
+            algo.field.fpmul / (10.0 ** 6),
+            algo.field.fpsqr / (10.0 ** 6),
+            algo.field.fpadd / (10.0 ** 6),
+            measure([algo.field.fpmul, algo.field.fpsqr, algo.field.fpadd]) / (10.0 ** 6),
         )
     )
-    print("pk_b := %r;\n" % list(map(hex, b_public)))
-    print("pk_b := 0x%X;" % coeff(b_public))
+    #print("pk_b := %r;\n" % list(map(hex, b_public)))
+    print("pk_b := %s;" % coeff(b_public))
 
     print(
         "\n// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
@@ -242,22 +238,22 @@ def csidh_main(ctx):
     )
 
     # ------------------------------------------------------------------------- Alice
-    set_zero_ops()
+    init_runtime()
     public_validation = validate(b_public)
     assert public_validation
-    RUNNING_TIME = get_ops()
+    
     print("// Secret sharing corresponding to Alice")
     print(
         "// public key validation cost  :\t%2.3fM + %2.3fS + %2.3fa = %2.3fM,"
         % (
-            RUNNING_TIME[0] / (10.0 ** 6),
-            RUNNING_TIME[1] / (10.0 ** 6),
-            RUNNING_TIME[2] / (10.0 ** 6),
-            measure(RUNNING_TIME) / (10.0 ** 6),
+            algo.field.fpmul / (10.0 ** 6),
+            algo.field.fpsqr / (10.0 ** 6),
+            algo.field.fpadd / (10.0 ** 6),
+            measure([algo.field.fpmul, algo.field.fpsqr, algo.field.fpadd]) / (10.0 ** 6),
         )
     )
 
-    set_zero_ops()
+    init_runtime()
     if (len(temporal_m) == 1) or (
         (len(temporal_m) == 2) and (0 in temporal_m)
     ):
@@ -272,40 +268,39 @@ def csidh_main(ctx):
         )
     else:
         ss_a = GAE(b_public, a_private, L_out, R_out, S_out, r_out, m)
-
-    RUNNING_TIME = get_ops()
+    
 
     print(
         "// group action evaluation cost:\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
         % (
-            RUNNING_TIME[0] / (10.0 ** 6),
-            RUNNING_TIME[1] / (10.0 ** 6),
-            RUNNING_TIME[2] / (10.0 ** 6),
-            measure(RUNNING_TIME) / (10.0 ** 6),
+            algo.field.fpmul / (10.0 ** 6),
+            algo.field.fpsqr / (10.0 ** 6),
+            algo.field.fpadd / (10.0 ** 6),
+            measure([algo.field.fpmul, algo.field.fpsqr, algo.field.fpadd]) / (10.0 ** 6),
         )
     )
-    print("ss_a := 0x%X;\n" % coeff(ss_a))
+    print("ss_a := %s;\n" % coeff(ss_a))
     print(
         "expected: 0x1ADB783878BA330BB2A842E7F8B3392329A2CD3B407900E4CF6A8F13B744BFFEFF617BDE2CEBBB9CE97D32BC6FC1BCE2D88381B03B3E13CFF0651EEA82D02937"
     )
 
     # ------------------------------------------------------------------------- Bob
-    set_zero_ops()
+    init_runtime()
     public_validation = validate(a_public)
     assert public_validation
-    RUNNING_TIME = get_ops()
+    
     print("// Secret sharing corresponding to Bob")
     print(
         "// public key validation cost  :\t%2.3fM + %2.3fS + %2.3fa = %2.3fM,"
         % (
-            RUNNING_TIME[0] / (10.0 ** 6),
-            RUNNING_TIME[1] / (10.0 ** 6),
-            RUNNING_TIME[2] / (10.0 ** 6),
-            measure(RUNNING_TIME) / (10.0 ** 6),
+            algo.field.fpmul / (10.0 ** 6),
+            algo.field.fpsqr / (10.0 ** 6),
+            algo.field.fpadd / (10.0 ** 6),
+            measure([algo.field.fpmul, algo.field.fpsqr, algo.field.fpadd]) / (10.0 ** 6),
         )
     )
 
-    set_zero_ops()
+    init_runtime()
     if (len(temporal_m) == 1) or (
         (len(temporal_m) == 2) and (0 in temporal_m)
     ):
@@ -321,17 +316,17 @@ def csidh_main(ctx):
     else:
         ss_b = GAE(a_public, b_private, L_out, R_out, S_out, r_out, m)
 
-    RUNNING_TIME = get_ops()
+    
     print(
         "// group action evaluation cost:\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
         % (
-            RUNNING_TIME[0] / (10.0 ** 6),
-            RUNNING_TIME[1] / (10.0 ** 6),
-            RUNNING_TIME[2] / (10.0 ** 6),
-            measure(RUNNING_TIME) / (10.0 ** 6),
+            algo.field.fpmul / (10.0 ** 6),
+            algo.field.fpsqr / (10.0 ** 6),
+            algo.field.fpadd / (10.0 ** 6),
+            measure([algo.field.fpmul, algo.field.fpsqr, algo.field.fpadd]) / (10.0 ** 6),
         )
     )
-    print("ss_b := 0x%X;\n" % coeff(ss_b))
+    print("ss_b := %s;\n" % coeff(ss_b))
 
     print(
         "\n// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
