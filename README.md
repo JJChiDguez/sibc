@@ -11,7 +11,7 @@ their practical cost.
 
 ## Installation 
 
-Install the `sidh` module which provides the `sidh` program:
+Install the `sibc` module which provides the `sibc` program:
 ```
 sudo python3 setup.py install
 ```
@@ -21,27 +21,39 @@ For development:
 sudo pip install -e . 
 ```
 
+### Debian package build
+
+To build a package for Debian or Ubuntu, we suggest the use of stdeb:
+
+```
+sudo apt install -y dh-python python3-click  python3-sympy  python3-progress\
+  python3-numpy python3-matplotlib python3-networkx \
+  python3-stdeb python3-setuptools-scm python3-setuptools python3-cpuinfo
+python3 setup.py bdist_deb
+sudo dpkg -i deb_dist/python3-sibc_0.0.1-1_all.deb
+```
+
 ## Usage 
 The syntax compilation can be viewed by running one of the following three commands:
 ```bash
 # Corresponding with the key-exchange protocol
-sidh --help
+sibc --help
 
 # Corresponding with benchmarking (only for CSIDH, which has a variable
 # running-time cost independent from the key)
-sidh csidh-bench
+sibc csidh-bench
 
 # Corresponding with the costs of KPs (Kernel Point computation), xISOG
 # (isogeny construction), and xEVAL (isogeny evaluation)
-sidh csidh-test
+sibc csidh-test
 ```
 
-Usage for the `sidh` tool:
+Usage for the `sibc` tool:
 ```bash
 
 
-$ sidh --help
-Usage: sidh [OPTIONS] COMMAND [ARGS]...
+$ sibc --help
+Usage: sibc [OPTIONS] COMMAND [ARGS]...
 
     ,-~~-.___.
    / |  '     \
@@ -95,18 +107,18 @@ Commands:
 
 ## SIDH cryptographic API
 
-CSIDH and BSIDH objects are available from the `sidh` package and module.
+CSIDH and BSIDH objects are available from the `sibc` package and module.
 
-Automatically generated documentation is available with pydoc after `sidh` is
+Automatically generated documentation is available with pydoc after `sibc` is
 installed:
 ```
-pydoc3 sidh.csidh
-pydoc3 sidh.bsidh
+pydoc3 sibc.csidh
+pydoc3 sibc.bsidh
 ```
 
 ### Basic shared secret generation example with CSIDH
 ```python3
-from sidh.csidh import CSIDH, default_parameters
+from sibc.csidh import CSIDH, default_parameters
 c = CSIDH(**default_parameters)
 
 # alice generates a key
@@ -162,40 +174,40 @@ should be stored in hexadecimal."
 
 ## Examples
 
-We summarize some examples of runs of the `sidh` tool as follows:
+We summarize some examples of runs of the `sibc` tool as follows:
 
 ```bash
 # CSIDH
-sidh -p p1024 -f tvelu -a csidh -s df csidh-main
-sidh -p p512 -f svelu -a csidh -s wd2 csidh-main
-sidh -p p1792 -f hvelu -a csidh -s wd1 -v csidh-main
+sibc -p p1024 -f tvelu -a csidh -s df csidh-main
+sibc -p p512 -f svelu -a csidh -s wd2 csidh-main
+sibc -p p1792 -f hvelu -a csidh -s wd1 -v csidh-main
 
-sidh -p p512 -f hvelu -a csidh -s wd2 -b 1024 -v csidh-bench 
-sidh -p p512 -f hvelu -a csidh -s wd1 -b 1024 -v csidh-bench 
-sidh -p p512 -f hvelu -a csidh -s df  -b 1024 -v csidh-bench 
+sibc -p p512 -f hvelu -a csidh -s wd2 -b 1024 -v csidh-bench 
+sibc -p p512 -f hvelu -a csidh -s wd1 -b 1024 -v csidh-bench 
+sibc -p p512 -f hvelu -a csidh -s df  -b 1024 -v csidh-bench 
 
-sidh -p p1792 -f tvelu -a csidh csidh-test
-sidh -p p1792 -f svelu -a csidh csidh-test
-sidh -p p1792 -f hvelu -a csidh csidh-test
+sibc -p p1792 -f tvelu -a csidh csidh-test
+sibc -p p1792 -f svelu -a csidh csidh-test
+sibc -p p1792 -f hvelu -a csidh csidh-test
 
 # BSIDH
-sidh -p b2 -f tvelu -a bsidh bsidh-test
-sidh -p b2 -f svelu -a bsidh bsidh-test
-sidh -p b2 -f hvelu -a bsidh -t bsidh-test
+sibc -p b2 -f tvelu -a bsidh bsidh-test
+sibc -p b2 -f svelu -a bsidh bsidh-test
+sibc -p b2 -f hvelu -a bsidh -t bsidh-test
 ```
 
 Remark, our implementation allows us to plot each optimal strategy required:
 
 ```bash
 # CSIDH
-sidh -p p1024 -f tvelu -a csidh -s df     print-strategy
-sidh -p p512 -f svelu -a csidh -s wd2     print-strategy
-sidh -p p1792 -f hvelu -a csidh -s wd1 -v print-strategy
+sibc -p p1024 -f tvelu -a csidh -s df     print-strategy
+sibc -p p512 -f svelu -a csidh -s wd2     print-strategy
+sibc -p p1792 -f hvelu -a csidh -s wd1 -v print-strategy
 
 # BSIDH
-sidh -a bsidh -p b2 -f tvelu bsidh-strategy
-sidh -a bsidh -t -p b2 -f svelu bsidh-strategy
-sidh -a bsidh -t -p b2 -f hvelu bsidh-strategy
+sibc -a bsidh -p b2 -f tvelu bsidh-strategy
+sibc -a bsidh -t -p b2 -f svelu bsidh-strategy
+sibc -a bsidh -t -p b2 -f hvelu bsidh-strategy
 ```
 
 Additionally, one can created files with extension `.h` that includes all the
@@ -204,13 +216,13 @@ implementations).
 
 ```bash
 # Suitable bounds with m = 5
-sidh -a csidh -p p512 -s wd2 -f hvelu -b 5 csidh-bounds
+sibc -a csidh -p p512 -s wd2 -f hvelu -b 5 csidh-bounds
 # Strategies also with m = 5
-sidh -a csidh -p p512 -s wd2 -f hvelu -v -b 5 csidh-header
+sibc -a csidh -p p512 -s wd2 -f hvelu -v -b 5 csidh-header
 # SDACs (the flag -s doesn't affects the output)
-sidh -a csidh -p p512 -s wd2 -f hvelu -v csidh-sdacs
+sibc -a csidh -p p512 -s wd2 -f hvelu -v csidh-sdacs
 # Optimal sizes of I, J, and K required in velusqrt (the flag -s doesn't affects the output)
-sidh -a csidh -p p512 -s wd2 -f hvelu -v csidh-ijk
+sibc -a csidh -p p512 -s wd2 -f hvelu -v csidh-ijk
 ```
 
 ## BSIDH primes
