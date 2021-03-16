@@ -2,6 +2,14 @@
 import setuptools
 import os
 
+try:
+    from stdeb.command.sdist_dsc import sdist_dsc
+    from stdeb.command.bdist_deb import bdist_deb
+except ImportError:
+    sdist_dsc = None
+    bdist_deb = None
+
+
 __version__ = '0.0.1'
 
 if os.path.exists('requirements.txt'):
@@ -48,6 +56,10 @@ setuptools.setup(
     zip_safe=False,
     install_requires=requirements,
     include_package_data=True,
+    cmdclass=dict(
+        bdist_deb=bdist_deb,
+        sdist_dsc=sdist_dsc,
+    ),
     package_data = {
             "" : [ "data/*/*" ]
         }
