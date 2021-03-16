@@ -1,4 +1,5 @@
 from functools import wraps
+from math import floor
 
 class attrdict(dict):
     """
@@ -129,3 +130,47 @@ def printl(NAME, L, k):
 
     print(to_print[len(to_print) - 2])
     print(to_print[len(to_print) - 1])
+
+def geometric_serie(m, l):
+    """
+    geometric_serie()
+    inputs: and integer m, and a prime number l
+    output: the nearest integer to
+                  l
+            m x -----
+                l - 1
+    """
+    l_float = float(l)
+    m_float = float(m)
+    return floor((m_float * l_float) / (l_float - 1.0) + 0.5)
+
+def filtered(List, sublist):
+    """
+    filtered()
+    inputs : a list L and a sublist SL of L
+    output : L \\ SL
+    """
+    return [e for e in List if e not in sublist]
+
+def rounds(e, n):
+    """
+    rounds()
+    inputs : an integer vector (maximum number of isogeny constructions to be performed),
+             and the length of the vector
+    output : the subset of (indexes of) the small odd primes that determines the optimal
+             strategy to be used, the number of times that each strategy will be used, and
+             the complement of each subset (with respect to the set of all the small odd primes)
+    """
+    tmp_N = range(n)
+    tmp_e = list(e)
+    rounds_out = []
+    sublists_L = []
+    sublists_C = []
+    while [e_i for e_i in tmp_e if e_i > 0] != []:
+        e_min = min([e_i for e_i in tmp_e if e_i > 0])
+        rounds_out.append(e_min)
+        sublists_L.append([i for i in tmp_N if tmp_e[i] >= e_min])
+        sublists_C.append(filtered(tmp_N, sublists_L[len(sublists_L) - 1]))
+        tmp_e = [(tmp_e[i] - e_min) for i in tmp_N]
+
+    return rounds_out, sublists_L, sublists_C
