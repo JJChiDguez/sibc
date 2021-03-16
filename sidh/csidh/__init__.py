@@ -1,12 +1,11 @@
 from struct import pack, unpack
 
+from sidh.montgomery.curve import MontgomeryCurve
+from sidh.montgomery.isogeny import MontgomeryIsogeny
 from sidh.csidh.gae_df import Gae_df
 from sidh.csidh.gae_wd1 import Gae_wd1
 from sidh.csidh.gae_wd2 import Gae_wd2
-from sidh.csidh.hvelu import Hvelu
-from sidh.csidh.tvelu import Tvelu
-from sidh.csidh.svelu import Svelu
-from sidh.csidh.montgomery import MontgomeryCurve
+
 from sidh.constants import parameters
 from sidh.common import attrdict
 
@@ -72,23 +71,19 @@ class CSIDH(object):
         self._exponent = exponent
         self.tuned = tuned
         self.multievaluation = multievaluation
-        self.fp = None
+        self.field = None
         self.params = attrdict(parameters['csidh'][prime])
         self.params.update(self.params[style])
 
         if self.curvemodel == 'montgomery':
-            self.curve = MontgomeryCurve(prime, style)
-            self.fp = self.curve.fp
+            self.isogeny = MontgomeryIsogeny(formula)
+            self.curve = MontgomeryCurve(prime)
+            self.field = self.curve.field
         else:
             self.curve = None
             raise NotImplemented
 
-        if formula == 'hvelu':
-            self.formula = Hvelu(self.curve, self.tuned, self.multievaluation)
-        elif formula == 'tvelu':
-            self.formula = Tvelu(self.curve)
-        elif formula == 'svelu':
-            self.formula = Svelu(self.curve, self.tuned, self.multievaluation)
+        self.formula = self.isogeny(self.curve, self.tuned, self.multievaluation)
 
         if self.style == 'df':
             self.gae = Gae_df(prime, self.tuned, self.curve, self.formula)
