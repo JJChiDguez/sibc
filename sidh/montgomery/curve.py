@@ -1,5 +1,6 @@
 import math
 from random import SystemRandom
+from pkg_resources import resource_filename
 
 import numpy
 
@@ -28,8 +29,8 @@ def filename_to_list_of_lists_of_ints(path):
 def write_list_of_lists_of_ints_to_file(path, data):
     with open(path, 'w') as fh:
         for line in data:
-            fh.writelines(' '.join(str(v) for v in v in line))
-        fh.writelines()
+            fh.writelines(' '.join(str(v) for v in line))
+        fh.writelines('')
 
 
 # MontgomeryCurve class determines the family of supersingular elliptic curves over GF(p)
@@ -112,7 +113,7 @@ def MontgomeryCurve(prime):
         return min(all_dacs, key=lambda t: len(t[0]))[0]
 
     # Shortest Differential Addition Chains (SDACs) for each l_i
-    path = sdacs_data + prime
+    path = resource_filename('sidh', "data/sdacs/" + prime)
     SDACS = filename_to_list_of_lists_of_ints(path)
     if len(SDACS) == 0:
         print("// SDAC's to be computed")
