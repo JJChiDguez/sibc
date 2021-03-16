@@ -161,10 +161,10 @@ sidh -p p1024 -f tvelu -a csidh -s df     print-strategy
 sidh -p p512 -f svelu -a csidh -s wd2     print-strategy
 sidh -p p1792 -f hvelu -a csidh -s wd1 -v print-strategy
 
-# BSIDH
-sidh-print-strategy -p b6 -f tvelu -a bsidh
-sidh-print-strategy -p b5 -f svelu -a bsidh <! data missing for this ( /usr/share/python3-sidh/data/strategies/bsidh-b5-svelu-classical )
-sidh-print-strategy -p b2 -f hvelu -a bsidh -v
+# BSIDH (b6 and b5 are not yet functional)
+sidh -a bsidh -p b2 -f tvelu bsidh-strategy
+sidh -a bsidh -t -p b2 -f svelu bsidh-strategy
+sidh -a bsidh -t -p b2 -f hvelu bsidh-strategy
 ```
 
 Additionally, one can created files with extension `.h` that includes all the required variables in a the sdacs, strategies, and velusqrt (at least for CSIDH implementations).

@@ -1,3 +1,4 @@
+click
 matplotlib
 networkx
 numpy

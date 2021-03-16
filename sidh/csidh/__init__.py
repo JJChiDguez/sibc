@@ -14,8 +14,8 @@ default_parameters = dict(
     curvemodel='montgomery',
     prime='p512',
     formula='hvelu',
-    style='wd2',
-    exponent=2,
+    style='df',
+    exponent=10,
     tuned=False,
     multievaluation=False,
     verbose=False,
@@ -104,7 +104,7 @@ class CSIDH(object):
         pk = int.from_bytes(pk, 'little')
         pk = self.curve.affine_to_projective(pk)
         ss = self.curve.coeff(self.gae.dh(sk, pk)).to_bytes(
-            length=64, byteorder='little'
+            length=(self.params.p_bits // 8), byteorder='little'
         )
         return ss
 
@@ -117,7 +117,7 @@ class CSIDH(object):
         xy = self.gae.pubkey(sk)
         x = self.curve.coeff(xy)
         # this implies a y of 4 on the receiver side
-        return x.to_bytes(length=64, byteorder='little')
+        return x.to_bytes(length=(self.params.p_bits // 8), byteorder='little')
 
 
 if __name__ == "__main__":

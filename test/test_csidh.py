@@ -1,5 +1,5 @@
 """
-This module creates test classes for all 108 permutations of prime, formula,
+This module creates test classes for all 81 permutations of prime, formula,
 style, tuned, and multievaluation.
 
 These obviously take a long time to run. pytest-xdist is useful for speeding up
@@ -20,11 +20,19 @@ FORMULAS = ('tvelu', 'svelu', 'hvelu')
 
 STYLES = ('df', 'wd1', 'wd2')
 
+
 class CSIDH_gae_test_base(object):
     def setUp(self):
         self.c = CSIDH(
-            'montgomery', self.prime, self.formula, self.style, self.exponent,
-            self.tuned, self.multievaluation, self.verbose)
+            'montgomery',
+            self.prime,
+            self.formula,
+            self.style,
+            self.exponent,
+            self.tuned,
+            self.multievaluation,
+            self.verbose,
+        )
 
     def test_group_action_with_random_keys(self):
         sk_a, sk_b = self.c.gae.random_key(), self.c.gae.random_key()
@@ -42,6 +50,9 @@ for prime in PRIMES:
         for style in STYLES:
             for tuned in (False, True):
                 for multievaluation in (False, True):
+                    if formula == "tvelu" and (tuned or multievaluation):
+                        # tvelu doesn't have tuned or multievaluation modes
+                        continue
 
                     class cls(CSIDH_gae_test_base, TestCase):
                         formula = formula
@@ -52,7 +63,6 @@ for prime in PRIMES:
                         multievaluation = multievaluation
                         verbose = False
 
-
                     globals()[
                         'csidh_gae_'
                         + '_'.join(
@@ -61,8 +71,13 @@ for prime in PRIMES:
                                 formula,
                                 style,
                                 ('classical', 'suitable')[tuned],
-                                ('no-multievaluation', 'multievaluation')[multievaluation],
+                                ('no-multievaluation', 'multievaluation')[
+                                    multievaluation
+                                ],
                             ]
                         )
                     ] = cls
 del cls
+assert (
+    len([c for c in dir() if c.startswith('csidh_gae')]) == 81
+), "unexpected number of permutations"

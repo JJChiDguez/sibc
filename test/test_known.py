@@ -64,20 +64,28 @@ class known_df_p512(object):
 
     def setUp(self):
         self.csidh = CSIDH(
-            'montgomery', self.prime, self.formula, self.style, self.tuned,
-                          self.exponent, self.multievaluation, self.verbose
+            'montgomery',
+            self.prime,
+            self.formula,
+            self.style,
+            self.tuned,
+            self.exponent,
+            self.multievaluation,
+            self.verbose,
         )
 
         self.coeff = self.csidh.curve.coeff
 
     def test_dh_AB(self):
         self.assertEqual(
-            self.coeff(self.csidh.gae.dh(self.keys.A.sk, self.keys.B.pk)), self.ss
+            self.coeff(self.csidh.gae.dh(self.keys.A.sk, self.keys.B.pk)),
+            self.ss,
         )
 
     def test_dh_BA(self):
         self.assertEqual(
-            self.coeff(self.csidh.gae.dh(self.keys.B.sk, self.keys.A.pk)), self.ss
+            self.coeff(self.csidh.gae.dh(self.keys.B.sk, self.keys.A.pk)),
+            self.ss,
         )
 
     def test_compress(self):
