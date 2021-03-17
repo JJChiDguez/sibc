@@ -78,6 +78,9 @@ from sidh.constants import parameters
     "-t", "--tuned", is_flag=True, help="", show_default=True,
 )
 @click.option(
+    "-u", "--uninitialized", is_flag=True, help="", show_default=True,
+)
+@click.option(
     "-v",
     "--verbose",
     is_flag=True,
