@@ -62,7 +62,7 @@ class Gae_wd1(object):
             )
 
     def GAE_at_A(self, exp, A):
-        assert self.curve.issupersingular(A), "public key does not validate"
+        assert self.curve.issupersingular(A), "non-supersingular input curve"
         temporal_m = list(set(self.m))
         C_out, L_out, R_out, S_out, r_out = self.strategy_block_cost(
             self.L[::-1], self.m[::-1]

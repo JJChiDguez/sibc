@@ -12,7 +12,7 @@ def bsidh_main(ctx):
     coeff = algo.curve.coeff
     SQR, ADD = algo.curve.SQR, algo.curve.ADD
     init_runtime = algo.basefield.init_runtime
-    #validate = algo.curve.issupersingular
+    validate = algo.curve.issupersingular
     measure = algo.curve.measure
     strategy_at_6_A = algo.strategy.strategy_at_6_A
     strategy_at_6_B = algo.strategy.strategy_at_6_B

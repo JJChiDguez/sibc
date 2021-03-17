@@ -13,6 +13,7 @@ from functools import reduce
 from sidh.constants import sdacs_data, bitlength, parameters
 from sidh.common import attrdict
 from sidh.math import cswap
+from math import sqrt
 
 def filename_to_list_of_lists_of_ints(path):
     res = []
@@ -40,11 +41,13 @@ def MontgomeryCurve(prime):
         # CSIDH only requires the factorization of p + 1
         L = parameters['csidh'][prime]['L']
         n = parameters['csidh'][prime]['n']
+        s = n
         exponent_of_two = parameters['csidh'][prime]['exponent_of_two']
 
         p = (2 ** (exponent_of_two)) * reduce(
             lambda x, y: (x * y), L
         ) - 1  # p := 4 * l_0 * ... * l_n - 1
+        cofactor = 2 ** (exponent_of_two)
         # p_minus_one_halves = (p - 1) // 2  # (p - 1) / 2
         p_minus_one_halves = parameters['csidh'][prime]['p_minus_one_halves']
         validation_stop = sum([bitlength(l_i) for l_i in L]) / 2.0 + 2
@@ -60,7 +63,10 @@ def MontgomeryCurve(prime):
         Em = parameters['bsidh'][prime]['Em']
         L = list(Lp + Lm)
         n = len(L)
+        s = np
         p = parameters['bsidh'][prime]['p']
+        cofactor = (p + 1) // reduce(lambda x, y: (x * y), Lp)
+        validation_stop = sum([bitlength(l_i) for l_i in Lp]) / 2.0 + 2
         p_minus_one_halves = parameters['bsidh'][prime]['p_minus_one_halves']
         p_minus_3_quarters = parameters['bsidh'][prime]['p_minus_3_quarters']
         field = QuadraticField(p)
@@ -348,6 +354,78 @@ def MontgomeryCurve(prime):
             t <<= 1
         return X1
 
+    # Golden ration is used in prac algorithm
+    phi = (1.0 + sqrt(0.5)) / 2.0
+    phi_nu, phi_de = phi.as_integer_ratio()
+    def euclid2d(m, n, P, Q, PQ, A):
+        """ The 2-dimensional scalar pseudomultiplication: x([r]P + [s - r]P) with r = s / {Golden Ratio}') """
+
+        s0, s1 = m, n
+        x0  = list(P)
+        x1  = list(Q)
+        diff= list(PQ)
+
+        while s0 != 0:
+            if s1 < s0:
+                x0, x1 = cswap(x0, x1, 1)
+                s0, s1 = s1, s0
+            if s1 <= 4*s0:
+                # Fibonacci step
+                x   = list(x0)
+                x0  = xadd(x1, x0, diff)
+                diff= list(x)
+                s1 -= s0
+            elif (s0 % 2) == (s1 % 2):
+                x0 = xadd(x1, x0, diff)
+                x1 = xdbl(x1, A)
+                s1 = (s1 - s0) // 2
+            elif (s1 % 2) == 0:
+                diff=xadd(x1, diff, x0)
+                x1  =xdbl(x1, A)
+                s1 //= 2
+            else:
+                diff= xadd(x0, diff, x1)
+                x0  = xdbl(x0, A)
+                s0 //= 2
+
+        while s1 % 2 == 0:
+            x1 = xdbl(x1, A)
+            s1 //= 2
+
+        if s1 > 1:
+            # Ladder step on the missing part: x0 will correspond with Ladder(x1)
+            diff= list(x1)
+            x0  = xdbl(x1, A)
+            s1_binary = bin(s1)[2:][::-1]
+            s1_length = len(s1_binary)
+            for i in range(s1_length - 2, -1, -1):
+                x0, x1 = cswap(x0, x1, int(s1_binary[i + 1]) ^ int(s1_binary[i]))
+                x1 = xadd(x0, x1, diff)
+                x0 = xdbl(x0, A)
+
+            x0, x1 = cswap(x0, x1, int(s1_binary[0]))
+        else:
+            # In this case, the output should correspond with x1, thus we swap to x0
+            x0, x1 = cswap(x0, x1, 1)
+
+        return x0
+
+    def prac(k, P, A):
+        """ PRAC algorithm: (simplified) 1-D Euclidean pseudomultiplication """
+
+        s = k
+        infty = [field(1), field(0)]  # Point at infinity
+
+        # Reducing the problem from k = 2^i x s to s
+        x = list(P)
+        while s % 2 == 0:
+            x = xdbl(x, A)
+            s //= 2
+
+        r = (s * phi_nu) // phi_de
+        x = euclid2d(r, s - r, x, x, infty, A)
+        return x
+
     def cofactor_multiples(P, A, points):
         '''
         ----------------------------------------------------------------------
@@ -427,14 +505,13 @@ def MontgomeryCurve(prime):
         ''' issupersingular() verifies supersingularity '''
         while True:
 
-            T_p, _ = elligator(A)
-            for i in range(0, exponent_of_two, 1):
-                T_p = xdbl(T_p, A)
+            T_p, _ = elligator(A) # T_p is always in GF(p), and thus has torsion (p+1)
+            T_p = prac(cofactor, T_p, A)
 
-            P = cofactor_multiples(T_p, A, range(0, n, 1))
+            P = cofactor_multiples(T_p, A, range(0, s, 1))
 
             bits_of_the_order = 0
-            for i in range(0, n, 1):
+            for i in range(0, s, 1):
 
                 if isinfinity(P[i]) == False:
 
