@@ -1,10 +1,10 @@
 import click
 import numpy
 
-from sidh.common import attrdict
-from sidh.fp import printl
+from sidh.common import attrdict, geometric_serie, rounds, printl
 from sidh.constants import strategy_data
 
+from pkg_resources import resource_filename
 
 @click.command()
 @click.pass_context
@@ -14,9 +14,6 @@ def csidh_header(ctx):
     L = algo.params.L
     n = algo.params.n
     m = algo.params.m
-    delta = algo.params.delta
-    geometric_serie = algo.gae.geometric_serie
-    rounds = algo.gae.rounds
 
     strategy_block_cost = algo.gae.strategy_block_cost
     basis = numpy.eye(n, dtype=int)
@@ -46,8 +43,8 @@ def csidh_header(ctx):
             R_out[j] = list([L[::-1][k] for k in R_out[j]])
             L_out[j] = list([L[::-1][k] for k in L_out[j]])
 
-        f = open(
-            strategy_data
+        file_path = (
+            "data/strategies/"
             + setting.algorithm
             + '-'
             + setting.prime
@@ -59,6 +56,8 @@ def csidh_header(ctx):
             + LABEL_m
             + verb
         )
+        file_path = resource_filename('sidh', file_path)
+        f = open(file_path)
         # print("// Strategies to be read from a file")
         S_out = []
         for i in range(0, len(r_out), 1):
@@ -75,8 +74,8 @@ def csidh_header(ctx):
         C_out, L_out, R_out, S_out, r_out = strategy_block_cost(
             L[::-1], m[::-1]
         )
-        f = open(
-            strategy_data
+        file_path = (
+            "data/strategies/"
             + setting.algorithm
             + '-'
             + setting.prime
@@ -86,9 +85,10 @@ def csidh_header(ctx):
             + setting.formula
             + '-'
             + LABEL_m
-            + verb,
-            'w',
+            + verb
         )
+        file_path = resource_filename('sidh', file_path)
+        f = open(file_path, 'w')
         for i in range(0, len(r_out)):
 
             f.writelines(' '.join([str(tmp) for tmp in S_out[i]]) + '\n')
