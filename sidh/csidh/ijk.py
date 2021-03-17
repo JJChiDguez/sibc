@@ -6,7 +6,7 @@ from sidh.fp import printl
 from sidh.constants import strategy_data
 from sidh.math import isequal, bitlength
 
-
+# example: sidh -a csidh -p p512 -f hvelu -t csidh-ijk
 @click.command()
 @click.pass_context
 def csidh_ijk(ctx):
@@ -15,10 +15,6 @@ def csidh_ijk(ctx):
     L = algo.params.L
     n = algo.params.n
     m = algo.params.m
-    delta = algo.params.delta
-    # XXX: FIX required - sI_list is currently incorrect - so generation
-    # doesn't work unless -v is added to the arguments when called as:
-    #   `sidh -v csidh-ijk`
     sI_list = algo.formula.sI_list
     sJ_list = algo.formula.sJ_list
 
