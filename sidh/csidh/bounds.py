@@ -1,7 +1,7 @@
 import click
 import numpy
 
-from math import ceil
+from math import ceil, log
 
 from sidh.common import attrdict
 from sidh.fp import printl
@@ -41,21 +41,22 @@ def csidh_bounds(ctx):
 
                 for j in seq_i:
 
-                    current_cost, _, _, _, _ = strategy_block_cost(
-                        L, OUT[0] + basis[j]
-                    )
-                    tmp = neighboring_intvec(
-                        seq_i,
-                        L,
-                        IN,
-                        (
-                            OUT[0] + basis[j],
-                            current_cost,
-                            security(OUT[0] + basis[j], len(L)),
-                        ),
-                    )
-                    if measure(minimum[1]) >= measure(tmp[1]):
-                        minimum = tmp
+                    if OUT[0][j] > 0:
+                        current_cost, _, _, _, _ = strategy_block_cost(
+                            L, OUT[0] + basis[j]
+                        )
+                        tmp = neighboring_intvec(
+                            seq_i,
+                            L,
+                            IN,
+                            (
+                                OUT[0] + basis[j],
+                                current_cost,
+                                security(OUT[0] + basis[j], len(L)),
+                            ),
+                        )
+                        if measure(minimum[1]) >= measure(tmp[1]):
+                            minimum = tmp
 
             return minimum
 
@@ -114,12 +115,13 @@ def csidh_bounds(ctx):
             + setting.prime
             + "_"
             + setting.style
-            + "_m"
-            + str(setting.benchmark)
+            + "_e"
+            + setting.exponent
             + ".py",
             "w",
         )
-        f.write('m = [' + ', '.join([str(ei) for ei in e[::-1]]) + ']')
+        #f.write('m = [' + ', '.join([str(ei) for ei in e[::-1]]) + ']')
+        f.write(' '.join(map(str, e[::-1])))
         f.close()
         # --------------------------------------------------------------------------------------------------
         return (e, RNC)
@@ -129,7 +131,7 @@ def csidh_bounds(ctx):
         ------------------------------------------------------------------------------------- '''
 
     # ==========================================================================
-    m = setting.benchmark
+    m = int(setting.exponent)
 
     # ---
     k = 3
@@ -141,13 +143,13 @@ def csidh_bounds(ctx):
     printl("L", L[::-1], n // k)
     print("\nInitial integer vector of bounts (b_0, ..., b_%d)" % n)
 
-    if setting.benchmark == 1:
+    if m == 1:
         if setting.style == 'wd1' or setting.style == 'df':
-            assert n >= 221
-            e = [1] * 221 + [0] * (n - 221)
+            assert n >= int(keyspace), f'not enough prime factors in p + 1: {n}'
+            e = [1] * int(keyspace) + [0] * (n - int(keyspace))
         else:
-            assert n >= 139
-            e = [1] * 139 + [0] * (n - 139)
+            assert n >= int(ceil(keyspace / log(3,2))), f'not enough prime factors in p + 1: {n}'
+            e = [1] * 162 + [0] * (n - 162)
 
         # --------------------------------------------------------------------------------------------------
         f = open(
@@ -156,12 +158,13 @@ def csidh_bounds(ctx):
             + setting.prime
             + "_"
             + setting.style
-            + "_m"
-            + str(setting.benchmark)
+            + "_e"
+            + setting.exponent
             + ".py",
             "w",
         )
-        f.write('m = [' + ', '.join([str(ei) for ei in e]) + ']')
+        #f.write('m = [' + ', '.join([str(ei) for ei in e]) + ']')
+        f.write(' '.join(map(str, e)))
         f.close()
         # --------------------------------------------------------------------------------------------------
 
