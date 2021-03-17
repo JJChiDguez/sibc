@@ -38,7 +38,7 @@ class Gae_wd1(object):
         # Next functions are used for computing optimal bounds
         self.basis = numpy.eye(n, dtype=int)
 
-    def pubkey(self, sk):
+    def GAE_at_0(self, exp):
         C_out, L_out, R_out, S_out, r_out = self.strategy_block_cost(
             self.L[::-1], self.m[::-1]
         )
@@ -47,8 +47,8 @@ class Gae_wd1(object):
             (len(temporal_m) == 2) and (0 in temporal_m)
         ):
             return self.GAE(
-                self.curve.A,
-                sk,
+                [self.curve.field(2), self.curve.field(4)],
+                exp,
                 [L_out[0]],
                 [R_out[0]],
                 [S_out[0]],
@@ -57,11 +57,12 @@ class Gae_wd1(object):
             )
         else:
             return self.GAE(
-                self.curve.A, sk, L_out, R_out, S_out, r_out, self.m
+                [self.curve.field(2), self.curve.field(4)],
+                exp, L_out, R_out, S_out, r_out, self.m
             )
 
-    def dh(self, sk, pk):
-        assert self.curve.validate(pk), "public key does not validate"
+    def GAE_at_A(self, exp, A):
+        assert self.curve.issupersingular(A), "public key does not validate"
         temporal_m = list(set(self.m))
         C_out, L_out, R_out, S_out, r_out = self.strategy_block_cost(
             self.L[::-1], self.m[::-1]
@@ -71,8 +72,8 @@ class Gae_wd1(object):
             (len(temporal_m) == 2) and (0 in temporal_m)
         ):
             ss = self.GAE(
-                pk,
-                sk,
+                A,
+                exp,
                 [L_out[0]],
                 [R_out[0]],
                 [S_out[0]],
@@ -80,20 +81,24 @@ class Gae_wd1(object):
                 self.m,
             )
         else:
-            ss = self.GAE(pk, sk, L_out, R_out, S_out, r_out, self.m)
+            ss = self.GAE(A, exp, L_out, R_out, S_out, r_out, self.m)
         return ss
 
-    def random_key(self, m=None):
+    def random_exponents(self, m=None):
         if m is None:
             m = self.m
         """
-        random_key(m) implements an uniform random sample from S(m_1) x S(m_2) x ... x S(m_n)
+        random_exponents(m) implements an uniform random sample from S(m_1) x S(m_2) x ... x S(m_n)
         """
         return [
-            2 * (self.random.randint(0, m_i) - (m_i // 2)) - (m_i % 2)
+            self.random.randint(0, m_i)
             for m_i in self.m
         ]
 
+    def print_exponents(self, label : str, exp):
+        print("%s := ( %s );" % (label, ' '.join(map(str, exp))) )
+        return None
+        
     def security(self, M, n):
         """
         security()

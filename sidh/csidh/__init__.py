@@ -61,6 +61,7 @@ class CSIDH(object):
         formula,
         style,
         tuned,
+        uninitialized,
         exponent,
         multievaluation,
         verbose,
@@ -70,13 +71,14 @@ class CSIDH(object):
         self.style = style
         self._exponent = exponent
         self.tuned = tuned
+        self.uninitialized = uninitialized
         self.multievaluation = multievaluation
         self.field = None
         self.params = attrdict(parameters['csidh'][prime])
         self.params.update(self.params[style])
 
         if self.curvemodel == 'montgomery':
-            self.isogeny = MontgomeryIsogeny(formula)
+            self.isogeny = MontgomeryIsogeny(formula, uninitialized = self.uninitialized)
             self.curve = MontgomeryCurve(prime)
             self.field = self.curve.field
         else:
@@ -98,22 +100,37 @@ class CSIDH(object):
         sk = unpack('<{}b'.format(len(sk)), sk)
         pk = int.from_bytes(pk, 'little')
         pk = self.curve.affine_to_projective(pk)
-        ss = self.curve.coeff(self.gae.dh(sk, pk)).to_bytes(
+        ss = self.curve.coeff(self.gae.GAE_at_A(sk, pk)).to_bytes(
+            length=(self.params.p_bits // 8), byteorder='little'
+        )
+        return ss
+
+    def derive(self, sk, pk):
+        sk = unpack('<{}b'.format(len(sk)), sk)
+        pk = int.from_bytes(pk, 'little')
+        pk = self.curve.affine_to_projective(pk)
+        ss = self.curve.coeff(self.gae.GAE_at_A(sk, pk)).to_bytes(
             length=(self.params.p_bits // 8), byteorder='little'
         )
         return ss
 
     def secret_key(self):
-        k = self.gae.random_key()
+        k = self.gae.random_exponents()
         return pack('<{}b'.format(len(k)), *k)
 
     def public_key(self, sk):
         sk = unpack('<{}b'.format(len(sk)), sk)
-        xy = self.gae.pubkey(sk)
+        xy = self.gae.GAE_at_0(sk)
         x = self.curve.coeff(xy)
         # this implies a y of 4 on the receiver side
         return x.to_bytes(length=(self.params.p_bits // 8), byteorder='little')
 
+    def keygen(self):
+        sk = self.gae.random_exponents()
+        xy = self.gae.GAE_at_0(sk, A)
+        x = self.curve.coeff(xy)
+        # this implies a y of 4 on the receiver side
+        return pack('<{}b'.format(len(sk)), *sk), x.to_bytes(length=(self.params.p_bits // 8), byteorder='little')
 
 if __name__ == "__main__":
     import doctest
