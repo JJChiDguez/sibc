@@ -1,258 +1,139 @@
-import click
-from sympy import symbols, floor, sqrt, sign
 from pkg_resources import resource_filename
-from random import SystemRandom
+import click
 
-from sidh.common import attrdict
+from sidh.common import attrdict, geometric_serie, rounds
+from sidh.constants import strategy_data
 
 @click.command()
 @click.pass_context
 def bsidh_main(ctx):
     algo = ctx.meta['sidh.kwargs']['algo']
     setting = ctx.meta['sidh.kwargs']
-    curve = algo.curve
-    tuned_name = ('-classical','-suitable')[setting.tuned]
-    SIDp = algo.curve.SIDp
-    SIDm = algo.curve.SIDm
+    coeff = algo.curve.coeff
     SQR, ADD = algo.curve.SQR, algo.curve.ADD
-    p = algo.params.p
-    global_L = algo.curve.L
-    coeff = curve.coeff
-    random = SystemRandom()
-    fp = curve.fp
+    init_runtime = algo.basefield.init_runtime
+    #validate = algo.curve.issupersingular
+    measure = algo.curve.measure
+    strategy_at_6_A = algo.strategy.strategy_at_6_A
+    strategy_at_6_B = algo.strategy.strategy_at_6_B
+    strategy_A = algo.strategy.strategy_A
+    strategy_B = algo.strategy.strategy_B
+    random_scalar_A = algo.strategy.random_scalar_A
+    random_scalar_B = algo.strategy.random_scalar_B
 
-    f_name = 'data/strategies/'+setting.algorithm+'-'+setting.prime+'-'+algo.formula.name+tuned_name
-    try:
-        f = open(resource_filename('sidh', f_name))
-        print("// Strategies to be read from a file")
-        # Corresponding to the list of Small Isogeny Degree, Lp := [l_0, ...,
-        # l_{n-1}] [We need to include case l=2 and l=4]
-        tmp = f.readline()
-        tmp = [int(b) for b in tmp.split()]
-        Sp = list(tmp)
-        # Corresponding to the list of Small Isogeny Degree, Lm := [l_0, ..., l_{n-1}]
-        tmp = f.readline()
-        tmp = [int(b) for b in tmp.split()]
-        Sm = list(tmp)
-        f.close()
-    except IOError:
-        print("// Strategies to be computed")
-        # List of Small Isogeny Degree, Lp := [l_0, ..., l_{n-1}] [We need to
-        # include case l=2 and l=4]
-        Sp, Cp = dynamic_programming_algorithm(SIDp[::-1], len(SIDp))
-        # List of Small Isogeny Degree, Lm := [l_0, ..., l_{n-1}]
-        Sm, Cm = dynamic_programming_algorithm(SIDm[::-1], len(SIDm))
-        f = open(f_name, 'w')
-        f.writelines(' '.join([str(tmp) for tmp in Sp]) + '\n')
-        f.writelines(' '.join([str(tmp) for tmp in Sm]) + '\n')
-        f.close()
     print(
-        "// All the experiments are assuming S = %1.6f x M and a = %1.6f x M. The curve.measures are given in millions of field operations.\n"
+        "// The running time is assuming S = %1.2f x M and a = %1.2f x M, and giving in millions of field operations.\n"
         % (SQR, ADD)
     )
 
-    print("p := 0x%X;" % p)
-    print("fp := GF(p);")
-    print("_<x> := PolynomialRing(fp);")
-    print("fp2<i> := ext<fp | x^2 + 1>;")
-    print("Pr<x> := PolynomialRing(fp2);")
+    ''' -------------------------------------------------------------------------------------
+        Main
+        ------------------------------------------------------------------------------------- '''
 
-    # Reading public generators points
-    f = open(resource_filename('sidh', 'data/gen/' + setting.prime))
-
-    # x(PA), x(QA) and x(PA - QA)
-    PQA = f.readline()
-    PQA = [int(x, 16) for x in PQA.split()]
-    PA = [list(PQA[0:2]), [0x1, 0x0]]
-    QA = [list(PQA[2:4]), [0x1, 0x0]]
-    PQA = [list(PQA[4:6]), [0x1, 0x0]]
-
-    # x(PB), x(QB) and x(PB - QB)
-    PQB = f.readline()
-    PQB = [int(x, 16) for x in PQB.split()]
-    PB = [list(PQB[0:2]), [0x1, 0x0]]
-    QB = [list(PQB[2:4]), [0x1, 0x0]]
-    PQB = [list(PQB[4:6]), [0x1, 0x0]]
-
-    f.close()
-
-    A = [[0x8, 0x0], [0x4, 0x0]]
-    a = coeff(A)
-
-    print("public_coeff := 0x%X + i * 0x%X;\n" % (a[0], a[1]))
+    # ------------------------------------------------------------------------- Alice
+    print("// --- \033[0;35mAlice\033[0m")
+    init_runtime()
+    a_private = random_scalar_A()
+    a_public = strategy_at_6_A(a_private)
 
     print(
-        "// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
-    )
-    print("// Public Key Generation")
-    print(
-        "// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
-    )
-
-    # Alice's side
-    print("// Private key corresponding to Alice")
-    a_private = algo.gae.random_key(p + 1)
-    fp.fp.set_zero_ops()
-    Ra = curve.Ladder3pt(a_private, PA, QA, PQA, A)
-    print("// sk_a := 0x%X;" % a_private)
-    RUNNING_TIME = fp.fp.get_ops()
-    print(
-        "// kernel point generator cost:\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;\n"
+        "// Running time (Strategy evaluation):\t\t\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
         % (
-            RUNNING_TIME[0] / (10.0 ** 6),
-            RUNNING_TIME[1] / (10.0 ** 6),
-            RUNNING_TIME[2] / (10.0 ** 6),
-            curve.measure(RUNNING_TIME) / (10.0 ** 6),
+            algo.basefield.fpmul / (10.0 ** 6),
+            algo.basefield.fpsqr / (10.0 ** 6),
+            algo.basefield.fpadd / (10.0 ** 6),
+            measure([algo.basefield.fpmul, algo.basefield.fpsqr, algo.basefield.fpadd]) / (10.0 ** 6),
         )
     )
-    print("// Public key corresponding to Alice")
-    fp.fp.set_zero_ops()
-    a_public, PB_a, QB_a, PQB_a = algo.gae.evaluate_strategy(
-        True, PB, QB, PQB, A, Ra, SIDp[::-1], Sp, len(SIDp)
-    )
-    RUNNING_TIME = fp.fp.get_ops()
+    print("sk_a := %d;" % a_private)
+    print("pk_a := %s;" % coeff(a_public))
+
+    # ------------------------------------------------------------------------- Bob
+    print("\n// --- \033[0;34mBob\033[0m")
+    init_runtime()
+    b_private = random_scalar_B()
+    b_public = strategy_at_6_B(b_private)
+    
     print(
-        "// isogeny evaluation cost:\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
+        "// Running time (Strategy evaluation):\t\t\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
         % (
-            RUNNING_TIME[0] / (10.0 ** 6),
-            RUNNING_TIME[1] / (10.0 ** 6),
-            RUNNING_TIME[2] / (10.0 ** 6),
-            curve.measure(RUNNING_TIME) / (10.0 ** 6),
+            algo.basefield.fpmul / (10.0 ** 6),
+            algo.basefield.fpsqr / (10.0 ** 6),
+            algo.basefield.fpadd / (10.0 ** 6),
+            measure([algo.basefield.fpmul, algo.basefield.fpsqr, algo.basefield.fpadd]) / (10.0 ** 6),
+        )
+    )
+    print("sk_b := %d;" % b_private)
+    print("pk_b := %s;" % coeff(b_public))
+
+    print("\n// ===================== \033[0;33mSecret Sharing Computation\033[0m")
+    # ------------------------------------------------------------------------- Alice
+    print("// --- \033[0;35mAlice\033[0m")
+    init_runtime()
+    #public_validation = validate(b_public)
+    #assert public_validation
+    
+    print(
+        "// Running time (key validation):\t%2.3fM + %2.3fS + %2.3fa = %2.3fM,"
+        % (
+            algo.basefield.fpmul / (10.0 ** 6),
+            algo.basefield.fpsqr / (10.0 ** 6),
+            algo.basefield.fpadd / (10.0 ** 6),
+            measure([algo.basefield.fpmul, algo.basefield.fpsqr, algo.basefield.fpadd]) / (10.0 ** 6),
         )
     )
 
-    a_curve = coeff(a_public)
-    print("pk_a := 0x%X + i * 0x%X;\n" % (a_curve[0], a_curve[1]))
-    # print("B := EllipticCurve(x^3 + (0x%X + i * 0x%X )* x^2 + x);" % (a_curve[0], a_curve[1]) )
-    # print("assert(Random(B) * (p + 1) eq B!0);")
-
-    print("// Private key corresponding to Bob")
-    b_private = algo.gae.random_key(p - 1)
-    print("// sk_b := 0x%X;" % b_private)
-    fp.fp.set_zero_ops()
-    Rb = curve.Ladder3pt(b_private, PB, QB, PQB, A)
-    RUNNING_TIME = fp.fp.get_ops()
+    init_runtime()
+    ss_a = strategy_A(a_private, b_public)
     print(
-        "// kernel point generator cost:\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;\n"
+        "// Running time (Strategy evaluation + key validation):\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
         % (
-            RUNNING_TIME[0] / (10.0 ** 6),
-            RUNNING_TIME[1] / (10.0 ** 6),
-            RUNNING_TIME[2] / (10.0 ** 6),
-            curve.measure(RUNNING_TIME) / (10.0 ** 6),
+            algo.basefield.fpmul / (10.0 ** 6),
+            algo.basefield.fpsqr / (10.0 ** 6),
+            algo.basefield.fpadd / (10.0 ** 6),
+            measure([algo.basefield.fpmul, algo.basefield.fpsqr, algo.basefield.fpadd]) / (10.0 ** 6),
         )
     )
-    print("// Public key corresponding to Bob")
-    fp.fp.set_zero_ops()
-    b_public, PA_b, QA_b, PQA_b = algo.gae.evaluate_strategy(
-        True, PA, QA, PQA, A, Rb, SIDm[::-1], Sm, len(SIDm)
-    )
-    RUNNING_TIME = fp.fp.get_ops()
+    print("ss_a := %s;\n" % coeff(ss_a))
+
+    # ------------------------------------------------------------------------- Bob
+    print("// --- \033[0;34mBob\033[0m")
+    init_runtime()
+    #public_validation = validate(a_public)
+    #assert public_validation
+    
     print(
-        "// isogeny evaluation cost:\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
+        "// Running time (key validation):\t%2.3fM + %2.3fS + %2.3fa = %2.3fM,"
         % (
-            RUNNING_TIME[0] / (10.0 ** 6),
-            RUNNING_TIME[1] / (10.0 ** 6),
-            RUNNING_TIME[2] / (10.0 ** 6),
-            curve.measure(RUNNING_TIME) / (10.0 ** 6),
+            algo.basefield.fpmul / (10.0 ** 6),
+            algo.basefield.fpsqr / (10.0 ** 6),
+            algo.basefield.fpadd / (10.0 ** 6),
+            measure([algo.basefield.fpmul, algo.basefield.fpsqr, algo.basefield.fpadd]) / (10.0 ** 6),
         )
     )
 
-    b_curve = coeff(b_public)
-    print("pk_b := 0x%X + i * 0x%X;\n" % (b_curve[0], b_curve[1]))
-    # print("B := EllipticCurve(x^3 + (0x%X + i * 0x%X )* x^2 + x);" % (b_curve[0], b_curve[1]) )
-    # print("assert(Random(B) * (p + 1) eq B!0);")
-
-    # ======================================================
+    init_runtime()
+    ss_b = strategy_B(b_private, a_public)
+    
     print(
-        "\n// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
-    )
-    print("// Secret Sharing Computation")
-    print(
-        "// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
-    )
-
-    print("// Secret sharing corresponding to Alice")
-    fp.fp.set_zero_ops()
-    RB_a = curve.Ladder3pt(a_private, PA_b, QA_b, PQA_b, b_public)
-    RUNNING_TIME = fp.fp.get_ops()
-    print(
-        "// kernel point generator cost:\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
+        "// Running time (Strategy evaluation + key validation):\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
         % (
-            RUNNING_TIME[0] / (10.0 ** 6),
-            RUNNING_TIME[1] / (10.0 ** 6),
-            RUNNING_TIME[2] / (10.0 ** 6),
-            curve.measure(RUNNING_TIME) / (10.0 ** 6),
+            algo.basefield.fpmul / (10.0 ** 6),
+            algo.basefield.fpsqr / (10.0 ** 6),
+            algo.basefield.fpadd / (10.0 ** 6),
+            measure([algo.basefield.fpmul, algo.basefield.fpsqr, algo.basefield.fpadd]) / (10.0 ** 6),
         )
     )
-    fp.fp.set_zero_ops()
-    ss_a, _, _, _ = algo.gae.evaluate_strategy(
-        False, PB, QB, PQB, b_public, RB_a, SIDp[::-1], Sp, len(SIDp)
-    )
-    RUNNING_TIME = fp.fp.get_ops()
-    print(
-        "// isogeny evaluation cost:\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
-        % (
-            RUNNING_TIME[0] / (10.0 ** 6),
-            RUNNING_TIME[1] / (10.0 ** 6),
-            RUNNING_TIME[2] / (10.0 ** 6),
-            curve.measure(RUNNING_TIME) / (10.0 ** 6),
-        )
-    )
+    print("ss_b := %s;" % coeff(ss_b))
 
-    ss_a_curve = coeff(ss_a)
-    print("ss_a := 0x%X + i * 0x%X;\n" % (ss_a_curve[0], ss_a_curve[1]))
-    # ss_ja = jinvariant(ss_a)
-    # print("B := EllipticCurve(x^3 + (0x%X + i * 0x%X )* x^2 + x);" % (ss_a_curve[0], ss_a_curve[1]) )
-    # print("jB := 0x%X + i * 0x%X;" % (ss_ja[0], ss_ja[1]) )
-    # print("assert(Random(B) * (p + 1) eq B!0);")
-    # print("assert(jInvariant(B) eq jB);")
-
-    print("// Secret sharing corresponding to Bob")
-    fp.fp.set_zero_ops()
-    RA_b = curve.Ladder3pt(b_private, PB_a, QB_a, PQB_a, a_public)
-    RUNNING_TIME = fp.fp.get_ops()
-    print(
-        "// kernel point generator cost:\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
-        % (
-            RUNNING_TIME[0] / (10.0 ** 6),
-            RUNNING_TIME[1] / (10.0 ** 6),
-            RUNNING_TIME[2] / (10.0 ** 6),
-            curve.measure(RUNNING_TIME) / (10.0 ** 6),
-        )
-    )
-    fp.fp.set_zero_ops()
-    ss_b, _, _, _ = algo.gae.evaluate_strategy(
-        False, PA, QA, PQA, a_public, RA_b, SIDm[::-1], Sm, len(SIDm)
-    )
-    RUNNING_TIME = fp.fp.get_ops()
-    print(
-        "// isogeny evaluation cost:\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
-        % (
-            RUNNING_TIME[0] / (10.0 ** 6),
-            RUNNING_TIME[1] / (10.0 ** 6),
-            RUNNING_TIME[2] / (10.0 ** 6),
-            curve.measure(RUNNING_TIME) / (10.0 ** 6),
-        )
-    )
-
-    ss_b_curve = coeff(ss_b)
-    print("ss_b := 0x%X + i * 0x%X;\n" % (ss_b_curve[0], ss_b_curve[1]))
-    # ss_jb = jinvariant(ss_b)
-    # print("B := EllipticCurve(x^3 + (0x%X + i * 0x%X )* x^2 + x);" % (ss_b_curve[0], ss_b_curve[1]) )
-    # print("jB := 0x%X + i * 0x%X;" % (ss_jb[0], ss_jb[1]) )
-    # print("assert(Random(B) * (p + 1) eq B!0);")
-    # print("assert(jInvariant(B) eq jB);")
-
-    print(
-        "\n// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
-    )
-    if ss_a_curve == ss_b_curve:
-        print('\x1b[0;30;43m' + '\"Successfully passed!\";' + '\x1b[0m')
-    else:
-        print(
+    try:
+        assert(coeff(ss_a) == coeff(ss_b))
+        print('\n\x1b[0;30;43m' + 'Successfully passed!' + '\x1b[0m')
+    except:
+        raise TypeError(
             '\x1b[0;30;41m'
-            + '\"Great Scott!... The sky is falling. NOT PASSED!!!\"'
+            + 'Great Scott!... The sky is falling. NOT PASSED!!!'
             + '\x1b[0m'
         )
-    return attrdict(name='bsidh-main', **locals())
 
+    return attrdict(name='bsidh-main', **locals())

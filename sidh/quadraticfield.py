@@ -9,14 +9,14 @@ def tostring(a):
 		if a.im == 1:
 			return 'u'
 		else:
-			return f'{hex(a.im)}*u'
+			return f'{a.im}*u'
 	elif a.im == 0:
-		return f'{hex(a.re)}'
+		return f'{a.re}'
 	else:
 		if a.im == 1:
-			return f'{hex(a.re)} + u'
+			return f'{a.re} + u'
 		else:
-			return f'{hex(a.re)} + {hex(a.im)}*u'
+			return f'{a.re} + {a.im}*u'
 
 def QuadraticField(p : int):
 	"""

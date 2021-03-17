@@ -1,20 +1,22 @@
 from struct import pack, unpack
-
-from sympy import symbols, floor, sqrt, sign
-from pkg_resources import resource_filename
 from random import SystemRandom
 
-from sidh.bsidh.hvelu import Hvelu
-from sidh.bsidh.tvelu import Tvelu
-from sidh.bsidh.svelu import Svelu
-from sidh.bsidh.montgomery import MontgomeryCurve
-from sidh.bsidh.strategy import Gae
+from sidh.montgomery.curve import MontgomeryCurve
+from sidh.montgomery.isogeny import MontgomeryIsogeny
+from sidh.bsidh.strategy import Strategy
+
 from sidh.constants import parameters
 from sidh.common import attrdict
 
-default_parameters = dict(curvemodel='montgomery', prime='b2',
-                        formula='hvelu', tuned=False,
-                        multievaluation=False, verbose=False)
+default_parameters = dict(
+    curvemodel='montgomery',
+    prime='b2',
+    formula='hvelu',
+    tuned=True,
+    uninitialized=False,
+    multievaluation=False,
+    verbose=False
+)
 
 class BSIDH(object):
     """
@@ -42,63 +44,65 @@ class BSIDH(object):
 
     """
 
-    def __init__(self, curvemodel, prime, formula, tuned, multievaluation,
-                 verbose):
+    def __init__(
+        self,
+        curvemodel,
+        prime,
+        formula,
+        tuned,
+        uninitialized,
+        multievaluation,
+        verbose
+    ):
 
         self.params = attrdict(parameters['bsidh'][prime])
         self.prime = prime
         self.tuned = tuned
+        self.uninitialized = uninitialized
         self.multievaluation = multievaluation
         self.verbose = verbose
 
         random = SystemRandom()
 
         if curvemodel == 'montgomery':
+            self.isogeny = MontgomeryIsogeny(formula, uninitialized = self.uninitialized)
             self.curve = MontgomeryCurve(prime)
-            self.A = self.curve.A
-            self.fp = self.curve.fp
+            self.field = self.curve.field
+            self.basefield = self.curve.field.basefield
         else:
             self.curve = None
             raise NotImplemented
 
-        if formula == 'hvelu':
-            self.formula = Hvelu(self.curve, self.tuned, self.multievaluation)
-        elif formula == 'tvelu':
-            self.formula = Tvelu(self.curve)
-        elif formula == 'svelu':
-            self.formula = Svelu(self.curve, self.tuned, self.multievaluation)
-        else:
-            self.formula = None
-            raise NotImplemented
+        self.formula = self.isogeny(self.curve, self.tuned, self.multievaluation)
 
         if self.formula is not None and self.curve is not None:
-            self.gae = Gae(prime, self.tuned, self.curve, self.formula)
+            self.strategy = Strategy(prime, self.tuned, self.curve, self.formula)
         else:
-            self.gae = None
+            self.strategy = None
             raise NotImplemented
 
     def secret_key_a(self):
-        k = self.gae.random_key_A()
+        k = self.strategy.random_scalar_A()
         return k.to_bytes(length=32, byteorder='little')
 
     def secret_key_b(self):
-        k = self.gae.random_key_B()
+        k = self.strategy.random_scalar_B()
         return k.to_bytes(length=32, byteorder='little')
 
     def public_key_a(self, sk):
         sk = int.from_bytes(sk, byteorder='little')
-        x, y = self.gae.pubkey_A(sk)
-        a = x[0]; b = x[1];
-        c = y[0]; d = y[1];
+        x, y = self.strategy.strategy_at_6_A(sk)
+        a = x.re.x; b = x.im.x;
+        c = y.re.x; d = y.im.x;
         pk = a.to_bytes(length=32, byteorder='little') + b.to_bytes(length=32, byteorder='little') +\
             c.to_bytes(length=32, byteorder='little') + d.to_bytes(length=32, byteorder='little')
         return pk
 
     def public_key_b(self, sk):
         sk = int.from_bytes(sk, byteorder='little')
-        x, y = self.gae.pubkey_B(sk)
-        a = x[0]; b = x[1];
-        c = y[0]; d = y[1];
+        x, y = self.strategy.strategy_at_6_B(sk)
+        a = x.re.x; b = x.im.x;
+        c = y.re.x; d = y.im.x;
         e = a.to_bytes(length=32, byteorder='little') + b.to_bytes(length=32, byteorder='little') +\
             c.to_bytes(length=32, byteorder='little') + d.to_bytes(length=32, byteorder='little')
         return e
@@ -108,11 +112,11 @@ class BSIDH(object):
         a, b = int.from_bytes(pk[0:32], byteorder='little'), int.from_bytes(pk[32:64], byteorder='little')
         c, d = int.from_bytes(pk[64:96], byteorder='little'), int.from_bytes(pk[96:128], byteorder='little')
         pk = [(a, b), (c, d)]
-        ss = self.gae.dh_A(sk, pk)
+        ss = self.strategy.strategy_A(sk, pk)
         curve_ss_a = self.curve.coeff(ss)
         x, y = curve_ss_a
-        x = x.to_bytes(length=32, byteorder='little')
-        y = y.to_bytes(length=32, byteorder='little')
+        x = x.re.x.to_bytes(length=32, byteorder='little')
+        y = y.im.x.to_bytes(length=32, byteorder='little')
         return x + y
 
     def dh_b(self, sk, pk):
@@ -120,11 +124,11 @@ class BSIDH(object):
         a, b = int.from_bytes(pk[0:32], byteorder='little'), int.from_bytes(pk[32:64], byteorder='little')
         c, d = int.from_bytes(pk[64:96], byteorder='little'), int.from_bytes(pk[96:128], byteorder='little')
         pk = [(a, b), (c, d)]
-        ss = self.gae.dh_B(sk, pk)
+        ss = self.strategy.strategy_B(sk, pk)
         curve_ss_b = self.curve.coeff(ss)
         x, y = curve_ss_b
-        x = x.to_bytes(length=32, byteorder='little')
-        y = y.to_bytes(length=32, byteorder='little')
+        x = x.re.x.to_bytes(length=32, byteorder='little')
+        y = y.im.x.to_bytes(length=32, byteorder='little')
         return x + y
 
 if __name__ == "__main__":

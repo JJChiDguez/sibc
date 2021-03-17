@@ -1,4 +1,3 @@
-import math
 from random import SystemRandom
 from pkg_resources import resource_filename
 

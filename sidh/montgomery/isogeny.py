@@ -908,6 +908,43 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
 
             return [XX, ZZ]
 
+        # Degree-4 isogeny construction
+        def xisog_4(self, P):
+
+            self.K = [[0, 0], [0, 0], [0, 0]]
+
+            self.K[1] = (P[0] - P[1])
+            self.K[2] = (P[0] + P[1])
+            self.K[0] = (P[1] ** 2)
+            self.K[0] = (self.K[0] + self.K[0])
+
+            C24 = (self.K[0] ** 2)
+            self.K[0] = (self.K[0] + self.K[0])
+            A24 = (P[0] ** 2)
+            A24 = (A24 + A24)
+            A24 = (A24 ** 2)
+            return [A24, C24]
+
+
+        # Degree-4 isogeny evaluation
+        def xeval_4(self, Q):
+
+            t0 = (Q[0] + Q[1])
+            t1 = (Q[0] - Q[1])
+            XQ = (t0 * self.K[1])
+            ZQ = (t1 * self.K[2])
+            t0 = (t0 * t1)
+            t0 = (t0 * self.K[0])
+            t1 = (XQ + ZQ)
+            ZQ = (XQ - ZQ)
+            t1 = (t1 ** 2)
+            ZQ = (ZQ ** 2)
+            XQ = (t0 + t1)
+            t0 = (ZQ - t0)
+            XQ = (XQ * t1)
+            ZQ = (ZQ * t0)
+            return [XQ, ZQ]
+
         def kps(self, P, A, i):
 
             if self.L[i] <= self.HYBRID_BOUND:
@@ -918,14 +955,20 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
         def xisog(self, A, i):
 
             if self.L[i] <= self.HYBRID_BOUND:
-                return self.xisog_t(A, i)
+                if self.L[i] != 4:
+                    return self.xisog_t(A, i)
+                else:
+                    return self.xisog_4(A)
             else:
                 return self.xisog_s(A, i)
 
         def xeval(self, P, v):
 
             if type(v) == int:
-                return self.xeval_t(P, v)
+                if self.L[v] != 4:
+                    return self.xeval_t(P, v)
+                else:
+                    return self.xeval_4(P)
             else:
                 return self.xeval_s(P, v)
 

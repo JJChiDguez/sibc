@@ -74,7 +74,6 @@ class CSIDH(object):
         self.tuned = tuned
         self.uninitialized = uninitialized
         self.multievaluation = multievaluation
-        self.field = None
         self.params = attrdict(parameters['csidh'][prime])
         self.params.update(self.params[style])
 
