@@ -1,5 +1,5 @@
 import click
-from sympy import symbols, floor, sqrt, sign
+from math import floor, sqrt
 
 from sidh.common import attrdict
 

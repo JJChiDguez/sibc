@@ -3,8 +3,7 @@ import numpy
 
 from sidh.common import attrdict, printl
 from sidh.constants import strategy_data
-from sympy import floor, sqrt
-from math import pi
+from math import floor, sqrt, pi
 
 
 @click.command()
