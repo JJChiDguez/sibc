@@ -101,7 +101,7 @@ class CSIDH(object):
         sk = unpack('<{}b'.format(len(sk)), sk)
         pk = int.from_bytes(pk, 'little')
         pk = self.curve.affine_to_projective(pk)
-        ss = self.curve.coeff(self.gae.GAE_at_A(sk, pk)).to_bytes(
+        ss = self.curve.coeff(self.gae.GAE_at_A(sk, pk)).x.to_bytes(
             length=(self.params.p_bits // 8), byteorder='little'
         )
         return ss
@@ -110,7 +110,7 @@ class CSIDH(object):
         sk = unpack('<{}b'.format(len(sk)), sk)
         pk = int.from_bytes(pk, 'little')
         pk = self.curve.affine_to_projective(pk)
-        ss = self.curve.coeff(self.gae.GAE_at_A(sk, pk)).to_bytes(
+        ss = self.curve.coeff(self.gae.GAE_at_A(sk, pk)).x.to_bytes(
             length=(self.params.p_bits // 8), byteorder='little'
         )
         return ss
@@ -122,16 +122,16 @@ class CSIDH(object):
     def public_key(self, sk):
         sk = unpack('<{}b'.format(len(sk)), sk)
         xy = self.gae.GAE_at_0(sk)
-        x = self.curve.coeff(xy)
+        pk = self.curve.coeff(xy)
         # this implies a y of 4 on the receiver side
-        return x.to_bytes(length=(self.params.p_bits // 8), byteorder='little')
+        return pk.x.to_bytes(length=(self.params.p_bits // 8), byteorder='little')
 
     def keygen(self):
         sk = self.gae.random_exponents()
-        xy = self.gae.GAE_at_0(sk, A)
-        x = self.curve.coeff(xy)
+        xy = self.gae.GAE_at_0(sk)
+        pk = self.curve.coeff(xy)
         # this implies a y of 4 on the receiver side
-        return pack('<{}b'.format(len(sk)), *sk), x.to_bytes(length=(self.params.p_bits // 8), byteorder='little')
+        return pack('<{}b'.format(len(sk)), *sk), pk.x.to_bytes(length=(self.params.p_bits // 8), byteorder='little')
 
 if __name__ == "__main__":
     import doctest
