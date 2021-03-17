@@ -1,20 +1,37 @@
+from pkg_resources import resource_filename
 import click
+
 from progress.bar import Bar
-from sidh.constants import strategy_data
-from sidh.csidh import CSIDH
 import statistics
 
+from sidh.common import attrdict, geometric_serie, rounds
+from sidh.constants import strategy_data
 
 @click.command()
 @click.pass_context
 def csidh_bench(ctx):
+    algo = ctx.meta['sidh.kwargs']['algo']
     setting = ctx.meta['sidh.kwargs']
-    self = setting['algo']
-    n = self.params.n
-    m = self.params.m
-    L = self.params.L
+    coeff = algo.curve.coeff
+    p = algo.params.p
+    L = algo.params.L
+    m = algo.params.m
+    n = algo.params.n
+    SQR, ADD = algo.curve.SQR, algo.curve.ADD
+    init_runtime = algo.field.init_runtime
+    validate = algo.curve.issupersingular
+    measure = algo.curve.measure
+    GAE_at_0 = algo.gae.GAE_at_0
+    GAE_at_A = algo.gae.GAE_at_A
+    strategy_block_cost = algo.gae.strategy_block_cost
+    random_exponents = algo.gae.random_exponents
+    print_exponents = algo.gae.print_exponents
 
-    if len(set(m)) > 1:
+    if algo.formula.name != 'tvelu':
+        set_parameters_velu = algo.formula.set_parameters_velu
+
+    temporal_m = list(set(m))
+    if len(temporal_m) > 1:
         # Maximum number of degree-(l_i) isogeny constructions is m_i (different for each l_i)
         LABEL_m = 'different_bounds'
     else:
@@ -26,29 +43,30 @@ def csidh_bench(ctx):
     else:
         verb = '-classical'
 
+    # List of Small Odd Primes, L := [l_0, ..., l_{n-1}]
+    m_prime = [geometric_serie(m[k], L[k]) for k in range(n)]
+    r_out, L_out, R_out = rounds(m_prime[::-1], n)
+    for j in range(0, len(r_out), 1):
+
+        R_out[j] = list([L[::-1][k] for k in R_out[j]])
+        L_out[j] = list([L[::-1][k] for k in L_out[j]])
+
+    file_path = (
+        "data/strategies/"
+        + setting.algorithm
+        + '-'
+        + setting.prime
+        + '-'
+        + setting.style
+        + '-'
+        + setting.formula
+        + '-'
+        + LABEL_m
+        + verb
+    )
+    file_path = resource_filename('sidh', file_path)
     try:
-
-        # List of Small Odd Primes, L := [l_0, ..., l_{n-1}]
-        m_prime = [self.gae.geometric_serie(m[k], L[k]) for k in range(n)]
-        r_out, L_out, R_out = self.gae.rounds(m_prime[::-1], n)
-        for j in range(0, len(r_out), 1):
-
-            R_out[j] = list([L[::-1][k] for k in R_out[j]])
-            L_out[j] = list([L[::-1][k] for k in L_out[j]])
-
-        f = open(
-            strategy_data
-            + setting.algorithm
-            + '-'
-            + setting.prime
-            + '-'
-            + setting.style
-            + '-'
-            + setting.formula
-            + '-'
-            + LABEL_m
-            + verb
-        )
+        f = open(file_path)
         print("// Strategies to be read from a file")
         S_out = []
         for i in range(0, len(r_out), 1):
@@ -62,23 +80,10 @@ def csidh_bench(ctx):
     except IOError:
 
         print("// Strategies to be computed")
-        C_out, L_out, R_out, S_out, r_out = self.gae.strategy_block_cost(
+        C_out, L_out, R_out, S_out, r_out = strategy_block_cost(
             L[::-1], m[::-1]
         )
-        f = open(
-            strategy_data
-            + setting.algorithm
-            + '-'
-            + setting.prime
-            + '-'
-            + setting.style
-            + '-'
-            + setting.formula
-            + '-'
-            + LABEL_m
-            + verb,
-            'w',
-        )
+        f = open(file_path, 'w')
         for i in range(0, len(r_out)):
 
             f.writelines(' '.join([str(tmp) for tmp in S_out[i]]) + '\n')
@@ -86,30 +91,16 @@ def csidh_bench(ctx):
         f.close()
 
     print(
-        "// All the experiments are assuming S = %2.3fM and a = %2.3fM. The measures are given in millions of field operations.\n"
-        % (self.curve.SQR, self.curve.ADD)
+        "// The running time is assuming S = %1.2f x M and a = %1.2f x M, and giving in millions of field operations.\n"
+        % (SQR, ADD)
     )
-
-    ''' -------------------------------------------------------------------------------------
-        Framework
-        ------------------------------------------------------------------------------------- '''
-
-    # print("p := 0x%X;" % p)
-    # print("fp := GF(p);")
-    # print("P<x> := PolynomialRing(fp);");
-    # print("fp2<i> := ext<fp | x^2 + 1>;")
-    # print("P<x> := PolynomialRing(fp2);");
-
-    A = self.curve.A
-    assert A == [2, 4]
-    # print("public_coeff := 0x%X;\n" % coeff(A))
 
     ''' -------------------------------------------------------------------------------------
         Main
         ------------------------------------------------------------------------------------- '''
 
-    e = self.gae.random_key(m)
-    B = list(A)
+    e = random_exponents(m)
+    A = [algo.curve.field(2), algo.curve.field(4)]
 
     tmp = list(set(m))
     SAMPLE = [[0.0, 0.0, 0.0]] * setting.benchmark
@@ -118,28 +109,15 @@ def csidh_bench(ctx):
 
     for main_i in range(setting.benchmark):
 
-        e = self.gae.random_key(m)
+        e = random_exponents(m)
+        init_runtime()
+        B = GAE_at_A(e, A)
+        SAMPLE[main_i] = [algo.field.fpmul, algo.field.fpsqr, algo.field.fpadd]
 
-        if (len(tmp) == 1) or ((len(tmp) == 2) and (0 in tmp)):
-
-            self.fp.set_zero_ops()
-            B = self.gae.GAE(
-                B, e, [L_out[0]], [R_out[0]], [S_out[0]], [tmp[-1]], m
-            )
-            SAMPLE[main_i] = self.fp.get_ops()
-
-        else:
-
-            self.fp.set_zero_ops()
-            B = self.gae.GAE(B, e, L_out, R_out, S_out, r_out, m)
-            SAMPLE[main_i] = self.fp.get_ops()
-
-        self.fp.set_zero_ops()
-        V = self.curve.validate(B)
+        init_runtime()
+        V = validate(B)
         assert V
-        SAMPLE_VALIDATE[main_i] = self.fp.get_ops()
-
-        # print("Random(EllipticCurve(x^3 + 0x%X * x^2 + x)) * (p+1);" % coeff(B))
+        SAMPLE_VALIDATE[main_i] = [algo.field.fpmul, algo.field.fpsqr, algo.field.fpadd]
 
         bar.next()
     bar.finish()
@@ -150,12 +128,12 @@ def csidh_bench(ctx):
         statistics.mean([ops[2] for ops in SAMPLE]),
     ]
     print(
-        "// Average number of field operations (GAE):\t\t%2.3fM + %2.3fS + %2.3fa := %2.3fM"
+        "// Average running time (GAE + key validation):\t%2.3fM + %2.3fS + %2.3fa := %2.3fM"
         % (
             AVERAGE[0] / (10.0 ** 6),
             AVERAGE[1] / (10.0 ** 6),
             AVERAGE[2] / (10.0 ** 6),
-            self.curve.measure(AVERAGE) / (10.0 ** 6),
+            measure(AVERAGE) / (10.0 ** 6),
         )
     )
 
@@ -165,11 +143,11 @@ def csidh_bench(ctx):
         statistics.mean([ops[2] for ops in SAMPLE_VALIDATE]),
     ]
     print(
-        "// Average number of field operations (validate):\t%2.3fM + %2.3fS + %2.3fa := %2.3fM\n"
+        "// Average running time (validate):\t\t%2.3fM + %2.3fS + %2.3fa := %2.3fM\n"
         % (
             AVERAGE[0] / (10.0 ** 6),
             AVERAGE[1] / (10.0 ** 6),
             AVERAGE[2] / (10.0 ** 6),
-            self.curve.measure(AVERAGE) / (10.0 ** 6),
+            measure(AVERAGE) / (10.0 ** 6),
         )
     )

@@ -98,7 +98,7 @@ class Gae_wd1(object):
     def print_exponents(self, label : str, exp):
         print("%s := ( %s );" % (label, ' '.join(map(str, exp))) )
         return None
-        
+
     def security(self, M, n):
         """
         security()
@@ -532,9 +532,9 @@ class Gae_wd1(object):
         )  # Cost of computing x([2^exponent_of_two]P)
 
         n = len(L)
-        e_prime = [self.geometric_serie(e[k], L[k]) for k in range(n)]
+        e_prime = [geometric_serie(e[k], L[k]) for k in range(n)]
 
-        tmp_r, tmp_Ls, tmp_Cs = self.rounds(e_prime, n)
+        tmp_r, tmp_Ls, tmp_Cs = rounds(e_prime, n)
 
         C_e = numpy.array([0.0, 0.0, 0.0])
         S_out = []

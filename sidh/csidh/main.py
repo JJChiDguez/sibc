@@ -1,6 +1,5 @@
 from pkg_resources import resource_filename
 import click
-from sympy import symbols, floor, sqrt, sign
 
 from sidh.common import attrdict, geometric_serie, rounds
 from sidh.constants import strategy_data
