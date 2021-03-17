@@ -15,7 +15,8 @@ default_parameters = dict(
     formula='hvelu',
     style='df',
     exponent=10,
-    tuned=False,
+    tuned=True,
+    uninitialized=False,
     multievaluation=False,
     verbose=False,
 )
