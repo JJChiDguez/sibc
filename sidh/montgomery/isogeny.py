@@ -22,7 +22,7 @@ def doc(s):
             return self.desc
     return __doc
 
-def MontgomeryIsogeny(name : str, precomputation = False):
+def MontgomeryIsogeny(name : str, uninitialized = False):
 
     cutoff = 83
     cutoff_string = f' with cutoff ell <= {cutoff}' if name == 'hvelu' else ''
@@ -93,7 +93,8 @@ def MontgomeryIsogeny(name : str, precomputation = False):
             )  # list of the costs of each degree-l isogeny construction
 
             # Now, we proceed to store all the correct costs
-            if name != 'tvelu' and precomputation:
+            if name != 'tvelu' and uninitialized:
+                print("// Precomputation cost regarding kps, xisog, and xeval of the velusqrt formulae")
                 self.velusqrt_cost()
 
         def ceval(self, l):
@@ -958,12 +959,12 @@ def MontgomeryIsogeny(name : str, precomputation = False):
                 # Cost of xisog() and kps()
                 self.field.init_runtime()
                 self.kps(Tp, A, i)
-                t = [self.field.fpmul, self.field.sqr, self.field.add]
+                t = [self.field.fpmul, self.field.fpsqr, self.field.fpadd]
                 self.c_xisog[i] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
 
                 self.field.init_runtime()
                 B = self.xisog(A, i)
-                t = [self.field.fpmul, self.field.sqr, self.field.add]
+                t = [self.field.fpmul, self.field.fpsqr, self.field.fpadd]
                 self.c_xisog[i] += numpy.array(
                     [t[0] * 1.0, t[1] * 1.0, t[2] * 1.0]
                 )
@@ -982,7 +983,7 @@ def MontgomeryIsogeny(name : str, precomputation = False):
                 else:
                     T_m = self.xeval(T_m, A)
 
-                t = [self.field.fpmul, self.field.sqr, self.field.add]
+                t = [self.field.fpmul, self.field.fpsqr, self.field.fpadd]
                 self.c_xeval[i] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
 
                 # Updating the new next curve
