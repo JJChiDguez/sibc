@@ -1,8 +1,7 @@
 import click
 import numpy
 
-from sidh.common import attrdict
-from sidh.fp import printl
+from sidh.common import attrdict, printl
 from sidh.constants import strategy_data
 from sidh.math import isequal, bitlength
 

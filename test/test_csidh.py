@@ -30,17 +30,18 @@ class CSIDH_gae_test_base(object):
             self.style,
             self.exponent,
             self.tuned,
+            self.uninitialized,
             self.multievaluation,
             self.verbose,
         )
 
-    def test_group_action_with_random_keys(self):
-        sk_a, sk_b = self.c.gae.random_key(), self.c.gae.random_key()
-        pk_a, pk_b = self.c.gae.pubkey(sk_a), self.c.gae.pubkey(sk_b)
-        self.assertTrue(self.c.curve.validate(pk_a))
-        self.assertTrue(self.c.curve.validate(pk_b))
-        ss_a = self.c.gae.dh(sk_a, pk_b)
-        ss_b = self.c.gae.dh(sk_b, pk_a)
+    def test_group_action_with_random_exponents(self):
+        sk_a, sk_b = self.c.gae.random_exponents(), self.c.gae.random_exponents()
+        pk_a, pk_b = self.c.gae.GAE_at_0(sk_a), self.c.gae.GAE_at_0(sk_b)
+        self.assertTrue(self.c.curve.issupersingular(pk_a))
+        self.assertTrue(self.c.curve.issupersingular(pk_b))
+        ss_a = self.c.gae.GAE_at_A(sk_a, pk_b)
+        ss_b = self.c.gae.GAE_at_A(sk_b, pk_a)
         self.assertNotEqual(ss_a, ss_b)
         self.assertEqual(self.c.curve.coeff(ss_a), self.c.curve.coeff(ss_b))
 
@@ -59,7 +60,8 @@ for prime in PRIMES:
                         style = style
                         prime = prime
                         tuned = tuned
-                        exponent = 2
+                        exponent = 10
+                        uninitialized = False
                         multievaluation = multievaluation
                         verbose = False
 

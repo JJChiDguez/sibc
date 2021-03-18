@@ -8,7 +8,7 @@ from math import floor, sqrt, pi
 
 @click.command()
 @click.pass_context
-def csidh_parameters(ctx):
+def csidh_precompute_parameters(ctx):
     algo = ctx.meta['sidh.kwargs']['algo']
     setting = ctx.meta['sidh.kwargs']
     L = algo.params.L
@@ -115,4 +115,4 @@ def csidh_parameters(ctx):
             )
 
         print(parameters[str(idx)][0], parameters[str(idx)][1])
-    return attrdict(name='print-parameters', **locals())
+    return attrdict(name='csidh-precompute-parameters', **locals())

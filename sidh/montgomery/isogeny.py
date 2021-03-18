@@ -1128,7 +1128,7 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
                     # xeval: kernel point determined by the next isogeny evaluation
                     self.field.basefield.init_runtime()
                     self.field.init_runtime()
-                    if self.L[idx] <= self.HYBRID_BOUND:
+                    if self.L[idx] <= self.HYBRID_BOUND or self.L[idx] == 4:
                         T_p = self.xeval(T_p, idx)
                     else:
                         T_p = self.xeval(T_p, A)
@@ -1136,7 +1136,7 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
                     # xeval bench
                     self.field.basefield.init_runtime()
                     self.field.init_runtime()
-                    if self.L[idx] <= self.HYBRID_BOUND:
+                    if self.L[idx] <= self.HYBRID_BOUND or self.L[idx] == 4:
                         T_m = self.xeval(T_m, idx)
                     else:
                         T_m = self.xeval(T_m, A)

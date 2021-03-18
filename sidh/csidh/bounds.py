@@ -3,8 +3,7 @@ import numpy
 
 from math import ceil, log
 
-from sidh.common import attrdict
-from sidh.fp import printl
+from sidh.common import attrdict, printl
 from sidh.constants import tmp_dir
 
 

@@ -32,7 +32,7 @@ class Strategy(object):
             # Strategy with a list with only one element (a small odd prime number l_i)
             self.C[1][tuple([self.L[i]])] = self.formula.c_xisog[i]
             # For catching the weigth of horizontal edges of the form [(0,j),(0,j+1)]
-        for i in range(2, n + 1):
+        for i in range(2, len(self.SIDp) + len(self.SIDm) + 1):
             self.C[i] = {}
             self.S[i] = {}
 

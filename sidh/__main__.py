@@ -7,18 +7,18 @@ from sidh.csidh.bench import csidh_bench
 from sidh.csidh.bounds import csidh_bounds
 from sidh.csidh.header import csidh_header
 from sidh.csidh.ijk import csidh_ijk
-from sidh.csidh.print_parameters import csidh_parameters
-from sidh.csidh.print_strategy import csidh_strategy
+from sidh.csidh.precompute_parameters import csidh_precompute_parameters
+from sidh.csidh.precompute_strategy import csidh_precompute_strategy
 from sidh.csidh.sdacs import csidh_sdacs
 from sidh.csidh.test import csidh_test
 from sidh.csidh.main import csidh_main
 # bsidh
 from sidh.bsidh.test import bsidh_test
-from sidh.bsidh.print_strategy import bsidh_strategy
-from sidh.bsidh.print_parameters import bsidh_parameters
+from sidh.bsidh.precompute_strategy import bsidh_precompute_strategy
+from sidh.bsidh.precompute_parameters import bsidh_precompute_parameters
 from sidh.bsidh.main import bsidh_main
-from sidh.printstrategy import print_strategy
 
+from sidh.plot_strategy import plot_strategy
 from sidh.timing import print_timing
 from sidh.common import attrdict
 from sidh.constants import parameters
@@ -153,19 +153,21 @@ def csidh_dh(ctx, secret_key, public_key):
 
 
 main.add_command(print_timing)
-main.add_command(print_strategy)
+main.add_command(plot_strategy)
+# csidh
 main.add_command(csidh_bench)
 main.add_command(csidh_bounds)
 main.add_command(csidh_header)
 main.add_command(csidh_ijk)
-main.add_command(csidh_parameters)
-main.add_command(csidh_strategy)
+main.add_command(csidh_precompute_parameters)
+main.add_command(csidh_precompute_strategy)
 main.add_command(csidh_sdacs)
 main.add_command(csidh_test)
 main.add_command(csidh_main)
+# bsidh
 main.add_command(bsidh_test)
-main.add_command(bsidh_strategy)
-main.add_command(bsidh_parameters)
+main.add_command(bsidh_precompute_strategy)
+main.add_command(bsidh_precompute_parameters)
 main.add_command(bsidh_main)
 
 if __name__ == '__main__':

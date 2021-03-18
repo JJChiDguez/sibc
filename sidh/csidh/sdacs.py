@@ -1,9 +1,7 @@
 import click
 
-from sidh.common import attrdict
+from sidh.common import attrdict, printl
 from sidh.constants import strategy_data
-from sidh.fp import printl
-
 
 @click.command()
 @click.pass_context

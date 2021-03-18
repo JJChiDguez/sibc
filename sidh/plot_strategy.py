@@ -12,7 +12,7 @@ from sidh.constants import strategy_data
 
 @click.command()
 @click.pass_context
-def print_strategy(ctx):
+def plot_strategy(ctx):
     """
     draw graphs
     """
@@ -202,4 +202,4 @@ def print_strategy(ctx):
             acc += batches[i]
 
         return vertexes, vertex_colors, edges, edge_colors
-    return attrdict(name='print-strategy', **locals())
+    return attrdict(name='plot-strategy', **locals())

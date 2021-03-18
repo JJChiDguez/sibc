@@ -7,7 +7,7 @@ from random import SystemRandom
 
 @click.command()
 @click.pass_context
-def bsidh_parameters(ctx):
+def bsidh_precompute_parameters(ctx):
     algo = ctx.meta['sidh.kwargs']['algo']
     setting = ctx.meta['sidh.kwargs']
     p = algo.params.p
@@ -315,3 +315,5 @@ def bsidh_parameters(ctx):
             )
 
         print(parameters[str(idx)][0], parameters[str(idx)][1])
+
+    return attrdict(name='bsidh-precompute-parameters', **locals())

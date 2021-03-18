@@ -58,8 +58,9 @@ class known_df_p512(object):
     formula = NotImplemented
     style = 'df'
     tuned = False
-    exponent = 2
+    exponent = 10
     multievaluation = False
+    uninitialized = False
     verbose = False
 
     def setUp(self):
@@ -69,28 +70,30 @@ class known_df_p512(object):
             self.formula,
             self.style,
             self.tuned,
+            self.uninitialized,
             self.exponent,
             self.multievaluation,
             self.verbose,
         )
 
         self.coeff = self.csidh.curve.coeff
+        self.field = self.csidh.field
 
     def test_dh_AB(self):
         self.assertEqual(
-            self.coeff(self.csidh.gae.dh(self.keys.A.sk, self.keys.B.pk)),
+            self.coeff(self.csidh.gae.GAE_at_A(self.keys.A.sk, [self.field(pk) for pk in self.keys.B.pk])).x,
             self.ss,
         )
 
     def test_dh_BA(self):
         self.assertEqual(
-            self.coeff(self.csidh.gae.dh(self.keys.B.sk, self.keys.A.pk)),
+            self.coeff(self.csidh.gae.GAE_at_A(self.keys.B.sk, [self.field(pk) for pk in self.keys.A.pk])).x,
             self.ss,
         )
 
     def test_compress(self):
         for keys in self.keys.values():
-            self.assertEqual(keys.compressed, self.csidh.curve.coeff(keys.pk))
+            self.assertEqual(keys.compressed, self.csidh.curve.coeff([self.field(pk) for pk in keys.pk]).x)
 
     def test_compress_roundtrip(self):
         compress, uncompress = (
@@ -99,7 +102,7 @@ class known_df_p512(object):
         )
         for keys in self.keys.values():
             self.assertEqual(
-                keys.compressed, compress(uncompress(compress(keys.pk)))
+                keys.compressed, compress(uncompress(compress([self.field(pk) for pk in keys.pk]))).x
             )
 
 
