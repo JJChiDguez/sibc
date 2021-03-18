@@ -41,7 +41,6 @@ def MontgomeryCurve(prime):
         # CSIDH only requires the factorization of p + 1
         L = parameters['csidh'][prime]['L']
         n = parameters['csidh'][prime]['n']
-        s = n
         exponent_of_two = parameters['csidh'][prime]['exponent_of_two']
 
         p = (2 ** (exponent_of_two)) * reduce(
@@ -63,9 +62,9 @@ def MontgomeryCurve(prime):
         Em = parameters['bsidh'][prime]['Em']
         L = list(Lp + Lm)
         n = len(L)
-        s = np
         p = parameters['bsidh'][prime]['p']
-        cofactor = (p + 1) // reduce(lambda x, y: (x * y), Lp)
+        cofactor_p = (p + 1) // reduce(lambda x, y: (x * y), Lp)
+        cofactor_m = (p - 1) // reduce(lambda x, y: (x * y), Lm)
         validation_stop = sum([bitlength(l_i) for l_i in Lp]) / 2.0 + 2
         p_minus_one_halves = parameters['bsidh'][prime]['p_minus_one_halves']
         p_minus_3_quarters = parameters['bsidh'][prime]['p_minus_3_quarters']
@@ -501,27 +500,51 @@ def MontgomeryCurve(prime):
         t_2 = (beta * gamma)
         return (t_1 + t_2), (t_1 - t_2)
 
-    def issupersingular(A):
-        ''' issupersingular() verifies supersingularity '''
-        while True:
+    if prime in parameters['csidh'].keys():
+        def issupersingular(A):
+            ''' issupersingular() verifies supersingularity '''
+            while True:
 
-            T_p, _ = elligator(A) # T_p is always in GF(p), and thus has torsion (p+1)
-            T_p = prac(cofactor, T_p, A)
+                T_p, _ = elligator(A) # T_p is always in GF(p), and thus has torsion (p+1)
+                T_p = prac(cofactor, T_p, A)
 
-            P = cofactor_multiples(T_p, A, range(0, s, 1))
+                P = cofactor_multiples(T_p, A, range(0, n, 1))
 
-            bits_of_the_order = 0
-            for i in range(0, s, 1):
+                bits_of_the_order = 0
+                for i in range(0, n, 1):
 
-                if isinfinity(P[i]) == False:
+                    if isinfinity(P[i]) == False:
 
-                    Q = xmul(P[i], A, i)
+                        Q = xmul(P[i], A, i)
 
-                    if isinfinity(Q) == False:
-                        return False
+                        if isinfinity(Q) == False:
+                            return False
 
-                    bits_of_the_order += bitlength(L[i])
-                    if bits_of_the_order > validation_stop:
-                        return True
+                        bits_of_the_order += bitlength(L[i])
+                        if bits_of_the_order > validation_stop:
+                            return True
+
+    elif prime in parameters['bsidh'].keys():
+        def issupersingular(A):
+            ''' issupersingular() verifies supersingularity '''
+            while True:
+
+                P, _ = elligator(A) # T_p is always in GF(p²)
+
+                # Is P a torsion-(p + 1)?
+                T_p = prac(cofactor_p, P, A)
+                Tp = cofactor_multiples(T_p, A, range(0, np, 1))
+                Tp = [xmul(Tp[i], A, i) for i in range(0, np, 1)]
+                Tp = [isinfinity(Tp_i) for Tp_i in Tp]
+
+                # Is P a torsion-(p - 1)?
+                T_m = prac(cofactor_m, P, A)
+                Tm = cofactor_multiples(T_m, A, range(np, n, 1))
+                Tm = [xmul(Tm[i - np], A, i) for i in range(np, n, 1)]
+                Tm = [isinfinity(Tm_i) for Tm_i in Tm]
+
+                return reduce(lambda x, y: (x and y), Tp) or reduce(lambda x, y: (x and y), Tm)
+    else:
+        assert False, "only CSIDH and B-SIDH are currently implemented"
 
     return attrdict(**locals())

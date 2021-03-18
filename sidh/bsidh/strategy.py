@@ -201,7 +201,7 @@ class Strategy(object):
         # sk here is alice's secret key
         # pk_b here is from bob (not processed by coeff)
         #nonlocal PA_b, QA_b, PQA_b
-        #assert self.curve.issupersingular(pk_b), "non-supersingular input curve"
+        assert self.curve.issupersingular(pk_b), "non-supersingular input curve"
         RB_a = self.curve.Ladder3pt(sk_a, self.PA_b, self.QA_b, self.PQA_b, pk_b)
         ss_a, _, _, _ = self.evaluate_strategy(
             False,
@@ -220,7 +220,7 @@ class Strategy(object):
         # sk_b here is bob's secret key
         # pk_a here is from alice (not processed by coeff)
         #nonlocal PB_a, QB_a, PQB_a
-        #assert self.curve.issupersingular(pk_a), "non-supersingular input curve"
+        assert self.curve.issupersingular(pk_a), "non-supersingular input curve"
         RA_b = self.curve.Ladder3pt(sk_b, self.PB_a, self.QB_a, self.PQB_a, pk_a)
         ss_b, _, _, _ = self.evaluate_strategy(
             False,

@@ -70,11 +70,11 @@ def bsidh_main(ctx):
     # ------------------------------------------------------------------------- Alice
     print("// --- \033[0;35mAlice\033[0m")
     init_runtime()
-    #public_validation = validate(b_public)
-    #assert public_validation
+    public_validation = validate(b_public)
+    assert public_validation
     
     print(
-        "// Running time (key validation):\t%2.3fM + %2.3fS + %2.3fa = %2.3fM,"
+        "// Running time (supersingular test):\t\t\t\t%2.3fM + %2.3fS + %2.3fa = %2.3fM,"
         % (
             algo.basefield.fpmul / (10.0 ** 6),
             algo.basefield.fpsqr / (10.0 ** 6),
@@ -86,7 +86,7 @@ def bsidh_main(ctx):
     init_runtime()
     ss_a = strategy_A(a_private, b_public)
     print(
-        "// Running time (Strategy evaluation + key validation):\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
+        "// Running time (Strategy evaluation + supersingular test):\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
         % (
             algo.basefield.fpmul / (10.0 ** 6),
             algo.basefield.fpsqr / (10.0 ** 6),
@@ -99,11 +99,11 @@ def bsidh_main(ctx):
     # ------------------------------------------------------------------------- Bob
     print("// --- \033[0;34mBob\033[0m")
     init_runtime()
-    #public_validation = validate(a_public)
-    #assert public_validation
+    public_validation = validate(a_public)
+    assert public_validation
     
     print(
-        "// Running time (key validation):\t%2.3fM + %2.3fS + %2.3fa = %2.3fM,"
+        "// Running time (supersingular test):\t\t\t\t%2.3fM + %2.3fS + %2.3fa = %2.3fM,"
         % (
             algo.basefield.fpmul / (10.0 ** 6),
             algo.basefield.fpsqr / (10.0 ** 6),
@@ -116,7 +116,7 @@ def bsidh_main(ctx):
     ss_b = strategy_B(b_private, a_public)
     
     print(
-        "// Running time (Strategy evaluation + key validation):\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
+        "// Running time (Strategy evaluation + supersingular test):\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
         % (
             algo.basefield.fpmul / (10.0 ** 6),
             algo.basefield.fpsqr / (10.0 ** 6),
