@@ -1,134 +1,140 @@
 import click
-from sympy import symbols, floor, sqrt, sign
-from pkg_resources import resource_filename
-from random import SystemRandom
-from math import pi
-
+from math import floor, sqrt, pi
 from sidh.common import attrdict
+from sidh.math import cswap
+
+from random import SystemRandom
 
 @click.command()
 @click.pass_context
 def bsidh_parameters(ctx):
-    # This is only valid for svelu and hvelu - if we are called from tvelu, we
-    # should exit!
     algo = ctx.meta['sidh.kwargs']['algo']
     setting = ctx.meta['sidh.kwargs']
-    tuned_name = ('-classical','-suitable')[setting.tuned]
-    curve = algo.curve
-    formula = algo.formula
-    coeff = curve.coeff
-    random = SystemRandom()
     p = algo.params.p
     np = algo.params.np
     Ep = algo.params.Ep
     nm = algo.params.nm
     Em = algo.params.Em
-    global_L = algo.curve.L
+    Lp = algo.params.Lp
+    Lm = algo.params.Lm
+    L = list(Lp + Lm)
 
+    A = [ algo.curve.field(8), algo.curve.field(4)]
+    xmul = algo.curve.xmul
+    isinfinity = algo.curve.isinfinity
+    coeff = algo.curve.coeff
+    isfullorder = algo.curve.isfullorder
+    cofactor_multiples = algo.curve.cofactor_multiples
+    Ladder3pt = algo.curve.Ladder3pt
+    if algo.formula.name != 'tvelu':
+        set_parameters_velu = algo.formula.set_parameters_velu
+        print_parameters_velu = algo.formula.print_parameters_velu
+        HYBRID_BOUND = algo.formula.HYBRID_BOUND
+    
+    init_runtime_field = algo.field.init_runtime
+    show_runtime_field = algo.field.show_runtime
+    init_runtime_basefield = algo.basefield.init_runtime
+    show_runtime_basefield = algo.basefield.show_runtime
+    kps = algo.formula.kps
+    xisog = algo.formula.xisog
+    xeval = algo.formula.xeval
 
+    field = algo.field
+    random = SystemRandom()
 
-    # Reading public generators points
-    f = open(resource_filename('sidh', 'data/gen/'+ algo.prime))
+    # ---Generators in E[p + 1]
+    PA = list(algo.strategy.PA)
+    QA = list(algo.strategy.QA)
+    PQA = list(algo.strategy.PQA)
+    # ---Generators in E[p - 1]
+    PB = list(algo.strategy.PB)
+    QB = list(algo.strategy.QB)
+    PQB = list(algo.strategy.PQB)
 
-    # x(PA), x(QA) and x(PA - QA)
-    PQA = f.readline()
-    PQA = [int(x, 16) for x in PQA.split()]
-    PA = [list(PQA[0:2]), [0x1, 0x0]]
-    QA = [list(PQA[2:4]), [0x1, 0x0]]
-    PQA = [list(PQA[4:6]), [0x1, 0x0]]
-
-    # x(PB), x(QB) and x(PB - QB)
-    PQB = f.readline()
-    PQB = [int(x, 16) for x in PQB.split()]
-    PB = [list(PQB[0:2]), [0x1, 0x0]]
-    QB = [list(PQB[2:4]), [0x1, 0x0]]
-    PQB = [list(PQB[4:6]), [0x1, 0x0]]
-
-    f.close()
-
-    A = [[0x8, 0x0], [0x4, 0x0]]
-    a = coeff(A)
-
-    S = [list(PA[0]), list(PA[1])]
-    T = [list(QA[0]), list(QA[1])]
-    ST = [list(PQA[0]), list(PQA[1])]
+    S = list(PA)
+    T = list(QA)
+    ST = list(PQA)
 
     for i in range(0, np, 1):
         for idx in range(0, Ep[i], 1):
-            S = curve.xMUL(S, A, i)
-            T = curve.xMUL(T, A, i)
-            ST = curve.xMUL(ST, A, i)
+            S = xmul(S, A, i)
+            T = xmul(T, A, i)
+            ST = xmul(ST, A, i)
 
-    assert curve.isinfinity(S)
-    assert curve.isinfinity(T)
-    assert curve.isinfinity(ST)
+    assert isinfinity(S)
+    assert isinfinity(T)
+    assert isinfinity(ST)
 
-    S = [list(PB[0]), list(PB[1])]
-    T = [list(QB[0]), list(QB[1])]
-    ST = [list(PQB[0]), list(PQB[1])]
+    S = list(PB)
+    T = list(QB)
+    ST = list(PQB)
 
     for i in range(np, np + nm, 1):
         for idx in range(0, Em[i - np], 1):
-            S = curve.xMUL(S, A, i)
-            T = curve.xMUL(T, A, i)
-            ST = curve.xMUL(ST, A, i)
+            S = xmul(S, A, i)
+            T = xmul(T, A, i)
+            ST = xmul(ST, A, i)
 
-    assert curve.isinfinity(S)
-    assert curve.isinfinity(T)
-    assert curve.isinfinity(ST)
+    assert isinfinity(S)
+    assert isinfinity(T)
+    assert isinfinity(ST)
 
     # Case (p + 1)
-    S = [list(PA[0]), list(PA[1])]
-    T = [list(QA[0]), list(QA[1])]
-    ST = [list(PQA[0]), list(PQA[1])]
+    S = list(PA)
+    T = list(QA)
+    ST = list(PQA)
 
-    assert curve.isinfinity(S) == False
-    assert curve.isinfinity(T) == False
-    assert curve.isinfinity(ST) == False
+    assert isinfinity(S) == False
+    assert isinfinity(T) == False
+    assert isinfinity(ST) == False
 
     for i in range(0, np, 1):
         for idx in range(0, Ep[i] - 1, 1):
-            S = curve.xMUL(S, A, i)
-            T = curve.xMUL(T, A, i)
-            ST = curve.xMUL(ST, A, i)
+            S = xmul(S, A, i)
+            T = xmul(T, A, i)
+            ST = xmul(ST, A, i)
+
+    assert isfullorder(cofactor_multiples(S, A, range(0, np, 1)))
+    assert isfullorder(cofactor_multiples(T, A, range(0, np, 1)))
+    assert isfullorder(cofactor_multiples(ST, A, range(0, np, 1)))
 
     # Case (p - 1)
-    S = [list(PB[0]), list(PB[1])]
-    T = [list(QB[0]), list(QB[1])]
-    ST = [list(PQB[0]), list(PQB[1])]
+    S = list(PB)
+    T = list(QB)
+    ST = list(PQB)
 
-    assert curve.isinfinity(S) == False
-    assert curve.isinfinity(T) == False
-    assert curve.isinfinity(ST) == False
+    assert isinfinity(S) == False
+    assert isinfinity(T) == False
+    assert isinfinity(ST) == False
 
     for i in range(np, np + nm, 1):
         for idx in range(0, Em[i - np] - 1, 1):
-            S = curve.xMUL(S, A, i)
-            T = curve.xMUL(T, A, i)
-            ST = curve.xMUL(ST, A, i)
+            S = xmul(S, A, i)
+            T = xmul(T, A, i)
+            ST = xmul(ST, A, i)
 
-    # --------------------------------------------------------------------------------------------------------------------
+    assert isfullorder(cofactor_multiples(S, A, range(np, np + nm, 1)))
+    assert isfullorder(cofactor_multiples(T, A, range(np, np + nm, 1)))
+    assert isfullorder(cofactor_multiples(ST, A, range(np, np + nm, 1)))
+
     # Three point ladder: case (p + 1)
-    S = [list(PA[0]), list(PA[1])]
-    T = [list(QA[0]), list(QA[1])]
-    ST = [list(PQA[0]), list(PQA[1])]
+    S = list(PA)
+    T = list(QA)
+    ST = list(PQA)
 
-    assert curve.isinfinity(S) == False
-    assert curve.isinfinity(T) == False
+    assert isinfinity(S) == False
+    assert isinfinity(T) == False
 
     for i in range(0, np, 1):
         for idx in range(0, Ep[i] - 1, 1):
-            S = curve.xMUL(S, A, i)
-            T = curve.xMUL(T, A, i)
-            ST = curve.xMUL(ST, A, i)
+            S = xmul(S, A, i)
+            T = xmul(T, A, i)
+            ST = xmul(ST, A, i)
 
     k = random.randint(0, p)
-    R = curve.Ladder3pt(k, S, T, ST, A)
-    # print("k := 0x%X;" % k)
-    # print("boolR, R := IsPoint(E, (0x%X + i * 0x%X) / (0x%X + i * 0x%X));" % (R[0][0], R[0][1], R[1][0], R[1][1]))
-
-    T_p = [list(R[0]), list(R[1])]
-    T_m = [list(S[0]), list(S[1])]
+    R = Ladder3pt(k, S, T, ST, A)
+    T_p = list(R)
+    T_m = list(S)
 
     parameters = dict()
     for idx in range(0, np, 1):
@@ -138,62 +144,73 @@ def bsidh_parameters(ctx):
         Tp = list(T_p)
         for i in range(0, np, 1):
             if i != idx:
-                Tp = curve.xMUL(Tp, A, i)
+                Tp = xmul(Tp, A, i)
 
         # -------------------------------------------------------------
         # Parameters sJ and sI correspond with the parameters b and b' from example 4.12 of https://eprint.iacr.org/2020/341
-        # These paramters are required in formula.KPs, formula.xISOG, and xEVAL
-        if global_L[idx] <= 4:
+        # These paramters are required in kps, xisog, and xEVAL
+        if L[idx] <= 4:
             b = 0
             c = 0
         else:
-            b = int(floor(sqrt(global_L[idx] - 1) / 2.0))
-            c = int(floor((global_L[idx] - 1.0) / (4.0 * b)))
+            b = int(floor(sqrt(L[idx] - 1) / 2.0))
+            c = int(floor((L[idx] - 1.0) / (4.0 * b)))
 
         parameters[str(idx)] = []
         b += 1
         for j in range(0, int(floor(sqrt(pi * (b - 1)) / 1.0)), 1):
 
             b -= 1
-            c = int(floor((global_L[idx] - 1.0) / (4.0 * b)))
-            formula.set_parameters_velu(b, c, idx)
+            c = int(floor((L[idx] - 1.0) / (4.0 * b)))
+            set_parameters_velu(b, c, idx)
 
             total_cost = [0, 0, 0]
 
             # -------------------------------------------------------------
-            # formula.KPs procedure
-            formula.fp.fp.set_zero_ops()
-            formula.KPs(Tp, A, idx)
-            t = formula.fp.fp.get_ops()
-            total_cost[0] += t[0]
-            total_cost[1] += t[1]
-            total_cost[2] += t[2]
+            # kps procedure
+            init_runtime_basefield()
+            kps(Tp, A, idx)
+            
+            total_cost[0] += algo.basefield.fpmul
+            total_cost[1] += algo.basefield.fpsqr
+            total_cost[2] += algo.basefield.fpadd
 
             # -------------------------------------------------------------
-            # formula.xISOG
-            formula.fp.fp.set_zero_ops()
-            Tp[0], A[0] = formula.fp.fp2_cswap(Tp[0], A[0], global_L[idx] == 4)
-            Tp[1], A[1] = formula.fp.fp2_cswap(Tp[1], A[1], global_L[idx] == 4)
-            B = formula.xISOG(A, idx)
-            Tp[0], A[0] = formula.fp.fp2_cswap(Tp[0], A[0], global_L[idx] == 4)
-            Tp[1], A[1] = formula.fp.fp2_cswap(Tp[1], A[1], global_L[idx] == 4)
-            t = formula.fp.fp.get_ops()
-            total_cost[0] += t[0]
-            total_cost[1] += t[1]
-            total_cost[2] += t[2]
+            # xisog
+            init_runtime_basefield()
+            Tp[0], A[0] = cswap(Tp[0], A[0], L[idx] == 4)
+            Tp[1], A[1] = cswap(Tp[1], A[1], L[idx] == 4)
+            B = xisog(A, idx)
+            Tp[0], A[0] = cswap(Tp[0], A[0], L[idx] == 4)
+            Tp[1], A[1] = cswap(Tp[1], A[1], L[idx] == 4)
+            
+            total_cost[0] += algo.basefield.fpmul
+            total_cost[1] += algo.basefield.fpsqr
+            total_cost[2] += algo.basefield.fpadd
 
             # -------------------------------------------------------------
             # xEVAL bench
-            formula.fp.fp.set_zero_ops()
-            Tm = formula.xEVAL(T_m, A)
-            t = formula.fp.fp.get_ops()
-            total_cost[0] += t[0]
-            total_cost[1] += t[1]
-            total_cost[2] += t[2]
+            init_runtime_basefield()
+            if setting.formula == 'tvelu' or (
+                setting.formula == 'hvelu' and L[idx] <= HYBRID_BOUND
+                ):
+                Tm = xeval(T_m, idx)
+            else:
+                Tm = xeval(T_m, A)
+            
+            total_cost[0] += algo.basefield.fpmul
+            total_cost[1] += algo.basefield.fpsqr
+            total_cost[2] += algo.basefield.fpadd
 
-            parameters[str(idx)].append((b, c, t, total_cost[0] + total_cost[1]))
+            parameters[str(idx)].append((
+                b,
+                c,
+                [algo.basefield.fpmul, algo.basefield.fpsqr, algo.basefield.fpadd],
+                total_cost[0] + total_cost[1]
+                )
+            )
 
-        if global_L[idx] <= 4:
+        if L[idx] <= 4:
             parameters[str(idx)] = (0, 0, None, None)
         else:
             parameters[str(idx)] = min(
@@ -203,28 +220,25 @@ def bsidh_parameters(ctx):
         print(parameters[str(idx)][0], parameters[str(idx)][1])
 
     # --------------------------------------------------------------------------------------------------------------------
-    A = [[0x8, 0x0], [0x4, 0x0]]
+    A = [ algo.curve.field(8), algo.curve.field(4)]
     # Three point ladder: case (p - 1)
-    S = [list(PB[0]), list(PB[1])]
-    T = [list(QB[0]), list(QB[1])]
-    ST = [list(PQB[0]), list(PQB[1])]
+    S = list(PB)
+    T = list(QB)
+    ST = list(PQB)
 
-    assert curve.isinfinity(S) == False
-    assert curve.isinfinity(T) == False
+    assert isinfinity(S) == False
+    assert isinfinity(T) == False
 
     for i in range(np, np + nm, 1):
         for idx in range(0, Em[i - np] - 1, 1):
-            S = curve.xMUL(S, A, i)
-            T = curve.xMUL(T, A, i)
-            ST = curve.xMUL(ST, A, i)
+            S = xmul(S, A, i)
+            T = xmul(T, A, i)
+            ST = xmul(ST, A, i)
 
     k = random.randint(0, p)
-    R = curve.Ladder3pt(k, S, T, ST, A)
-    # print("k := 0x%X;" % k)
-    # print("boolR, R := IsPoint(E, (0x%X + i * 0x%X) / (0x%X + i * 0x%X));" % (R[0][0], R[0][1], R[1][0], R[1][1]))
-
-    T_p = [list(R[0]), list(R[1])]
-    T_m = [list(S[0]), list(S[1])]
+    R = Ladder3pt(k, S, T, ST, A)
+    T_p = list(R)
+    T_m = list(S)
     for idx in range(np, np + nm, 1):
 
         # -------------------------------------------------------------
@@ -232,57 +246,68 @@ def bsidh_parameters(ctx):
         Tp = list(T_p)
         for i in range(np, np + nm, 1):
             if i != idx:
-                Tp = curve.xMUL(Tp, A, i)
+                Tp = xmul(Tp, A, i)
 
         # -------------------------------------------------------------
         # Parameters sJ and sI correspond with the parameters b and b' from example 4.12 of https://eprint.iacr.org/2020/341
-        # These paramters are required in formula.KPs, formula.xISOG, and xEVAL
-        if global_L[idx] == 3:
+        # These paramters are required in kps, xisog, and xEVAL
+        if L[idx] == 3:
             b = 0
             c = 0
         else:
-            b = int(floor(sqrt(global_L[idx] - 1) / 2.0))
-            c = int(floor((global_L[idx] - 1.0) / (4.0 * b)))
+            b = int(floor(sqrt(L[idx] - 1) / 2.0))
+            c = int(floor((L[idx] - 1.0) / (4.0 * b)))
 
         parameters[str(idx)] = []
         b += 1
         for j in range(0, int(floor(sqrt(pi * (b - 1)) / 1.0)), 1):
 
             b -= 1
-            c = int(floor((global_L[idx] - 1.0) / (4.0 * b)))
-            formula.set_parameters_velu(b, c, idx)
+            c = int(floor((L[idx] - 1.0) / (4.0 * b)))
+            set_parameters_velu(b, c, idx)
 
             total_cost = [0, 0, 0]
             # -------------------------------------------------------------
-            # formula.KPs procedure
-            formula.fp.fp.set_zero_ops()
-            formula.KPs(Tp, A, idx)
-            t = formula.fp.fp.get_ops()
-            total_cost[0] += t[0]
-            total_cost[1] += t[1]
-            total_cost[2] += t[2]
+            # kps procedure
+            init_runtime_basefield()
+            kps(Tp, A, idx)
+            
+            total_cost[0] += algo.basefield.fpmul
+            total_cost[1] += algo.basefield.fpsqr
+            total_cost[2] += algo.basefield.fpadd
 
             # -------------------------------------------------------------
-            # formula.xISOG
-            formula.fp.fp.set_zero_ops()
-            B = formula.xISOG(A, idx)
-            t = formula.fp.fp.get_ops()
-            total_cost[0] += t[0]
-            total_cost[1] += t[1]
-            total_cost[2] += t[2]
+            # xisog
+            init_runtime_basefield()
+            B = xisog(A, idx)
+            
+            total_cost[0] += algo.basefield.fpmul
+            total_cost[1] += algo.basefield.fpsqr
+            total_cost[2] += algo.basefield.fpadd
 
             # -------------------------------------------------------------
             # xEVAL bench
-            formula.fp.fp.set_zero_ops()
-            Tm = formula.xEVAL(T_m, A)
-            t = formula.fp.fp.get_ops()
-            total_cost[0] += t[0]
-            total_cost[1] += t[1]
-            total_cost[2] += t[2]
+            init_runtime_basefield()
+            if setting.formula == 'tvelu' or (
+                setting.formula == 'hvelu' and L[idx] <= HYBRID_BOUND
+            ):
+                Tm = xeval(T_m, idx)
+            else:
+                Tm = xeval(T_m, A)
+            
+            total_cost[0] += algo.basefield.fpmul
+            total_cost[1] += algo.basefield.fpsqr
+            total_cost[2] += algo.basefield.fpadd
 
-            parameters[str(idx)].append((b, c, t, total_cost[0] + total_cost[1]))
+            parameters[str(idx)].append((
+                b,
+                c,
+                [algo.basefield.fpmul, algo.basefield.fpsqr, algo.basefield.fpadd],
+                total_cost[0] + total_cost[1]
+                )
+            )
 
-        if global_L[idx] == 3:
+        if L[idx] == 3:
             parameters[str(idx)] = (0, 0, None, None)
         else:
             parameters[str(idx)] = min(

@@ -18,6 +18,11 @@ def tostring(a):
 		else:
 			return f'{a.re} + {a.im}*u'
 
+def init_runtime(field):
+	field.fp2add = 0
+	field.fp2sqr = 0
+	field.fp2mul = 0
+
 def QuadraticField(p : int):
 	"""
 	Quadratic Field class constructor
@@ -282,5 +287,12 @@ def QuadraticField(p : int):
 	FiniteField.u = FiniteField([0,1])
 	FiniteField.basefield = basefield
 	FiniteField.__name__ = NAME
+
+	FiniteField.show_runtime = lambda label: print(
+		"| %s: %7dM + %7dS + %7da"
+		% (label, FiniteField.fp2mul, FiniteField.fp2sqr, FiniteField.fp2add),
+		end="\t",
+    )
+	FiniteField.init_runtime = lambda: init_runtime(FiniteField)
 
 	return FiniteField

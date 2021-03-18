@@ -11,7 +11,8 @@ def bsidh_main(ctx):
     setting = ctx.meta['sidh.kwargs']
     coeff = algo.curve.coeff
     SQR, ADD = algo.curve.SQR, algo.curve.ADD
-    init_runtime = algo.basefield.init_runtime
+    init_runtime_basefield = algo.basefield.init_runtime
+    init_runtime_field = algo.field.init_runtime
     validate = algo.curve.issupersingular
     measure = algo.curve.measure
     strategy_at_6_A = algo.strategy.strategy_at_6_A
@@ -32,12 +33,13 @@ def bsidh_main(ctx):
 
     # ------------------------------------------------------------------------- Alice
     print("// --- \033[0;35mAlice\033[0m")
-    init_runtime()
+    init_runtime_basefield()
+    init_runtime_field()
     a_private = random_scalar_A()
     a_public = strategy_at_6_A(a_private)
 
     print(
-        "// Running time (Strategy evaluation):\t\t\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
+        "// Running time (Strategy evaluation):\n\t%2.3fM + %2.3fS + %2.3fa = %2.3fM in GF(p);"
         % (
             algo.basefield.fpmul / (10.0 ** 6),
             algo.basefield.fpsqr / (10.0 ** 6),
@@ -45,22 +47,41 @@ def bsidh_main(ctx):
             measure([algo.basefield.fpmul, algo.basefield.fpsqr, algo.basefield.fpadd]) / (10.0 ** 6),
         )
     )
+    print(
+        "\t%2.3fM + %2.3fS + %2.3fa = %2.3fM in GF(p²);"
+        % (
+            algo.field.fp2mul / (10.0 ** 6),
+            algo.field.fp2sqr / (10.0 ** 6),
+            algo.field.fp2add / (10.0 ** 6),
+            measure([algo.field.fp2mul, algo.field.fp2sqr, algo.field.fp2add]) / (10.0 ** 6),
+        )
+    )
     print("sk_a := %d;" % a_private)
     print("pk_a := %s;" % coeff(a_public))
 
     # ------------------------------------------------------------------------- Bob
     print("\n// --- \033[0;34mBob\033[0m")
-    init_runtime()
+    init_runtime_basefield()
+    init_runtime_field()
     b_private = random_scalar_B()
     b_public = strategy_at_6_B(b_private)
     
     print(
-        "// Running time (Strategy evaluation):\t\t\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
+        "// Running time (Strategy evaluation):\n\t%2.3fM + %2.3fS + %2.3fa = %2.3fM in GF(p);"
         % (
             algo.basefield.fpmul / (10.0 ** 6),
             algo.basefield.fpsqr / (10.0 ** 6),
             algo.basefield.fpadd / (10.0 ** 6),
             measure([algo.basefield.fpmul, algo.basefield.fpsqr, algo.basefield.fpadd]) / (10.0 ** 6),
+        )
+    )
+    print(
+        "\t%2.3fM + %2.3fS + %2.3fa = %2.3fM in GF(p²);"
+        % (
+            algo.field.fp2mul / (10.0 ** 6),
+            algo.field.fp2sqr / (10.0 ** 6),
+            algo.field.fp2add / (10.0 ** 6),
+            measure([algo.field.fp2mul, algo.field.fp2sqr, algo.field.fp2add]) / (10.0 ** 6),
         )
     )
     print("sk_b := %d;" % b_private)
@@ -69,12 +90,13 @@ def bsidh_main(ctx):
     print("\n// ===================== \033[0;33mSecret Sharing Computation\033[0m")
     # ------------------------------------------------------------------------- Alice
     print("// --- \033[0;35mAlice\033[0m")
-    init_runtime()
+    init_runtime_basefield()
+    init_runtime_field()
     public_validation = validate(b_public)
     assert public_validation
     
     print(
-        "// Running time (supersingular test):\t\t\t\t%2.3fM + %2.3fS + %2.3fa = %2.3fM,"
+        "// Running time (supersingular test):\n\t%2.3fM + %2.3fS + %2.3fa = %2.3fM in GF(p),"
         % (
             algo.basefield.fpmul / (10.0 ** 6),
             algo.basefield.fpsqr / (10.0 ** 6),
@@ -82,28 +104,48 @@ def bsidh_main(ctx):
             measure([algo.basefield.fpmul, algo.basefield.fpsqr, algo.basefield.fpadd]) / (10.0 ** 6),
         )
     )
+    print(
+        "\t%2.3fM + %2.3fS + %2.3fa = %2.3fM in GF(p²);"
+        % (
+            algo.field.fp2mul / (10.0 ** 6),
+            algo.field.fp2sqr / (10.0 ** 6),
+            algo.field.fp2add / (10.0 ** 6),
+            measure([algo.field.fp2mul, algo.field.fp2sqr, algo.field.fp2add]) / (10.0 ** 6),
+        )
+    )
 
-    init_runtime()
+    init_runtime_basefield()
+    init_runtime_field()
     ss_a = strategy_A(a_private, b_public)
     print(
-        "// Running time (Strategy evaluation + supersingular test):\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
+        "// Running time (Strategy evaluation + supersingular test):\n\t%2.3fM + %2.3fS + %2.3fa = %2.3fM in GF(p),"
         % (
             algo.basefield.fpmul / (10.0 ** 6),
             algo.basefield.fpsqr / (10.0 ** 6),
             algo.basefield.fpadd / (10.0 ** 6),
             measure([algo.basefield.fpmul, algo.basefield.fpsqr, algo.basefield.fpadd]) / (10.0 ** 6),
+        )
+    )
+    print(
+        "\t%2.3fM + %2.3fS + %2.3fa = %2.3fM in GF(p²);"
+        % (
+            algo.field.fp2mul / (10.0 ** 6),
+            algo.field.fp2sqr / (10.0 ** 6),
+            algo.field.fp2add / (10.0 ** 6),
+            measure([algo.field.fp2mul, algo.field.fp2sqr, algo.field.fp2add]) / (10.0 ** 6),
         )
     )
     print("ss_a := %s;\n" % coeff(ss_a))
 
     # ------------------------------------------------------------------------- Bob
     print("// --- \033[0;34mBob\033[0m")
-    init_runtime()
+    init_runtime_basefield()
+    init_runtime_field()
     public_validation = validate(a_public)
     assert public_validation
     
     print(
-        "// Running time (supersingular test):\t\t\t\t%2.3fM + %2.3fS + %2.3fa = %2.3fM,"
+        "// Running time (supersingular test):\n\t%2.3fM + %2.3fS + %2.3fa = %2.3fM in GF(p),"
         % (
             algo.basefield.fpmul / (10.0 ** 6),
             algo.basefield.fpsqr / (10.0 ** 6),
@@ -111,17 +153,36 @@ def bsidh_main(ctx):
             measure([algo.basefield.fpmul, algo.basefield.fpsqr, algo.basefield.fpadd]) / (10.0 ** 6),
         )
     )
+    print(
+        "\t%2.3fM + %2.3fS + %2.3fa = %2.3fM in GF(p²),"
+        % (
+            algo.field.fp2mul / (10.0 ** 6),
+            algo.field.fp2sqr / (10.0 ** 6),
+            algo.field.fp2add / (10.0 ** 6),
+            measure([algo.field.fp2mul, algo.field.fp2sqr, algo.field.fp2add]) / (10.0 ** 6),
+        )
+    )
 
-    init_runtime()
+    init_runtime_basefield()
+    init_runtime_field()
     ss_b = strategy_B(b_private, a_public)
     
     print(
-        "// Running time (Strategy evaluation + supersingular test):\t%2.3fM + %2.3fS + %2.3fa = %2.3fM;"
+        "// Running time (Strategy evaluation + supersingular test):\n\t%2.3fM + %2.3fS + %2.3fa = %2.3fM in GF(p),"
         % (
             algo.basefield.fpmul / (10.0 ** 6),
             algo.basefield.fpsqr / (10.0 ** 6),
             algo.basefield.fpadd / (10.0 ** 6),
             measure([algo.basefield.fpmul, algo.basefield.fpsqr, algo.basefield.fpadd]) / (10.0 ** 6),
+        )
+    )
+    print(
+        "\t%2.3fM + %2.3fS + %2.3fa = %2.3fM in GF(p²);"
+        % (
+            algo.field.fp2mul / (10.0 ** 6),
+            algo.field.fp2sqr / (10.0 ** 6),
+            algo.field.fp2add / (10.0 ** 6),
+            measure([algo.field.fp2mul, algo.field.fp2sqr, algo.field.fp2add]) / (10.0 ** 6),
         )
     )
     print("ss_b := %s;" % coeff(ss_b))

@@ -1,6 +1,6 @@
 from random import SystemRandom
 import numpy
-from math import floor, sqrt, log
+from math import floor, ceil, sqrt, log
 
 from sidh.math import isequal, bitlength, hamming_weight, cswap, sign
 from sidh.constants import parameters
@@ -727,9 +727,8 @@ class Gae_wd2(object):
             for k in range(0, r[j], 1):
 
                 T_p, T_m = self.curve.elligator(E_k)
-                for ii in range(0, self.curve.exponent_of_two, 1):
-                    T_p = self.curve.xdbl(T_p, E_k)
-                    T_m = self.curve.xdbl(T_m, E_k)
+                T_p = self.curve.prac(self.curve.cofactor, T_p, E_k)
+                T_m = self.curve.prac(self.curve.cofactor, T_m, E_k)
 
                 for l in R[j]:
                     T_p = self.curve.xmul(
@@ -762,9 +761,8 @@ class Gae_wd2(object):
         while len(unreached_sop) > 0:
 
             T_p, T_m = self.curve.elligator(E_k)
-            for ii in range(0, self.curve.exponent_of_two, 1):
-                T_p = self.curve.xdbl(T_p, E_k)
-                T_m = self.curve.xdbl(T_m, E_k)
+            T_p = self.curve.prac(self.curve.cofactor, T_p, E_k)
+            T_m = self.curve.prac(self.curve.cofactor, T_m, E_k)
 
             for l in remainder_sop:
                 T_p = self.curve.xmul(T_p, E_k, self.formula.L.index(l))
@@ -807,9 +805,9 @@ class Gae_wd2(object):
         Next function computes the expected cost of our approach by assuming we have full torsion points
         """
         elligator_cost = numpy.array([7.0, 3.0, 10.0])  # Elligator cost
-        mul_fp_by_four = (
-            numpy.array([4.0, 2.0, 4.0]) * self.curve.exponent_of_two
-        )  # Cost of computing x([2^exponent_of_two]P)
+        mul_fp_by_cofactor = (
+            numpy.array([4.0, 2.0, 4.0]) * int(ceil(1.64 * bitlength(self.curve.cofactor)))
+        )  # Cost of computing x([self.curve.cofactor]P)
 
         n = len(L)
         e_prime = [geometric_serie(e[k], L[k]) for k in range(n)]
@@ -838,7 +836,7 @@ class Gae_wd2(object):
             S_out.append(S_tmp)
             C_e = (
                 C_e
-                + (go_C + bo_C + elligator_cost + 2.0 * mul_fp_by_four)
+                + (go_C + bo_C + elligator_cost + 2.0 * mul_fp_by_cofactor)
                 * tmp_r[j]
             )
 

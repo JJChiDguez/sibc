@@ -1,3 +1,4 @@
+from random import SystemRandom
 from pkg_resources import resource_filename
 
 # Related polynomial multiplication procedures
@@ -6,7 +7,7 @@ from sidh.polymul import PolyMul
 from sidh.polyredc import PolyRedc
 
 from sidh.math import isequal, bitlength, hamming_weight, cswap
-from sidh.constants import ijk_data
+from sidh.constants import ijk_data, parameters
 
 import numpy
 from sympy import floor, sqrt, sign
@@ -974,66 +975,258 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
 
         def velusqrt_cost(self):
 
-            # First, we look for a full torsion point
-            A = [2, 4]
-            T_p, T_m = self.curve.generators(A)
+            if self.curve.name in parameters['csidh'].keys():
+                # First, we look for a full torsion point
+                A = [self.field(2), self.field(4)]
+                T_p, T_m = self.curve.generators(A)
 
-            for i in range(0, self.curve.n, 1):
+                for i in range(0, self.curve.n, 1):
 
-                if self.tuned:
-                    self.set_parameters_velu(self.sJ_list[i], self.sI_list[i], i)
-                else:
-                    # Parameters sJ and sI correspond with the parameters b and b' from example 4.12 of https://eprint.iacr.org/2020/341
-                    # These paramters are required in kps, xisog, and xeval
-                    if self.L[i] == 3:
-                        b = 0
-                        c = 0
+                    if self.tuned:
+                        self.set_parameters_velu(self.sJ_list[i], self.sI_list[i], i)
                     else:
-                        b = int(floor(sqrt(self.L[i] - 1) / 2.0))
-                        c = int(floor((self.L[i] - 1.0) / (4.0 * b)))
+                        # Parameters sJ and sI correspond with the parameters b and b' from example 4.12 of https://eprint.iacr.org/2020/341
+                        # These paramters are required in kps, xisog, and xeval
+                        if self.L[i] == 3:
+                            b = 0
+                            c = 0
+                        else:
+                            b = int(floor(sqrt(self.L[i] - 1) / 2.0))
+                            c = int(floor((self.L[i] - 1.0) / (4.0 * b)))
 
-                    self.set_parameters_velu(b, c, i)
+                        self.set_parameters_velu(b, c, i)
 
-                # Getting an orderl-l point
-                Tp = list(T_p)
-                for j in range(i + 1, self.curve.n, 1):
-                    Tp = self.curve.xmul(Tp, A, j)
+                    # Getting an orderl-l point
+                    Tp = list(T_p)
+                    for j in range(i + 1, self.curve.n, 1):
+                        Tp = self.curve.xmul(Tp, A, j)
 
-                # Cost of xisog() and kps()
+                    # Cost of xisog() and kps()
+                    self.field.init_runtime()
+                    self.kps(Tp, A, i)
+                    t = [self.field.fpmul, self.field.fpsqr, self.field.fpadd]
+                    self.c_xisog[i] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
+
+                    self.field.init_runtime()
+                    B = self.xisog(A, i)
+                    t = [self.field.fpmul, self.field.fpsqr, self.field.fpadd]
+                    self.c_xisog[i] += numpy.array(
+                        [t[0] * 1.0, t[1] * 1.0, t[2] * 1.0]
+                    )
+
+                    # xeval: kernel point determined by the next isogeny evaluation
+                    self.field.init_runtime()
+                    if self.L[i] <= self.HYBRID_BOUND:
+                        T_p = self.xeval(T_p, i)
+                    else:
+                        T_p = self.xeval(T_p, A)
+
+                    # Cost of xeval
+                    self.field.init_runtime()
+                    if self.L[i] <= self.HYBRID_BOUND:
+                        T_m = self.xeval(T_m, i)
+                    else:
+                        T_m = self.xeval(T_m, A)
+
+                    t = [self.field.fpmul, self.field.fpsqr, self.field.fpadd]
+                    self.c_xeval[i] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
+
+                    # Updating the new next curve
+                    A = list(B)
+
                 self.field.init_runtime()
-                self.kps(Tp, A, i)
-                t = [self.field.fpmul, self.field.fpsqr, self.field.fpadd]
-                self.c_xisog[i] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
+                return None
 
-                self.field.init_runtime()
-                B = self.xisog(A, i)
-                t = [self.field.fpmul, self.field.fpsqr, self.field.fpadd]
-                self.c_xisog[i] += numpy.array(
-                    [t[0] * 1.0, t[1] * 1.0, t[2] * 1.0]
-                )
+            elif self.curve.name in parameters['bsidh'].keys():
 
-                # xeval: kernel point determined by the next isogeny evaluation
-                self.field.init_runtime()
-                if self.L[i] <= self.HYBRID_BOUND:
-                    T_p = self.xeval(T_p, i)
-                else:
-                    T_p = self.xeval(T_p, A)
+                random = SystemRandom()
 
-                # Cost of xeval
-                self.field.init_runtime()
-                if self.L[i] <= self.HYBRID_BOUND:
-                    T_m = self.xeval(T_m, i)
-                else:
-                    T_m = self.xeval(T_m, A)
+                # Reading public generators points
+                f = open(resource_filename('sidh', 'data/gen/' + self.curve.name))
 
-                t = [self.field.fpmul, self.field.fpsqr, self.field.fpadd]
-                self.c_xeval[i] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
+                # x(PA), x(QA) and x(PA - QA)
+                PQA = f.readline()
+                PQA = [int(x, 16) for x in PQA.split()]
+                PA = [self.field(PQA[0:2]), self.field(1)]
+                QA = [self.field(PQA[2:4]), self.field(1)]
+                PQA= [self.field(PQA[4:6]), self.field(1)]
 
-                # Updating the new next curve
-                A = list(B)
+                # x(PB), x(QB) and x(PB - QB)
+                PQB = f.readline()
+                PQB = [int(x, 16) for x in PQB.split()]
+                PB = [self.field(PQB[0:2]), self.field(1)]
+                QB = [self.field(PQB[2:4]), self.field(1)]
+                PQB= [self.field(PQB[4:6]), self.field(1)]
 
-            self.field.init_runtime()
-            return None
+                f.close()
+
+                # Three point ladder: case (p + 1)
+                A = [ self.field(8), self.field(4)]
+                S = list(PA)
+                T = list(QA)
+                ST = list(PQA)
+
+                assert self.curve.isinfinity(S) == False
+                assert self.curve.isinfinity(T) == False
+
+                for i in range(0, self.curve.np, 1):
+                    for idx in range(0, self.curve.Ep[i] - 1, 1):
+                        S = self.curve.xmul(S, A, i)
+                        T = self.curve.xmul(T, A, i)
+                        ST = self.curve.xmul(ST, A, i)
+
+                k = random.randint(0, self.field.basefield.p + 1)
+                R = self.curve.Ladder3pt(k, S, T, ST, A)
+                T_p = list(R)
+                T_m = list(S)
+                for idx in range(0, self.curve.np, 1):
+
+                    # -------------------------------------------------------------
+                    # Random kernel point
+                    Tp = list(T_p)
+                    for i in range(idx + 1, self.curve.np, 1):
+                        Tp = self.curve.xmul(Tp, A, i)
+
+                    if self.tuned:
+                        self.set_parameters_velu(self.sJ_list[idx], self.sI_list[idx], idx)
+                    else:
+                        # Parameters sJ and sI correspond with the parameters b and b' from example 4.12 of https://eprint.iacr.org/2020/341
+                        # These paramters are required in kps, xisog, and xeval
+                        if self.L[idx] == 3:
+                            b = 0
+                            c = 0
+                        else:
+                            b = int(floor(sqrt(self.L[idx] - 1) / 2.0))
+                            c = int(floor((self.L[idx] - 1.0) / (4.0 * b)))
+
+                        self.set_parameters_velu(b, c, idx)
+
+                    # -------------------------------------------------------------
+                    # kps procedure
+                    self.field.basefield.init_runtime()
+                    self.field.init_runtime()
+                    self.kps(Tp, A, idx)
+                    t = [self.field.basefield.fpmul, self.field.basefield.fpsqr, self.field.basefield.fpadd]
+                    self.c_xisog[idx] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
+
+                    # -------------------------------------------------------------
+                    # xisog
+                    self.field.basefield.init_runtime()
+                    self.field.init_runtime()
+                    Tp[0], A[0] = cswap(Tp[0], A[0], self.L[idx] == 4)
+                    Tp[1], A[1] = cswap(Tp[1], A[1], self.L[idx] == 4)
+                    B = self.xisog(A, idx)
+                    Tp[0], A[0] = cswap(Tp[0], A[0], self.L[idx] == 4)
+                    Tp[1], A[1] = cswap(Tp[1], A[1], self.L[idx] == 4)
+                    t = [self.field.basefield.fpmul, self.field.basefield.fpsqr, self.field.basefield.fpadd]
+                    self.c_xisog[idx] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
+
+                    # -------------------------------------------------------------
+                    # xeval: kernel point determined by the next isogeny evaluation
+                    self.field.basefield.init_runtime()
+                    self.field.init_runtime()
+                    if self.L[idx] <= self.HYBRID_BOUND:
+                        T_p = self.xeval(T_p, idx)
+                    else:
+                        T_p = self.xeval(T_p, A)
+
+                    # xeval bench
+                    self.field.basefield.init_runtime()
+                    self.field.init_runtime()
+                    if self.L[idx] <= self.HYBRID_BOUND:
+                        T_m = self.xeval(T_m, idx)
+                    else:
+                        T_m = self.xeval(T_m, A)
+
+                    t = [self.field.basefield.fpmul, self.field.basefield.fpsqr, self.field.basefield.fpadd]
+                    self.c_xeval[idx] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
+
+                    # assert(validate(B))
+                    A = list(B)
+
+                # Three point ladder: case (p - 1)
+                A = [ self.field(8), self.field(4)]
+                S = list(PB)
+                T = list(QB)
+                ST = list(PQB)
+
+                assert self.curve.isinfinity(S) == False
+                assert self.curve.isinfinity(T) == False
+
+                for i in range(self.curve.np, self.curve.np + self.curve.nm, 1):
+                    for idx in range(0, self.curve.Em[i - self.curve.np] - 1, 1):
+                        S = self.curve.xmul(S, A, i)
+                        T = self.curve.xmul(T, A, i)
+                        ST= self.curve.xmul(ST, A, i)
+
+                k = random.randint(0, self.field.basefield.p - 1)
+                R = self.curve.Ladder3pt(k, S, T, ST, A)
+                T_p = list(R)
+                T_m = list(S)
+
+                for idx in range(self.curve.np, self.curve.np + self.curve.nm, 1):
+
+                    # -------------------------------------------------------------
+                    # Random kernel point
+                    Tp = list(T_p)
+                    for i in range(idx + 1, self.curve.np + self.curve.nm, 1):
+                        Tp = self.curve.xmul(Tp, A, i)
+
+                    if self.tuned:
+                        self.set_parameters_velu(self.sJ_list[idx], self.sI_list[idx], idx)
+                    else:
+                        # Parameters sJ and sI correspond with the parameters b and b' from example 4.12 of https://eprint.iacr.org/2020/341
+                        # These paramters are required in kps, xisog, and xeval
+                        if self.L[idx] == 3:
+                            b = 0
+                            c = 0
+                        else:
+                            b = int(floor(sqrt(self.L[idx] - 1) / 2.0))
+                            c = int(floor((self.L[idx] - 1.0) / (4.0 * b)))
+
+                        self.set_parameters_velu(b, c, idx)
+
+                    # -------------------------------------------------------------
+                    # kps procedure
+                    self.field.basefield.init_runtime()
+                    self.field.init_runtime()
+                    self.kps(Tp, A, idx)
+                    t = [self.field.basefield.fpmul, self.field.basefield.fpsqr, self.field.basefield.fpadd]
+                    self.c_xisog[idx] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
+
+                    # -------------------------------------------------------------
+                    # xisog
+                    self.field.basefield.init_runtime()
+                    self.field.init_runtime()
+                    B = self.xisog(A, idx)
+                    t = [self.field.basefield.fpmul, self.field.basefield.fpsqr, self.field.basefield.fpadd]
+                    self.c_xisog[idx] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
+
+                    # -------------------------------------------------------------
+                    # xeval: kernel point determined by the next isogeny evaluation
+                    self.field.basefield.init_runtime()
+                    self.field.init_runtime()
+                    if self.L[idx] <= self.HYBRID_BOUND:
+                        T_p = self.xeval(T_p, idx)
+                    else:
+                        T_p = self.xeval(T_p, A)
+
+                    # xeval bench
+                    self.field.basefield.init_runtime()
+                    self.field.init_runtime()
+                    if self.L[idx] <= self.HYBRID_BOUND:
+                        T_m = self.xeval(T_m, idx)
+                    else:
+                        T_m = self.xeval(T_m, A)
+
+                    t = [self.field.basefield.fpmul, self.field.basefield.fpsqr, self.field.basefield.fpadd]
+                    self.c_xeval[idx] = numpy.array([t[0] * 1.0, t[1] * 1.0, t[2] * 1.0])
+
+                    # assert(validate(B))
+                    A = list(B)
+            else:
+                assert False, "only CSIDH and B-SIDH are currently implemented"
+
 
     Formulae.__name__ = NAME
     Formulae.name = name

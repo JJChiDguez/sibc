@@ -19,7 +19,6 @@ def csidh_test(ctx):
     if algo.formula.name != 'tvelu':
         set_parameters_velu = algo.formula.set_parameters_velu
         print_parameters_velu = algo.formula.print_parameters_velu
-        sI = algo.formula.sI
         HYBRID_BOUND = algo.formula.HYBRID_BOUND
     
     init_runtime = algo.field.init_runtime
@@ -144,7 +143,7 @@ def csidh_test(ctx):
     print("assert(Random(B) * (p + 1) eq B!0);")
 
     print(
-        "\n\"If no errors were showed using magma calculator, then all experiments were successful passed!\";"
+        "\n\"If no errors were showed using magma calculator, then all experiments were successfully passed!\";"
     )
     print("// copy and paste it at http://magma.maths.usyd.edu.au/calc/\n")
     return attrdict(name='csidh-test', **locals())

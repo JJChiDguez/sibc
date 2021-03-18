@@ -88,13 +88,13 @@ def MontgomeryCurve(prime):
         return x[0] + SQR * x[1] + ADD * x[2]
 
     def dacs(l, r0, r1, r2, chain):
-        '''
+        """
         dacs()
         inputs: a small odd prime number l, three integer numbers, and a list
         output: all the differential additions chains corresponding with the input l
 
         NOTE: this is a recursive approach
-        '''
+        """
         if r2 == l:
 
             return [(chain, r2)]
@@ -107,13 +107,13 @@ def MontgomeryCurve(prime):
             return []
 
     def sdac(l):
-        '''
+        """
         sdac()
         input: a small odd prime number l
         output: the shortest differential additions chains corresponding with the input l
 
         NOTE: this function uses a recursive function
-        '''
+        """
         all_dacs = dacs(l, 1, 2, 3, [])
         return min(all_dacs, key=lambda t: len(t[0]))[0]
 
@@ -142,14 +142,14 @@ def MontgomeryCurve(prime):
     random = SystemRandom()
 
     def jinvariant(A):
-        '''
+        """
         -------------------------------------------------------------------------
         jinvariant()
         input : projective Montgomery constants A24 := A + 2C and C24 := 4C where
                 E : y^2 = x^3 + (A/C)*x^2 + x
         output: the j-invariant of E
         -------------------------------------------------------------------------
-        '''
+        """
         A4_squared = (A[0] + A[0])              # (2 * A24)
         A4_squared = (A4_squared - A[1])        # (2 * A24) - C24
         A4_squared = (A4_squared + A4_squared)  # 4*A = 2[(2 * A24) - C24]
@@ -182,7 +182,7 @@ def MontgomeryCurve(prime):
         return num
 
     def elligator(A):
-        ''' elligator() samples two points on E[pi + 1] or E[pi - 1] '''
+        """ elligator() samples two points on E[pi + 1] or E[pi - 1] """
         Ap = (A[0] + A[0])
         Ap = (Ap - A[1])
         Ap = (Ap + Ap)
@@ -222,23 +222,23 @@ def MontgomeryCurve(prime):
         )
 
     def affine_to_projective(affine):
-        '''
+        """
         affine_to_projective()
         input : the affine Montgomery coefficient A=A'/C with C=1
         output: projective Montgomery constants A24 := A' + 2C and C24 := 4C
                 where E : y^2 = x^3 + (A'/C)*x^2 + x
-        '''
+        """
         return [affine + field(2), field(4)]
 
     def coeff(A):
-        '''
+        """
         ----------------------------------------------------------------------
         coeff()
         input : projective Montgomery constants A24 := A + 2C and C24 := 4C
                 where E : y^2 = x^3 + (A/C)*x^2 + x
         output: the affine Montgomery coefficient A/C
         ----------------------------------------------------------------------
-        '''
+        """
         output = (A[0] + A[0])         # (2 * A24)
         output = (output - A[1])       # (2 * A24) - C24
         C24_inv = (A[1] ** -1)         # 1 / (C24)
@@ -248,15 +248,15 @@ def MontgomeryCurve(prime):
         return output
 
     def isinfinity(P):
-        ''' isinfinity(P) determines if x(P) := (XP : ZP) = (1 : 0) '''
+        """ isinfinity(P) determines if x(P) := (XP : ZP) = (1 : 0) """
         return P[1] == 0
 
     def isequal(P, Q):
-        ''' isequal(P, Q) determines if x(P) = x(Q) '''
+        """ isequal(P, Q) determines if x(P) = x(Q) """
         return (P[0] * Q[1]) == (P[1] * Q[0])
 
     def xdbl(P, A):
-        '''
+        """
         ----------------------------------------------------------------------
         xdbl()
         input : a projective Montgomery x-coordinate point x(P) := XP/ZP, and
@@ -264,7 +264,7 @@ def MontgomeryCurve(prime):
                 where E : y^2 = x^3 + (A/C)*x^2 + x
         output: the projective Montgomery x-coordinate point x([2]P)
         ----------------------------------------------------------------------
-        '''
+        """
         t_0 = (P[0] - P[1])
         t_1 = (P[0] + P[1])
         t_0 = (t_0 ** 2)
@@ -279,14 +279,14 @@ def MontgomeryCurve(prime):
         return [X, Z]
 
     def xadd(P, Q, PQ):
-        '''
+        """
         ----------------------------------------------------------------------
         xadd()
         input : the projective Montgomery x-coordinate points x(P) := XP/ZP,
                 x(Q) := XQ/ZQ, and x(P-Q) := XPQ/ZPQ
         output: the projective Montgomery x-coordinate point x(P+Q)
         ----------------------------------------------------------------------
-        '''
+        """
         a = (P[0] + P[1])
         b = (P[0] - P[1])
         c = (Q[0] + Q[1])
@@ -302,13 +302,13 @@ def MontgomeryCurve(prime):
         return [X, Z]
 
     def xdbladd(P, Q, PQ, A):
-        ''' xdbladd() computes both of x([2]P) and x(P + Q) '''
+        """ xdbladd() computes both of x([2]P) and x(P + Q) """
         S = xadd(P, Q, PQ)
         T = xdbl(P, A)
         return T, S
 
     def xmul(P, A, j):
-        '''
+        """
         ----------------------------------------------------------------------
         xmul()
         input : a projective Montgomery x-coordinate point x(P) := XP/ZP, the
@@ -316,7 +316,7 @@ def MontgomeryCurve(prime):
                 E : y^2 = x^3 + (A/C)*x^2 + x, and an positive integer j
         output: the projective Montgomery x-coordinate point x([L[j]]P)
         ----------------------------------------------------------------------
-        '''
+        """
         P2 = xdbl(P, A)
         R = [P, P2, xadd(P2, P, P)]
 
@@ -334,7 +334,7 @@ def MontgomeryCurve(prime):
         return R[2]
 
     def Ladder3pt(m, P, Q, PQ, A):
-        ''' Ladder3pt() computes x(P + [m]Q) '''
+        """ Ladder3pt() computes x(P + [m]Q) """
         X0 = list([field(Q[0]), field(Q[1])])
         X1 = list([field(P[0]), field(P[1])])
         X2 = list([field(PQ[0]), field(PQ[1])])
@@ -426,7 +426,7 @@ def MontgomeryCurve(prime):
         return x
 
     def cofactor_multiples(P, A, points):
-        '''
+        """
         ----------------------------------------------------------------------
         cofactor_multiples()
         input : a projective Montgomery x-coordinate point x(P) := XP/ZP, the
@@ -435,7 +435,7 @@ def MontgomeryCurve(prime):
         output: the projective Montgomery x-coordinate points x([(p+1) / l_0]P),
                 x([(p+1) / l_1]P), ..., x([(p+1) / l_{n-1}]P).
         ----------------------------------------------------------------------
-        '''
+        """
         n = len(points)
         if n == 1:
             # In this recursion level we have an order-l point
@@ -466,27 +466,23 @@ def MontgomeryCurve(prime):
             return []
 
     def isfullorder(seq):
-        ''' isfullorder() checks if the point at infinity belongs or not to a given list '''
+        """ isfullorder() checks if the point at infinity belongs or not to a given list """
         tmp = [not isinfinity(seq_i) for seq_i in seq]
         return reduce(lambda x, y: (x and y), tmp)
 
     def generators(A):
-        ''' generators() looks for two full-order poinst on E[pi + 1] or E[pi - 1] '''
+        """ generators() looks for two full-order poinst on E[pi + 1] or E[pi - 1] """
         output = [[0, 0], [0, 0]]
         while [0, 0] in output:
 
             T_p, T_m = elligator(A)
-            for i in range(0, exponent_of_two, 1):
-                T_p = xdbl(T_p, A)
-
+            T_p = prac(cofactor, T_p, A)
             if isfullorder(cofactor_multiples(T_p, A, range(0, n, 1))) and output[
                 0
             ] == [0, 0]:
                 output[0] = list(T_p)
 
-            for i in range(0, exponent_of_two, 1):
-                T_m = xdbl(T_m, A)
-
+            T_m = prac(cofactor, T_m, A)
             if isfullorder(cofactor_multiples(T_m, A, range(0, n, 1))) and output[
                 1
             ] == [0, 0]:
@@ -495,14 +491,14 @@ def MontgomeryCurve(prime):
         return output[0], output[1]
 
     def crisscross(alpha, beta, gamma, delta):
-        ''' crisscross() computes a*c + b*d, and a*c - b*d '''
+        """ crisscross() computes a*c + b*d, and a*c - b*d """
         t_1 = (alpha * delta)
         t_2 = (beta * gamma)
         return (t_1 + t_2), (t_1 - t_2)
 
     if prime in parameters['csidh'].keys():
         def issupersingular(A):
-            ''' issupersingular() verifies supersingularity '''
+            """ issupersingular() verifies supersingularity """
             while True:
 
                 T_p, _ = elligator(A) # T_p is always in GF(p), and thus has torsion (p+1)
@@ -526,7 +522,7 @@ def MontgomeryCurve(prime):
 
     elif prime in parameters['bsidh'].keys():
         def issupersingular(A):
-            ''' issupersingular() verifies supersingularity '''
+            """ issupersingular() verifies supersingularity """
             while True:
 
                 P, _ = elligator(A) # T_p is always in GF(p²)

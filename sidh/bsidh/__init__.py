@@ -90,6 +90,7 @@ class BSIDH(object):
         return k.to_bytes(length=32, byteorder='little')
 
     def public_key_a(self, sk):
+        # To be modified: public key will corresponds with the image point if PB, QB, and PQB
         sk = int.from_bytes(sk, byteorder='little')
         x, y = self.strategy.strategy_at_6_A(sk)
         a = x.re.x; b = x.im.x;
@@ -99,6 +100,7 @@ class BSIDH(object):
         return pk
 
     def public_key_b(self, sk):
+        # To be modified: public key will corresponds with the image point if PA, QA, and PQA
         sk = int.from_bytes(sk, byteorder='little')
         x, y = self.strategy.strategy_at_6_B(sk)
         a = x.re.x; b = x.im.x;
@@ -120,6 +122,30 @@ class BSIDH(object):
         return x + y
 
     def dh_b(self, sk, pk):
+        sk = int.from_bytes(sk, byteorder='little')
+        a, b = int.from_bytes(pk[0:32], byteorder='little'), int.from_bytes(pk[32:64], byteorder='little')
+        c, d = int.from_bytes(pk[64:96], byteorder='little'), int.from_bytes(pk[96:128], byteorder='little')
+        pk = [(a, b), (c, d)]
+        ss = self.strategy.strategy_B(sk, pk)
+        curve_ss_b = self.curve.coeff(ss)
+        x, y = curve_ss_b
+        x = x.re.x.to_bytes(length=32, byteorder='little')
+        y = y.im.x.to_bytes(length=32, byteorder='little')
+        return x + y
+
+    def derive_a(self, sk, pk):
+        sk = int.from_bytes(sk, byteorder='little')
+        a, b = int.from_bytes(pk[0:32], byteorder='little'), int.from_bytes(pk[32:64], byteorder='little')
+        c, d = int.from_bytes(pk[64:96], byteorder='little'), int.from_bytes(pk[96:128], byteorder='little')
+        pk = [(a, b), (c, d)]
+        ss = self.strategy.strategy_A(sk, pk)
+        curve_ss_a = self.curve.coeff(ss)
+        x, y = curve_ss_a
+        x = x.re.x.to_bytes(length=32, byteorder='little')
+        y = y.im.x.to_bytes(length=32, byteorder='little')
+        return x + y
+
+    def derive_b(self, sk, pk):
         sk = int.from_bytes(sk, byteorder='little')
         a, b = int.from_bytes(pk[0:32], byteorder='little'), int.from_bytes(pk[32:64], byteorder='little')
         c, d = int.from_bytes(pk[64:96], byteorder='little'), int.from_bytes(pk[96:128], byteorder='little')
