@@ -11,7 +11,7 @@ PRIMES = ('b2',)
 FORMULAS = ('tvelu', 'svelu', 'hvelu')
 
 
-class BSIDH_gae_test_base(object):
+class BSIDH_strategy_test_base(object):
     def setUp(self):
         self.algo = BSIDH(
             curvemodel='montgomery',
@@ -23,17 +23,17 @@ class BSIDH_gae_test_base(object):
             verbose=self.verbose,
         )
 
-    def test_group_action_with_random_keys(self):
-        sk_a, sk_b = self.algo.gae.random_scalary_A(), self.algo.gae.random_key_B()
-        pk_a, pk_b = self.algo.gae.strategy_at_6_A(sk_a), self.algo.gae.strategy_at_6_B(sk_b)
+    def test_strategy_evaluation_with_random_keys(self):
+        sk_a, sk_b = self.algo.strategy.random_scalar_A(), self.algo.strategy.random_scalar_B()
+        pk_a, pk_b = self.algo.strategy.strategy_at_6_A(sk_a), self.algo.strategy.strategy_at_6_B(sk_b)
         # bsidh does not have a validate function on the montgomery curve
         self.assertTrue(self.algo.curve.issupersingular(pk_a))
         self.assertTrue(self.algo.curve.issupersingular(pk_b))
         a_curve = self.algo.curve.coeff(pk_a)
         b_curve = self.algo.curve.coeff(pk_b)
-        ss_a = self.algo.gae.strategy_A(sk_a, pk_b)
+        ss_a = self.algo.strategy.strategy_A(sk_a, pk_b)
         curve_ss_a = self.algo.curve.coeff(ss_a)
-        ss_b = self.algo.gae.strategy_B(sk_b, pk_a)
+        ss_b = self.algo.strategy.strategy_B(sk_b, pk_a)
         curve_ss_b = self.algo.curve.coeff(ss_b)
         self.assertNotEqual(ss_a, ss_b)
         self.assertEqual(curve_ss_a, curve_ss_b)
@@ -47,7 +47,7 @@ for prime in PRIMES:
                     # tvelu doesn't have tuned or multievaluation modes
                     continue
 
-                class cls(BSIDH_gae_test_base, TestCase):
+                class cls(BSIDH_strategy_test_base, TestCase):
                     formula = formula
                     prime = prime
                     tuned = tuned
@@ -56,7 +56,7 @@ for prime in PRIMES:
                     verbose = False
 
                 globals()[
-                    'bsidh_gae_'
+                    'bsidh_strategy_'
                     + '_'.join(
                         [
                             prime,
@@ -70,5 +70,5 @@ for prime in PRIMES:
                 ] = cls
 del cls
 #assert (
-#    len([algo for algo in dir() if algo.startswith('bsidh_gae')]) == 81
+#    len([algo for algo in dir() if algo.startswith('bsidh_strategy')]) == 81
 #), "unexpected number of permutations"
