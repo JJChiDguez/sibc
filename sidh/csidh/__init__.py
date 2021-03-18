@@ -29,7 +29,7 @@ class CSIDH(object):
 
     Here is one group action test with random keys:
 
-    >>> csidh_tvelu_wd1 = CSIDH('montgomery', 'p512', 'tvelu', 'wd1', 2, False, False, False)
+    >>> csidh_tvelu_wd1 = CSIDH('montgomery', 'p512', 'tvelu', 'wd1', 10, True, False, False, False)
     >>> sk_a, sk_b = csidh_tvelu_wd1.secret_key(), csidh_tvelu_wd1.secret_key()
     >>> pk_a, pk_b = csidh_tvelu_wd1.public_key(sk_a), csidh_tvelu_wd1.public_key(sk_b)
     >>> csidh_tvelu_wd1.dh(sk_a, pk_b) == csidh_tvelu_wd1.dh(sk_b, pk_a)

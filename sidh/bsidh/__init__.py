@@ -25,7 +25,7 @@ class BSIDH(object):
 
     Here is one group action test with random keys:
 
-    >>> bsidh_tvelu = BSIDH('montgomery', 'b2', 'hvelu', False, False, False)
+    >>> bsidh_tvelu = BSIDH('montgomery', 'b2', 'hvelu', True, False, False, False)
     >>> sk_a, sk_b = bsidh_tvelu.secret_key_a(), bsidh_tvelu.secret_key_b()
     >>> pk_a, pk_b = bsidh_tvelu.public_key_a(sk_a), bsidh_tvelu.public_key_b(sk_b)
     >>> curve_ss_a, curve_ss_b = bsidh_tvelu.dh_a(sk_a, pk_b), bsidh_tvelu.dh_b(sk_b, pk_a)
@@ -113,48 +113,48 @@ class BSIDH(object):
         sk = int.from_bytes(sk, byteorder='little')
         a, b = int.from_bytes(pk[0:32], byteorder='little'), int.from_bytes(pk[32:64], byteorder='little')
         c, d = int.from_bytes(pk[64:96], byteorder='little'), int.from_bytes(pk[96:128], byteorder='little')
-        pk = [(a, b), (c, d)]
+        pk = [self.field([a, b]), self.field([c, d])]
         ss = self.strategy.strategy_A(sk, pk)
         curve_ss_a = self.curve.coeff(ss)
-        x, y = curve_ss_a
-        x = x.re.x.to_bytes(length=32, byteorder='little')
-        y = y.im.x.to_bytes(length=32, byteorder='little')
+        x, y = curve_ss_a.re, curve_ss_a.im
+        x = x.x.to_bytes(length=32, byteorder='little')
+        y = y.x.to_bytes(length=32, byteorder='little')
         return x + y
 
     def dh_b(self, sk, pk):
         sk = int.from_bytes(sk, byteorder='little')
         a, b = int.from_bytes(pk[0:32], byteorder='little'), int.from_bytes(pk[32:64], byteorder='little')
         c, d = int.from_bytes(pk[64:96], byteorder='little'), int.from_bytes(pk[96:128], byteorder='little')
-        pk = [(a, b), (c, d)]
+        pk = [self.field([a, b]), self.field([c, d])]
         ss = self.strategy.strategy_B(sk, pk)
         curve_ss_b = self.curve.coeff(ss)
-        x, y = curve_ss_b
-        x = x.re.x.to_bytes(length=32, byteorder='little')
-        y = y.im.x.to_bytes(length=32, byteorder='little')
+        x, y = curve_ss_b.re, curve_ss_b.im
+        x = x.x.to_bytes(length=32, byteorder='little')
+        y = y.x.to_bytes(length=32, byteorder='little')
         return x + y
 
     def derive_a(self, sk, pk):
         sk = int.from_bytes(sk, byteorder='little')
         a, b = int.from_bytes(pk[0:32], byteorder='little'), int.from_bytes(pk[32:64], byteorder='little')
         c, d = int.from_bytes(pk[64:96], byteorder='little'), int.from_bytes(pk[96:128], byteorder='little')
-        pk = [(a, b), (c, d)]
+        pk = [self.field([a, b]), self.field([c, d])]
         ss = self.strategy.strategy_A(sk, pk)
         curve_ss_a = self.curve.coeff(ss)
-        x, y = curve_ss_a
-        x = x.re.x.to_bytes(length=32, byteorder='little')
-        y = y.im.x.to_bytes(length=32, byteorder='little')
+        x, y = curve_ss_a.re, curve_ss_a.im
+        x = x.x.to_bytes(length=32, byteorder='little')
+        y = y.x.to_bytes(length=32, byteorder='little')
         return x + y
 
     def derive_b(self, sk, pk):
         sk = int.from_bytes(sk, byteorder='little')
         a, b = int.from_bytes(pk[0:32], byteorder='little'), int.from_bytes(pk[32:64], byteorder='little')
         c, d = int.from_bytes(pk[64:96], byteorder='little'), int.from_bytes(pk[96:128], byteorder='little')
-        pk = [(a, b), (c, d)]
+        pk = [self.field([a, b]), self.field([c, d])]
         ss = self.strategy.strategy_B(sk, pk)
         curve_ss_b = self.curve.coeff(ss)
-        x, y = curve_ss_b
-        x = x.re.x.to_bytes(length=32, byteorder='little')
-        y = y.im.x.to_bytes(length=32, byteorder='little')
+        x, y = curve_ss_b.re, curve_ss_b.im
+        x = x.x.to_bytes(length=32, byteorder='little')
+        y = y.x.to_bytes(length=32, byteorder='little')
         return x + y
 
 if __name__ == "__main__":

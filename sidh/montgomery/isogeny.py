@@ -10,7 +10,7 @@ from sidh.math import isequal, bitlength, hamming_weight, cswap
 from sidh.constants import ijk_data, parameters
 
 import numpy
-from sympy import floor, sqrt, sign
+from math import floor, sqrt
 
 def doc(s):
     class __doc(object):
@@ -389,9 +389,9 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
                     assert (2 * self.sJ - self.sI + 1) <= self.sI
                     (
                         self.ptree_hI['scaled'],
-                        ptree_hI['as'],
+                        self.ptree_hI['as'],
                     ) = self.poly_redc.reciprocal(
-                        ptree_hI['poly'][::-1], self.sI + 1, self.sI
+                        self.ptree_hI['poly'][::-1], self.sI + 1, self.sI
                     )
                     self.ptree_hI['reciprocal'], self.ptree_hI['a'] = (
                         list(
@@ -948,6 +948,9 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
 
         def kps(self, P, A, i):
 
+            if self.L[i] == 4:
+                return None
+
             if self.L[i] <= self.HYBRID_BOUND:
                 return self.kps_t(P, A, i)
             else:
@@ -955,11 +958,11 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
 
         def xisog(self, A, i):
 
+            if self.L[i] == 4:
+                return self.xisog_4(A)
+
             if self.L[i] <= self.HYBRID_BOUND:
-                if self.L[i] != 4:
-                    return self.xisog_t(A, i)
-                else:
-                    return self.xisog_4(A)
+                return self.xisog_t(A, i)
             else:
                 return self.xisog_s(A, i)
 
