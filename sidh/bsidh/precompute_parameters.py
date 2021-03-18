@@ -1,4 +1,7 @@
+import sys
 import click
+from pkg_resources import resource_filename
+
 from math import floor, sqrt, pi
 from sidh.common import attrdict
 from sidh.math import cswap
@@ -136,184 +139,190 @@ def bsidh_precompute_parameters(ctx):
     T_p = list(R)
     T_m = list(S)
 
-    parameters = dict()
-    for idx in range(0, np, 1):
-
-        # -------------------------------------------------------------
-        # Random kernel point
-        Tp = list(T_p)
-        for i in range(0, np, 1):
-            if i != idx:
-                Tp = xmul(Tp, A, i)
-
-        # -------------------------------------------------------------
-        # Parameters sJ and sI correspond with the parameters b and b' from example 4.12 of https://eprint.iacr.org/2020/341
-        # These paramters are required in kps, xisog, and xEVAL
-        if L[idx] <= 4:
-            b = 0
-            c = 0
-        else:
-            b = int(floor(sqrt(L[idx] - 1) / 2.0))
-            c = int(floor((L[idx] - 1.0) / (4.0 * b)))
-
-        parameters[str(idx)] = []
-        b += 1
-        for j in range(0, int(floor(sqrt(pi * (b - 1)) / 1.0)), 1):
-
-            b -= 1
-            c = int(floor((L[idx] - 1.0) / (4.0 * b)))
-            set_parameters_velu(b, c, idx)
-
-            total_cost = [0, 0, 0]
+    original_stdout = sys.stdout # Save a reference to the original standard output
+    multievaluation = {True:'scaled', False:'unscaled'}[setting.multievaluation]
+    path = resource_filename('sidh', "data/ijk/" + algo.curve.name + '-' + multievaluation)
+    with open(path, 'w') as f:
+        sys.stdout = f # Change the standard output to the file we created.
+        parameters = dict()
+        for idx in range(0, np, 1):
 
             # -------------------------------------------------------------
-            # kps procedure
-            init_runtime_basefield()
-            kps(Tp, A, idx)
-            
-            total_cost[0] += algo.basefield.fpmul
-            total_cost[1] += algo.basefield.fpsqr
-            total_cost[2] += algo.basefield.fpadd
+            # Random kernel point
+            Tp = list(T_p)
+            for i in range(0, np, 1):
+                if i != idx:
+                    Tp = xmul(Tp, A, i)
 
             # -------------------------------------------------------------
-            # xisog
-            init_runtime_basefield()
-            Tp[0], A[0] = cswap(Tp[0], A[0], L[idx] == 4)
-            Tp[1], A[1] = cswap(Tp[1], A[1], L[idx] == 4)
-            B = xisog(A, idx)
-            Tp[0], A[0] = cswap(Tp[0], A[0], L[idx] == 4)
-            Tp[1], A[1] = cswap(Tp[1], A[1], L[idx] == 4)
-            
-            total_cost[0] += algo.basefield.fpmul
-            total_cost[1] += algo.basefield.fpsqr
-            total_cost[2] += algo.basefield.fpadd
-
-            # -------------------------------------------------------------
-            # xEVAL bench
-            init_runtime_basefield()
-            if setting.formula == 'tvelu' or (
-                setting.formula == 'hvelu' and L[idx] <= HYBRID_BOUND
-                ):
-                Tm = xeval(T_m, idx)
+            # Parameters sJ and sI correspond with the parameters b and b' from example 4.12 of https://eprint.iacr.org/2020/341
+            # These paramters are required in kps, xisog, and xEVAL
+            if L[idx] <= 4:
+                b = 0
+                c = 0
             else:
-                Tm = xeval(T_m, A)
-            
-            total_cost[0] += algo.basefield.fpmul
-            total_cost[1] += algo.basefield.fpsqr
-            total_cost[2] += algo.basefield.fpadd
+                b = int(floor(sqrt(L[idx] - 1) / 2.0))
+                c = int(floor((L[idx] - 1.0) / (4.0 * b)))
 
-            parameters[str(idx)].append((
-                b,
-                c,
-                [algo.basefield.fpmul, algo.basefield.fpsqr, algo.basefield.fpadd],
-                total_cost[0] + total_cost[1]
+            parameters[str(idx)] = []
+            b += 1
+            for j in range(0, int(floor(sqrt(pi * (b - 1)) / 1.0)), 1):
+
+                b -= 1
+                c = int(floor((L[idx] - 1.0) / (4.0 * b)))
+                set_parameters_velu(b, c, idx)
+
+                total_cost = [0, 0, 0]
+
+                # -------------------------------------------------------------
+                # kps procedure
+                init_runtime_basefield()
+                kps(Tp, A, idx)
+                
+                total_cost[0] += algo.basefield.fpmul
+                total_cost[1] += algo.basefield.fpsqr
+                total_cost[2] += algo.basefield.fpadd
+
+                # -------------------------------------------------------------
+                # xisog
+                init_runtime_basefield()
+                Tp[0], A[0] = cswap(Tp[0], A[0], L[idx] == 4)
+                Tp[1], A[1] = cswap(Tp[1], A[1], L[idx] == 4)
+                B = xisog(A, idx)
+                Tp[0], A[0] = cswap(Tp[0], A[0], L[idx] == 4)
+                Tp[1], A[1] = cswap(Tp[1], A[1], L[idx] == 4)
+                
+                total_cost[0] += algo.basefield.fpmul
+                total_cost[1] += algo.basefield.fpsqr
+                total_cost[2] += algo.basefield.fpadd
+
+                # -------------------------------------------------------------
+                # xEVAL bench
+                init_runtime_basefield()
+                if setting.formula == 'tvelu' or (
+                    setting.formula == 'hvelu' and L[idx] <= HYBRID_BOUND
+                    ):
+                    Tm = xeval(T_m, idx)
+                else:
+                    Tm = xeval(T_m, A)
+                
+                total_cost[0] += algo.basefield.fpmul
+                total_cost[1] += algo.basefield.fpsqr
+                total_cost[2] += algo.basefield.fpadd
+
+                parameters[str(idx)].append((
+                    b,
+                    c,
+                    [algo.basefield.fpmul, algo.basefield.fpsqr, algo.basefield.fpadd],
+                    total_cost[0] + total_cost[1]
+                    )
                 )
-            )
 
-        if L[idx] <= 4:
-            parameters[str(idx)] = (0, 0, None, None)
-        else:
-            parameters[str(idx)] = min(
-                parameters[str(idx)], key=lambda tup: tup[3]
-            )
+            if L[idx] <= 4:
+                parameters[str(idx)] = (0, 0, None, None)
+            else:
+                parameters[str(idx)] = min(
+                    parameters[str(idx)], key=lambda tup: tup[3]
+                )
 
-        print(parameters[str(idx)][0], parameters[str(idx)][1])
+            print(parameters[str(idx)][0], parameters[str(idx)][1])
 
-    # --------------------------------------------------------------------------------------------------------------------
-    A = [ algo.curve.field(8), algo.curve.field(4)]
-    # Three point ladder: case (p - 1)
-    S = list(PB)
-    T = list(QB)
-    ST = list(PQB)
+        # --------------------------------------------------------------------------------------------------------------------
+        A = [ algo.curve.field(8), algo.curve.field(4)]
+        # Three point ladder: case (p - 1)
+        S = list(PB)
+        T = list(QB)
+        ST = list(PQB)
 
-    assert isinfinity(S) == False
-    assert isinfinity(T) == False
+        assert isinfinity(S) == False
+        assert isinfinity(T) == False
 
-    for i in range(np, np + nm, 1):
-        for idx in range(0, Em[i - np] - 1, 1):
-            S = xmul(S, A, i)
-            T = xmul(T, A, i)
-            ST = xmul(ST, A, i)
-
-    k = random.randint(0, p)
-    R = Ladder3pt(k, S, T, ST, A)
-    T_p = list(R)
-    T_m = list(S)
-    for idx in range(np, np + nm, 1):
-
-        # -------------------------------------------------------------
-        # Random kernel point
-        Tp = list(T_p)
         for i in range(np, np + nm, 1):
-            if i != idx:
-                Tp = xmul(Tp, A, i)
+            for idx in range(0, Em[i - np] - 1, 1):
+                S = xmul(S, A, i)
+                T = xmul(T, A, i)
+                ST = xmul(ST, A, i)
 
-        # -------------------------------------------------------------
-        # Parameters sJ and sI correspond with the parameters b and b' from example 4.12 of https://eprint.iacr.org/2020/341
-        # These paramters are required in kps, xisog, and xEVAL
-        if L[idx] == 3:
-            b = 0
-            c = 0
-        else:
-            b = int(floor(sqrt(L[idx] - 1) / 2.0))
-            c = int(floor((L[idx] - 1.0) / (4.0 * b)))
-
-        parameters[str(idx)] = []
-        b += 1
-        for j in range(0, int(floor(sqrt(pi * (b - 1)) / 1.0)), 1):
-
-            b -= 1
-            c = int(floor((L[idx] - 1.0) / (4.0 * b)))
-            set_parameters_velu(b, c, idx)
-
-            total_cost = [0, 0, 0]
-            # -------------------------------------------------------------
-            # kps procedure
-            init_runtime_basefield()
-            kps(Tp, A, idx)
-            
-            total_cost[0] += algo.basefield.fpmul
-            total_cost[1] += algo.basefield.fpsqr
-            total_cost[2] += algo.basefield.fpadd
+        k = random.randint(0, p)
+        R = Ladder3pt(k, S, T, ST, A)
+        T_p = list(R)
+        T_m = list(S)
+        for idx in range(np, np + nm, 1):
 
             # -------------------------------------------------------------
-            # xisog
-            init_runtime_basefield()
-            B = xisog(A, idx)
-            
-            total_cost[0] += algo.basefield.fpmul
-            total_cost[1] += algo.basefield.fpsqr
-            total_cost[2] += algo.basefield.fpadd
+            # Random kernel point
+            Tp = list(T_p)
+            for i in range(np, np + nm, 1):
+                if i != idx:
+                    Tp = xmul(Tp, A, i)
 
             # -------------------------------------------------------------
-            # xEVAL bench
-            init_runtime_basefield()
-            if setting.formula == 'tvelu' or (
-                setting.formula == 'hvelu' and L[idx] <= HYBRID_BOUND
-            ):
-                Tm = xeval(T_m, idx)
+            # Parameters sJ and sI correspond with the parameters b and b' from example 4.12 of https://eprint.iacr.org/2020/341
+            # These paramters are required in kps, xisog, and xEVAL
+            if L[idx] == 3:
+                b = 0
+                c = 0
             else:
-                Tm = xeval(T_m, A)
-            
-            total_cost[0] += algo.basefield.fpmul
-            total_cost[1] += algo.basefield.fpsqr
-            total_cost[2] += algo.basefield.fpadd
+                b = int(floor(sqrt(L[idx] - 1) / 2.0))
+                c = int(floor((L[idx] - 1.0) / (4.0 * b)))
 
-            parameters[str(idx)].append((
-                b,
-                c,
-                [algo.basefield.fpmul, algo.basefield.fpsqr, algo.basefield.fpadd],
-                total_cost[0] + total_cost[1]
+            parameters[str(idx)] = []
+            b += 1
+            for j in range(0, int(floor(sqrt(pi * (b - 1)) / 1.0)), 1):
+
+                b -= 1
+                c = int(floor((L[idx] - 1.0) / (4.0 * b)))
+                set_parameters_velu(b, c, idx)
+
+                total_cost = [0, 0, 0]
+                # -------------------------------------------------------------
+                # kps procedure
+                init_runtime_basefield()
+                kps(Tp, A, idx)
+                
+                total_cost[0] += algo.basefield.fpmul
+                total_cost[1] += algo.basefield.fpsqr
+                total_cost[2] += algo.basefield.fpadd
+
+                # -------------------------------------------------------------
+                # xisog
+                init_runtime_basefield()
+                B = xisog(A, idx)
+                
+                total_cost[0] += algo.basefield.fpmul
+                total_cost[1] += algo.basefield.fpsqr
+                total_cost[2] += algo.basefield.fpadd
+
+                # -------------------------------------------------------------
+                # xEVAL bench
+                init_runtime_basefield()
+                if setting.formula == 'tvelu' or (
+                    setting.formula == 'hvelu' and L[idx] <= HYBRID_BOUND
+                ):
+                    Tm = xeval(T_m, idx)
+                else:
+                    Tm = xeval(T_m, A)
+                
+                total_cost[0] += algo.basefield.fpmul
+                total_cost[1] += algo.basefield.fpsqr
+                total_cost[2] += algo.basefield.fpadd
+
+                parameters[str(idx)].append((
+                    b,
+                    c,
+                    [algo.basefield.fpmul, algo.basefield.fpsqr, algo.basefield.fpadd],
+                    total_cost[0] + total_cost[1]
+                    )
                 )
-            )
 
-        if L[idx] == 3:
-            parameters[str(idx)] = (0, 0, None, None)
-        else:
-            parameters[str(idx)] = min(
-                parameters[str(idx)], key=lambda tup: tup[3]
-            )
+            if L[idx] == 3:
+                parameters[str(idx)] = (0, 0, None, None)
+            else:
+                parameters[str(idx)] = min(
+                    parameters[str(idx)], key=lambda tup: tup[3]
+                )
 
-        print(parameters[str(idx)][0], parameters[str(idx)][1])
+            print(parameters[str(idx)][0], parameters[str(idx)][1])
+        sys.stdout = original_stdout # Reset the standard output to its original value
 
     return attrdict(name='bsidh-precompute-parameters', **locals())

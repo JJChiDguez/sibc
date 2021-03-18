@@ -1,4 +1,6 @@
+import sys
 import click
+from pkg_resources import resource_filename
 import numpy
 
 from sidh.common import attrdict, printl
@@ -38,81 +40,87 @@ def csidh_precompute_parameters(ctx):
         T_m, T_p = generators(A)
 
     assert len(L) == n
-    parameters = dict()
-    for idx in range(0, n, 1):
 
-        # -------------------------------------------------------------
-        # Random kernel point
-        Tp = list(T_p)
-        for i in range(0, n, 1):
-            if i != idx:
-                Tp = xmul(Tp, A, i)
-
-        # -------------------------------------------------------------
-        # Parameters sJ and sI correspond with the parameters b and b' from example 4.12 of https://eprint.iacr.org/2020/341
-        # These paramters are required in kps, xisog, and xeval
-        if L[idx] == 3:
-            b = 0
-            c = 0
-        else:
-            b = int(floor(sqrt(L[idx] - 1) / 2.0))
-            c = int(floor((L[idx] - 1.0) / (4.0 * b)))
-
-        b += 1
-        parameters[str(idx)] = []
-        for j in range(0, int(floor(sqrt(pi * (b - 1)) / 1.0)), 1):
-
-            b -= 1
-            c = int(floor((L[idx] - 1.0) / (4.0 * b)))
-            set_parameters_velu(b, c, idx)
-
-            total_cost = [0, 0, 0]
-            # -------------------------------------------------------------
-            # kps procedure
-            init_runtime()
-            kps(Tp, A, idx)
-            
-            total_cost[0] += algo.field.fpmul
-            total_cost[1] += algo.field.fpsqr
-            total_cost[2] += algo.field.fpadd
+    original_stdout = sys.stdout # Save a reference to the original standard output
+    multievaluation = {True:'scaled', False:'unscaled'}[setting.multievaluation]
+    path = resource_filename('sidh', "data/ijk/" + algo.curve.name + '-' + multievaluation)
+    with open(path, 'w') as f:
+        sys.stdout = f # Change the standard output to the file we created.
+        parameters = dict()
+        for idx in range(0, n, 1):
 
             # -------------------------------------------------------------
-            # xisog
-            init_runtime()
-            B = xisog(A, idx)
-            
-            total_cost[0] += algo.field.fpmul
-            total_cost[1] += algo.field.fpsqr
-            total_cost[2] += algo.field.fpadd
+            # Random kernel point
+            Tp = list(T_p)
+            for i in range(0, n, 1):
+                if i != idx:
+                    Tp = xmul(Tp, A, i)
 
             # -------------------------------------------------------------
-            # xeval bench
-            init_runtime()
-            if L[idx] <= HYBRID_BOUND:
-                Tm = xeval(T_m, idx)
+            # Parameters sJ and sI correspond with the parameters b and b' from example 4.12 of https://eprint.iacr.org/2020/341
+            # These paramters are required in kps, xisog, and xeval
+            if L[idx] == 3:
+                b = 0
+                c = 0
             else:
-                Tm = xeval(T_m, A)
-            
-            total_cost[0] += algo.field.fpmul
-            total_cost[1] += algo.field.fpsqr
-            total_cost[2] += algo.field.fpadd
+                b = int(floor(sqrt(L[idx] - 1) / 2.0))
+                c = int(floor((L[idx] - 1.0) / (4.0 * b)))
 
-            # assert(validate(B))
-            parameters[str(idx)].append(
-                (
-                    b,
-                    c,
-                    [algo.field.fpmul, algo.field.fpsqr, algo.field.fpadd],
-                    total_cost[0] + total_cost[1]
+            b += 1
+            parameters[str(idx)] = []
+            for j in range(0, int(floor(sqrt(pi * (b - 1)) / 1.0)), 1):
+
+                b -= 1
+                c = int(floor((L[idx] - 1.0) / (4.0 * b)))
+                set_parameters_velu(b, c, idx)
+
+                total_cost = [0, 0, 0]
+                # -------------------------------------------------------------
+                # kps procedure
+                init_runtime()
+                kps(Tp, A, idx)
+                
+                total_cost[0] += algo.field.fpmul
+                total_cost[1] += algo.field.fpsqr
+                total_cost[2] += algo.field.fpadd
+
+                # -------------------------------------------------------------
+                # xisog
+                init_runtime()
+                B = xisog(A, idx)
+                
+                total_cost[0] += algo.field.fpmul
+                total_cost[1] += algo.field.fpsqr
+                total_cost[2] += algo.field.fpadd
+
+                # -------------------------------------------------------------
+                # xeval bench
+                init_runtime()
+                if L[idx] <= HYBRID_BOUND:
+                    Tm = xeval(T_m, idx)
+                else:
+                    Tm = xeval(T_m, A)
+                
+                total_cost[0] += algo.field.fpmul
+                total_cost[1] += algo.field.fpsqr
+                total_cost[2] += algo.field.fpadd
+
+                # assert(validate(B))
+                parameters[str(idx)].append(
+                    (
+                        b,
+                        c,
+                        [algo.field.fpmul, algo.field.fpsqr, algo.field.fpadd],
+                        total_cost[0] + total_cost[1]
+                    )
                 )
-            )
 
-        if L[idx] == 3:
-            parameters[str(idx)] = (0, 0, None, None)
-        else:
-            parameters[str(idx)] = min(
-                parameters[str(idx)], key=lambda tup: tup[3]
-            )
+            if L[idx] == 3:
+                parameters[str(idx)] = (0, 0, None, None)
+            else:
+                parameters[str(idx)] = min(
+                    parameters[str(idx)], key=lambda tup: tup[3]
+                )
 
-        print(parameters[str(idx)][0], parameters[str(idx)][1])
+            print(parameters[str(idx)][0], parameters[str(idx)][1])
     return attrdict(name='csidh-precompute-parameters', **locals())
