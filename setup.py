@@ -22,17 +22,17 @@ with open("README.md", "r") as obj:
     long_description = obj.read()
 
 setuptools.setup(
-    name="sidh",
+    name="sibc",
     version=__version__,
     author="JJChiDguez",
     author_email="chidoys@gmail.com",
-    description=("Supersingular Isogeny Diffie Hellman (SIDH) constructions: csidh and bsidh using velusqrt formulae"),
+    description=("Supersingular Isogeny-Based Cryptography constructions: currently, csidh and bsidh are implemented by using traditional and velusqrt formulae on Montgomery curve x-only projective coordinates"),
     long_description=long_description,
     long_description_content_type="text/markdown",
     license="GPLv3",
     url="https://github.com/JJChiDguez/velusqrt",
     packages=setuptools.find_packages(),
-    keywords="csidh, bsidh, sidh, encryption",
+    keywords="csidh, bsidh, sibc, encryption",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GPL License",
@@ -41,16 +41,16 @@ setuptools.setup(
     python_requires=">=3.7",
     entry_points={
         "console_scripts": [
-            "sidh=sidh.__main__:main",
-            "sidh-bench=sidh.csidh.bench:main",
-            "sidh-test=sidh.csidh.test:main",
-            "sidh-plot-strategy=sidh.plot_strategy:main",
-            "sidh-precompute-parameters=sidh.csidh.parameters:main",
-            "sidh-bounds=sidh.csidh.bounds:main",
-            "sidh-header=sidh.csidh.header:main",
-            "sidh-sdacs=sidh.csidh.sdacs:main",
-            "sidh-ijk=sidh.csidh.ijk:main",
-            "sidh-csidh-util=sidh.csidh.util:main",
+            "sibc=sibc.__main__:main",
+            "sibc-bench=sibc.csidh.bench:main",
+            "sibc-test=sibc.csidh.test:main",
+            "sibc-plot-strategy=sibc.plot_strategy:main",
+            "sibc-precompute-parameters=sibc.csidh.parameters:main",
+            "sibc-bounds=sibc.csidh.bounds:main",
+            "sibc-header=sibc.csidh.header:main",
+            "sibc-sdacs=sibc.csidh.sdacs:main",
+            "sibc-ijk=sibc.csidh.ijk:main",
+            "sibc-csidh-util=sibc.csidh.util:main",
         ]
     },
     zip_safe=False,

@@ -5,25 +5,25 @@
 create_known_answer_script() {
     echo "echo 'starting test of $@'"
 
-    sk_a="$(sidh "$@" csidh-genkey)"
+    sk_a="$(sibc "$@" csidh-genkey)"
     echo "sk_a='$sk_a'"
-    pk_a="$(echo "$sk_a"|sidh "$@" csidh-pubkey -)"
+    pk_a="$(echo "$sk_a"|sibc "$@" csidh-pubkey -)"
     echo "pk_a='$pk_a'"
-    echo '[ "$pk_a" != "$(echo "$sk_a"|sidh '"$@"' csidh-pubkey -)" ] && fail=1 && echo "fail: pk($sk_a) -> $pk_a" || echo "OK: pk_a '"$@"'"'
+    echo '[ "$pk_a" != "$(echo "$sk_a"|sibc '"$@"' csidh-pubkey -)" ] && fail=1 && echo "fail: pk($sk_a) -> $pk_a" || echo "OK: pk_a '"$@"'"'
 
-    sk_b="$(sidh "$@" csidh-genkey)"
+    sk_b="$(sibc "$@" csidh-genkey)"
     echo "sk_b='$sk_b'"
-    pk_b="$(echo "$sk_b"|sidh "$@" csidh-pubkey -)"
+    pk_b="$(echo "$sk_b"|sibc "$@" csidh-pubkey -)"
     echo "pk_b='$pk_b'"
-    echo '[ "$pk_b" != "$(echo "$sk_b"|sidh '"$@"' csidh-pubkey -)" ] && fail=1 && echo "fail: pk($sk_b) -> $pk_b" || echo "OK: pk_b '"$@"'"'
+    echo '[ "$pk_b" != "$(echo "$sk_b"|sibc '"$@"' csidh-pubkey -)" ] && fail=1 && echo "fail: pk($sk_b) -> $pk_b" || echo "OK: pk_b '"$@"'"'
 
-    ss_a="$(echo "$sk_a"|sidh "$@" csidh-dh - "$pk_b")"
+    ss_a="$(echo "$sk_a"|sibc "$@" csidh-dh - "$pk_b")"
     echo "ss_a='$ss_a'"
-    echo '[ "$ss_a" != "$(echo "$sk_a"|sidh '"$@"' csidh-dh - "$pk_b")" ] && fail=1 && echo "fail: dh($sk_a,$pk_b) -> $ss_a" || echo "OK: ss_a '"$@"'"'
+    echo '[ "$ss_a" != "$(echo "$sk_a"|sibc '"$@"' csidh-dh - "$pk_b")" ] && fail=1 && echo "fail: dh($sk_a,$pk_b) -> $ss_a" || echo "OK: ss_a '"$@"'"'
 
-    ss_b="$(echo "$sk_b"|sidh "$@" csidh-dh - "$pk_a")"
+    ss_b="$(echo "$sk_b"|sibc "$@" csidh-dh - "$pk_a")"
     echo "ss_b='$ss_b'"
-    echo '[ "$ss_b" != "$(echo "$sk_b"|sidh '"$@"' csidh-dh - "$pk_a")" ] && fail=1 && echo "fail: dh($sk_b,$pk_a) -> $ss_b" || echo "OK: ss_b '"$@"'"'
+    echo '[ "$ss_b" != "$(echo "$sk_b"|sibc '"$@"' csidh-dh - "$pk_a")" ] && fail=1 && echo "fail: dh($sk_b,$pk_a) -> $ss_b" || echo "OK: ss_b '"$@"'"'
 
     [ "$ss_a" != "$ss_b" ] && echo "fail: $@" && exit 1
 

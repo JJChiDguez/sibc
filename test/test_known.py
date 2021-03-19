@@ -1,6 +1,6 @@
 from unittest import TestCase
-from sidh.csidh import CSIDH
-from sidh.common import attrdict
+from sibc.csidh import CSIDH
+from sibc.common import attrdict
 
 
 class known_df_p512(object):

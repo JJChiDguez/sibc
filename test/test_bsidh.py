@@ -4,7 +4,7 @@ and multievaluation.
 """
 
 from unittest import TestCase
-from sidh.bsidh import BSIDH
+from sibc.bsidh import BSIDH
 
 PRIMES = ('b2',)
 

@@ -12,7 +12,7 @@ tvelu, you could run this:
 """
 
 from unittest import TestCase
-from sidh.csidh import CSIDH
+from sibc.csidh import CSIDH
 
 PRIMES = ('p512', 'p1024', 'p1792')
 
