@@ -7,3 +7,4 @@ build/
 dist/
 sibc.egg-info/
 *.swp
+sibc-installed.txt
