@@ -8,3 +8,5 @@ dist/
 sibc.egg-info/
 *.swp
 sibc-installed.txt
+deb_dist/*
+sibc-*.*.*.tar.gz
