@@ -1,4 +1,3 @@
-fix tests for bsidh
 remove file io from montgomery.py
 fork fp.py into benchmarking and non-benchmarking versions?
 use pkg_resources for finding data files
@@ -6,3 +5,6 @@ consider and implement a modular fp backend:
 - https://pypi.org/project/pyfinite/
 - https://pypi.org/project/gmpy2/
 - others?
+integrate bsidh key validation
+remove from bsidh public key the curve (it can be computed from given three points)
+fix plot_strategy
