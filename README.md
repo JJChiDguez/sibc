@@ -1,13 +1,10 @@
-# On the Velu's formulae and its applications to CSIDH and BSIDH constant-time implementations
+# **S**upersingular **I**sogeny-**B**ased **C**ryptography constructions
 
-At a combined computational expense of about *6l* field operations, Velu's
-formulae are used to construct and evaluate degree-*l* isogenies in the vast
-majority of isogeny-based primitive implementations. Recently, Bernstein, de
-Feo, Leroux and Smith introduced an new approach for solving this same problem
-at a reduced cost of just *O(sqrt(l))* field operations. In this work, we
-present a concrete computational analysis of these novel formulae, along with
-several algorithmic tricks that helped us to slightly, but noticeably, reduce
-their practical cost.
+This repository includes a python-code library named **sibc**, which allows an user-
+friendly usage.
+
+The current version of **sibc** library has integrated CSIDH and B-SIDH schemes using
+traditional and velusqrt formulae on Montgomery curve x-only projective coordinates.
 
 ## Installation 
 
@@ -18,7 +15,7 @@ sudo python3 setup.py install
 
 For development:
 ```
-sudo pip install -e . 
+sudo pip3 install -e . 
 ```
 
 ### Debian package build
@@ -231,10 +228,14 @@ this to other primes is straight-forward.
 
 ## Remarks
 
-The primes labeled as `b2`, `b3`, `b5`, and `b6` correspond with the examples
-2, 3, 5, and 6 of , respectively. In particular, we focused on primes such that
-`p = 3 mod 4`. Additionally, the product and squaring in `F_p[i]/(i^2 + 1)`
-were implemented using 3 and 2 products in `F_p`, respectively.
+The primes labeled as `b2`, `b3`, `b5`, and `b6` correspond with the examples 2, 3, 5, and 6 from
+[B-SIDH paper](https://eprint.iacr.org/2019/1145), respectively. In particular,  `sv` denotes the
+prime number given in [velusqrt paper](https://eprint.iacr.org/2020/341). The field airthmetic is
+centered on primes `p = 3 mod 4`. Moreover, multiplying and squaring in `GF(p)[u]/(u^2 + 1)` have
+a cost of 3 and 2 multiplications in `GF(p)`, respectively.
+
+The current implementation does not have implemented the B-SIDH key validation, it will be included
+in the next library version.
 
 ## Changes
 
@@ -242,11 +243,16 @@ Significant changes are listed in the [CHANGELOG](CHANGELOG.md) file.
 
 ## Authors
 
-1. **Gora Adj** <gora.adj@gmail.com,gora.adj@udl.cat>,
-2. **_Jesús-Javier Chi-Domínguez_** <jesus.chidominguez@tuni.fi>, <chidoys@gmail.com>, <jjchi@computacion.cs.cinvestav.mx>, and
+1. **Gora Adj** <gora.adj@gmail.com>, <gora.adj@udl.cat>;
+2. **_Jesús-Javier Chi-Domínguez_** <jesus.chidominguez@tuni.fi>, <chidoys@gmail.com>, <jjchi@computacion.cs.cinvestav.mx>; and
 3. **_Francisco Rodríguez-Henríquez_** <francisco@cs.cinvestav.mx>.
 
-Additional contributors are listed in the [CONTRIBUTORS](CONTRIBUTORS) file.
+### Main contributors
+
+1. Jacob Appelbaum <j.appelbaum@tue.nl>; and
+2. Leif Ryge <leif@synthesize.us>.
+
+All contributors are listed in the [CONTRIBUTORS](CONTRIBUTORS) file.
 
 ## License
 
@@ -255,9 +261,7 @@ This project is licensed under the GNU general public license - see the
 
 ## Funding
 
-This project has received funding from the European Research Council (ERC)
-under the European Union's Horizon 2020 research and innovation programme
-(grant agreement No 804476). 
+This project has initially received funding from the European Research Council (ERC) under the
+European Union's Horizon 2020 research and innovation programme (grant agreement No 804476).
 
-The third author received partial funds from the Mexican Science council
-CONACyT project 313572.
+The third author received partial funds from the Mexican Science council CONACyT project 313572.
