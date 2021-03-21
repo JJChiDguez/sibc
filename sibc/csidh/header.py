@@ -22,79 +22,52 @@ def csidh_header(ctx):
 
     # ==========================================================================
 
-    if len(set(m)) > 1:
+    if algo.formula.name != 'tvelu':
+        set_parameters_velu = algo.formula.set_parameters_velu
+
+    temporal_m = list(set(m))
+    if len(temporal_m) > 1:
         # Maximum number of degree-(l_i) isogeny constructions is m_i (different for each l_i)
-        LABEL_m = 'different_bounds'
+        bounds = '-diffbounds'
     else:
         # Maximum number of degree-(l_i) isogeny constructions is m (the same for each l_i)
-        LABEL_m = 'with_same_bounds'
+        bounds = '-samebounds'
 
-    if setting.tuned:
-        verb = '-suitable'
-    else:
-        verb = '-classical'
+    # List of Small Odd Primes, L := [l_0, ..., l_{n-1}]
+    m_prime = [geometric_serie(m[k], L[k]) for k in range(n)]
+    r_out, L_out, R_out = rounds(m_prime[::-1], n)
+    for j in range(0, len(r_out), 1):
 
-    try:
+        R_out[j] = list([L[::-1][k] for k in R_out[j]])
+        L_out[j] = list([L[::-1][k] for k in L_out[j]])
 
-        # List of Small Odd Primes, L := [l_0, ..., l_{n-1}]
-        m_prime = [geometric_serie(m[k], L[k]) for k in range(n)]
-        r_out, L_out, R_out = rounds(m_prime[::-1], n)
-        for j in range(0, len(r_out), 1):
+    file_path = (
+        "data/strategies/"
+        + 'csidh'
+        + '-'
+        + setting.prime
+        + '-'
+        + setting.style
+        + '-e'
+        + setting.exponent
+        + bounds
+        + '-'
+        + setting.formula
+        + '-'
+        + algo.formula.multievaluation_name
+        + algo.formula.tuned_name
+    )
+    file_path = resource_filename('sibc', file_path)
+    f = open(file_path)
+    print("// Strategies to be read from a file")
+    S_out = []
+    for i in range(0, len(r_out), 1):
 
-            R_out[j] = list([L[::-1][k] for k in R_out[j]])
-            L_out[j] = list([L[::-1][k] for k in L_out[j]])
+        tmp = f.readline()
+        tmp = [int(b) for b in tmp.split()]
+        S_out.append(tmp)
 
-        file_path = (
-            "data/strategies/"
-            + setting.algorithm
-            + '-'
-            + setting.prime
-            + '-'
-            + setting.style
-            + '-'
-            + setting.formula
-            + '-'
-            + LABEL_m
-            + verb
-        )
-        file_path = resource_filename('sibc', file_path)
-        f = open(file_path)
-        # print("// Strategies to be read from a file")
-        S_out = []
-        for i in range(0, len(r_out), 1):
-
-            tmp = f.readline()
-            tmp = [int(b) for b in tmp.split()]
-            S_out.append(tmp)
-
-        f.close()
-
-    except IOError:
-
-        # print("// Strategies to be computed")
-        C_out, L_out, R_out, S_out, r_out = strategy_block_cost(
-            L[::-1], m[::-1]
-        )
-        file_path = (
-            "data/strategies/"
-            + setting.algorithm
-            + '-'
-            + setting.prime
-            + '-'
-            + setting.style
-            + '-'
-            + setting.formula
-            + '-'
-            + LABEL_m
-            + verb
-        )
-        file_path = resource_filename('sibc', file_path)
-        f = open(file_path, 'w')
-        for i in range(0, len(r_out)):
-
-            f.writelines(' '.join([str(tmp) for tmp in S_out[i]]) + '\n')
-
-        f.close()
+    f.close()
 
     if (len(set(m)) == 1) or ((len(set(m)) == 2) and (0 in set(m))):
         L_out = list([L_out[0]])
