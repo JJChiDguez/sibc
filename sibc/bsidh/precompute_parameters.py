@@ -11,6 +11,7 @@ from random import SystemRandom
 @click.command()
 @click.pass_context
 def bsidh_precompute_parameters(ctx):
+    """ Precomputation of tuned velusqrt parameters """
     algo = ctx.meta['sibc.kwargs']['algo']
     setting = ctx.meta['sibc.kwargs']
     p = algo.params.p

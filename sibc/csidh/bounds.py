@@ -10,6 +10,7 @@ from sibc.constants import tmp_dir
 @click.command()
 @click.pass_context
 def csidh_bounds(ctx):
+    """ Greedy-based search of optimal exponents """
     algo = ctx.meta['sibc.kwargs']['algo']
     setting = ctx.meta['sibc.kwargs']
     assert setting.uninitialized, 'option -u (--uninitialized) is required!'

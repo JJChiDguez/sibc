@@ -6,6 +6,7 @@ from sibc.common import attrdict
 @click.command()
 @click.pass_context
 def csidh_test(ctx):
+    """ GF(p)-operation cost of kps, xisog, and xeval """
     algo = ctx.meta['sibc.kwargs']['algo']
     setting = ctx.meta['sibc.kwargs']
     generators = algo.curve.generators

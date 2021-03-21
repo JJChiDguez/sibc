@@ -7,6 +7,7 @@ from sibc.constants import strategy_data
 @click.command()
 @click.pass_context
 def bsidh_main(ctx):
+    """ Random instance example of a key-exchange """
     algo = ctx.meta['sibc.kwargs']['algo']
     setting = ctx.meta['sibc.kwargs']
     coeff = algo.curve.coeff

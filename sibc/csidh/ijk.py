@@ -9,6 +9,7 @@ from sibc.math import isequal, bitlength
 @click.command()
 @click.pass_context
 def csidh_ijk(ctx):
+    """ Velusqrt parameters as C-code headers files """
     algo = ctx.meta['sibc.kwargs']['algo']
     setting = ctx.meta['sibc.kwargs']
     L = algo.params.L

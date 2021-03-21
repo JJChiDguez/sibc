@@ -9,6 +9,7 @@ from pkg_resources import resource_filename
 @click.command()
 @click.pass_context
 def csidh_header(ctx):
+    """ Optimal strategies as C-code headers files """
     algo = ctx.meta['sibc.kwargs']['algo']
     setting = ctx.meta['sibc.kwargs']
     L = algo.params.L

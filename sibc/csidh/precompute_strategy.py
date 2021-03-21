@@ -7,6 +7,7 @@ from sibc.constants import strategy_data
 @click.command()
 @click.pass_context
 def csidh_precompute_strategy(ctx):
+    """ Precomputation of optimal strategies """
     algo = ctx.meta['sibc.kwargs']['algo']
     setting = ctx.meta['sibc.kwargs']
     coeff = algo.curve.coeff

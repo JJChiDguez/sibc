@@ -7,6 +7,7 @@ from sibc.common import attrdict
 @click.command()
 @click.pass_context
 def bsidh_precompute_strategy(ctx):
+    """ Precomputation of optimal strategies """
     algo = ctx.meta['sibc.kwargs']['algo']
     setting = ctx.meta['sibc.kwargs']
     SIDp = algo.strategy.SIDp

@@ -11,6 +11,7 @@ from math import floor, sqrt, pi
 @click.command()
 @click.pass_context
 def csidh_precompute_parameters(ctx):
+    """ Precomputation of tuned velusqrt parameters """
     algo = ctx.meta['sibc.kwargs']['algo']
     setting = ctx.meta['sibc.kwargs']
     L = algo.params.L

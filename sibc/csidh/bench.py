@@ -10,6 +10,7 @@ from sibc.constants import strategy_data
 @click.command()
 @click.pass_context
 def csidh_bench(ctx):
+    """ Average GF(p)-operation cost of a GAE """
     algo = ctx.meta['sibc.kwargs']['algo']
     setting = ctx.meta['sibc.kwargs']
     coeff = algo.curve.coeff
