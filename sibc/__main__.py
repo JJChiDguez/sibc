@@ -25,7 +25,7 @@ from sibc.constants import parameters
 
 
 @click.version_option()
-@click.group(short_help="sidh utility")
+@click.group(short_help="sibc utility")
 @click.option(
     "-p",
     "--prime",
