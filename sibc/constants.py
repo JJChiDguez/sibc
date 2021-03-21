@@ -112,7 +112,6 @@ def bsidh_get_sop_from_disk(prime):
 
 parameters = dict(
     csidh=dict(
-        A=[2, 4],
         p512=dict(
             wd1=dict(
                 m=
@@ -124,9 +123,6 @@ parameters = dict(
                     3, ]
                 ,
                 # fmt: on
-                sigma=5,
-                kappa=11,
-                delta=1,
             ),
             wd2=dict(
                 m=
@@ -137,9 +133,6 @@ parameters = dict(
                     3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, ]
                 ,
                 # fmt: on
-                sigma=3,
-                kappa=8,
-                delta=2,
             ),
             df=dict(
                 m=
@@ -151,9 +144,6 @@ parameters = dict(
                     3, ]
                 ,
                 # fmt: on
-                sigma=5,
-                kappa=11,
-                delta=1,
             ),
             **csidh_get_sop_from_disk('p512')
         ),
@@ -170,9 +160,6 @@ parameters = dict(
                     1, 1, 1, ]
                 ,
                 # fmt: on
-                sigma=5,
-                kappa=4,
-                delta=1,
             ),
             wd2=dict(
                 m=
@@ -186,9 +173,6 @@ parameters = dict(
                     1, 1, 1, ]
                 ,
                 # fmt: on
-                sigma=3,
-                kappa=5,
-                delta=2,
             ),
             df=dict(
                 m=
@@ -202,9 +186,6 @@ parameters = dict(
                     1, 1, 1, ]
                 ,
                 # fmt: on
-                sigma=5,
-                kappa=4,
-                delta=1,
             ),
             **csidh_get_sop_from_disk('p1024')
         ),
@@ -224,16 +205,10 @@ parameters = dict(
                     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ]
                 ,
                 # fmt: on
-                sigma=5,
-                kappa=4,
-                delta=1,
             ),
             wd2=dict(
                 m=[1]
                 * 207,  # 207 is the n value returned by csidh_get_sop_from_disk('p1792')
-                sigma=3,
-                kappa=5,
-                delta=2,
             ),
             df=dict(
                 m=
@@ -250,17 +225,25 @@ parameters = dict(
                     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ]
                 ,
                 # fmt: on
-                sigma=5,
-                kappa=4,
-                delta=1,
             ),
             **csidh_get_sop_from_disk('p1792')
         ),
     ),
     bsidh=dict(
-        A=[[0x8, 0x0], [0x4, 0x0]],
         b2=dict(
             **bsidh_get_sop_from_disk('b2')
+        ),
+        b3=dict(
+            **bsidh_get_sop_from_disk('b3')
+        ),
+        b5=dict(
+            **bsidh_get_sop_from_disk('b5')
+        ),
+        b6=dict(
+            **bsidh_get_sop_from_disk('b6')
+        ),
+        s1=dict(
+            **bsidh_get_sop_from_disk('s1')
         ),
     ),
 )

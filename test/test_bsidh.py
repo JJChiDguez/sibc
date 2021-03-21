@@ -6,7 +6,7 @@ and multievaluation.
 from unittest import TestCase
 from sibc.bsidh import BSIDH
 
-PRIMES = ('b2',)
+PRIMES = ('b2', 'b3', 'b5', 'b6', 's1')
 
 FORMULAS = ('tvelu', 'svelu', 'hvelu')
 
@@ -56,13 +56,13 @@ for prime in PRIMES:
                     verbose = False
 
                 globals()[
-                    'bsidh_strategy_'
+                    'bsidh_strategy_evaluation_'
                     + '_'.join(
                         [
                             prime,
                             formula,
-                            ('classical', 'suitable')[tuned],
-                            ('no-multievaluation', 'multievaluation')[
+                            ('', 'tuned')[tuned],
+                            ('unscaled', 'scaled')[
                                 multievaluation
                             ],
                         ]

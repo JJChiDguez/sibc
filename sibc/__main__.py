@@ -30,7 +30,7 @@ from sibc.constants import parameters
     "-p",
     "--prime",
     type=click.Choice(
-        ['b2', 'b3', 'b5', 'b6', 'p1024', 'p1792', 'p512', 'sv']
+        ['b2', 'b3', 'b5', 'b6', 'p1024', 'p1792', 'p512', 's1']
     ),
     default="p512",
     show_default=True,

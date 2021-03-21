@@ -14,25 +14,32 @@ tvelu, you could run this:
 from unittest import TestCase
 from sibc.csidh import CSIDH
 
-PRIMES = ('p512', 'p1024', 'p1792')
+configuration=(
+    ('p512', 'df', '10'),
+    ('p512', 'wd1', '10'),
+    ('p512', 'wd2', '5'),
+    ('p1024', 'df', '3'),
+    ('p1024', 'wd1', '3'),
+    ('p1024', 'wd2', '2'),
+    ('p1792', 'df', '2'),
+    ('p1792', 'wd1', '2'),
+    ('p1792', 'wd2', '1'),
+)
 
 FORMULAS = ('tvelu', 'svelu', 'hvelu')
-
-STYLES = ('df', 'wd1', 'wd2')
-
 
 class CSIDH_gae_test_base(object):
     def setUp(self):
         self.c = CSIDH(
             'montgomery',
-            self.prime,
-            self.formula,
-            self.style,
-            self.exponent,
-            self.tuned,
-            self.uninitialized,
-            self.multievaluation,
-            self.verbose,
+            prime=self.prime,
+            formula=self.formula,
+            style=self.style,
+            exponent=self.exponent,
+            tuned=self.tuned,
+            uninitialized=self.uninitialized,
+            multievaluation=self.multievaluation,
+            verbose=self.verbose,
         )
 
     def test_group_action_with_random_exponents(self):
@@ -46,39 +53,38 @@ class CSIDH_gae_test_base(object):
         self.assertEqual(self.c.curve.coeff(ss_a), self.c.curve.coeff(ss_b))
 
 
-for prime in PRIMES:
+for prime, style, exponent in configuration:
     for formula in FORMULAS:
-        for style in STYLES:
-            for tuned in (False, True):
-                for multievaluation in (False, True):
-                    if formula == "tvelu" and (tuned or multievaluation):
-                        # tvelu doesn't have tuned or multievaluation modes
-                        continue
+        for tuned in (False, True):
+            for multievaluation in (False, True):
+                if formula == "tvelu" and (tuned or multievaluation):
+                    # tvelu doesn't have tuned or multievaluation modes
+                    continue
 
-                    class cls(CSIDH_gae_test_base, TestCase):
-                        formula = formula
-                        style = style
-                        prime = prime
-                        tuned = tuned
-                        exponent = 10
-                        uninitialized = False
-                        multievaluation = multievaluation
-                        verbose = False
+                class cls(CSIDH_gae_test_base, TestCase):
+                    prime = prime
+                    formula = formula
+                    style = style
+                    exponent = exponent
+                    tuned = tuned
+                    uninitialized = False
+                    multievaluation = multievaluation
+                    verbose = False
 
-                    globals()[
-                        'csidh_gae_'
-                        + '_'.join(
-                            [
-                                prime,
-                                formula,
-                                style,
-                                ('classical', 'suitable')[tuned],
-                                ('no-multievaluation', 'multievaluation')[
-                                    multievaluation
-                                ],
-                            ]
-                        )
-                    ] = cls
+                globals()[
+                    'csidh_gae_'
+                    + '_'.join(
+                        [
+                            prime,
+                            formula,
+                            style,
+                            ('', 'tuned')[tuned],
+                            ('unscaled', 'scaled')[
+                                multievaluation
+                            ],
+                        ]
+                    )
+                ] = cls
 del cls
 assert (
     len([c for c in dir() if c.startswith('csidh_gae')]) == 81

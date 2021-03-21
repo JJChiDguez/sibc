@@ -45,14 +45,14 @@ class known_df_p512(object):
     def setUp(self):
         self.csidh = CSIDH(
             'montgomery',
-            self.prime,
-            self.formula,
-            self.style,
-            self.tuned,
-            self.uninitialized,
-            self.exponent,
-            self.multievaluation,
-            self.verbose,
+            prime=self.prime,
+            formula=self.formula,
+            style=self.style,
+            exponent=self.exponent,
+            tuned=self.tuned,
+            uninitialized=self.uninitialized,
+            multievaluation=self.multievaluation,
+            verbose=self.verbose,
         )
 
         self.coeff = self.csidh.curve.coeff
