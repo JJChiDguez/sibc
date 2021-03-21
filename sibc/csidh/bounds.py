@@ -12,6 +12,8 @@ from sibc.constants import tmp_dir
 def csidh_bounds(ctx):
     algo = ctx.meta['sibc.kwargs']['algo']
     setting = ctx.meta['sibc.kwargs']
+    assert setting.uninitialized, 'option -u (--uninitialized) is required!'
+    
     L = algo.params.L
     n = algo.params.n
     security = algo.gae.security

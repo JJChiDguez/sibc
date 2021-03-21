@@ -33,15 +33,10 @@ def csidh_bench(ctx):
     temporal_m = list(set(m))
     if len(temporal_m) > 1:
         # Maximum number of degree-(l_i) isogeny constructions is m_i (different for each l_i)
-        LABEL_m = 'different_bounds'
+        bounds = '-diffbounds'
     else:
         # Maximum number of degree-(l_i) isogeny constructions is m (the same for each l_i)
-        LABEL_m = 'with_same_bounds'
-
-    if setting.tuned:
-        verb = '-suitable'
-    else:
-        verb = '-classical'
+        bounds = '-samebounds'
 
     # List of Small Odd Primes, L := [l_0, ..., l_{n-1}]
     m_prime = [geometric_serie(m[k], L[k]) for k in range(n)]
@@ -53,42 +48,31 @@ def csidh_bench(ctx):
 
     file_path = (
         "data/strategies/"
-        + setting.algorithm
+        + 'csidh'
         + '-'
         + setting.prime
         + '-'
         + setting.style
+        + '-e'
+        + setting.exponent
+        + bounds
         + '-'
         + setting.formula
         + '-'
-        + LABEL_m
-        + verb
+        + algo.formula.multievaluation_name
+        + algo.formula.tuned_name
     )
     file_path = resource_filename('sibc', file_path)
-    try:
-        f = open(file_path)
-        print("// Strategies to be read from a file")
-        S_out = []
-        for i in range(0, len(r_out), 1):
+    f = open(file_path)
+    print("// Strategies to be read from a file")
+    S_out = []
+    for i in range(0, len(r_out), 1):
 
-            tmp = f.readline()
-            tmp = [int(b) for b in tmp.split()]
-            S_out.append(tmp)
+        tmp = f.readline()
+        tmp = [int(b) for b in tmp.split()]
+        S_out.append(tmp)
 
-        f.close()
-
-    except IOError:
-
-        print("// Strategies to be computed")
-        C_out, L_out, R_out, S_out, r_out = strategy_block_cost(
-            L[::-1], m[::-1]
-        )
-        f = open(file_path, 'w')
-        for i in range(0, len(r_out)):
-
-            f.writelines(' '.join([str(tmp) for tmp in S_out[i]]) + '\n')
-
-        f.close()
+    f.close()
 
     print(
         "// The running time is assuming S = %1.2f x M and a = %1.2f x M, and giving in millions of field operations.\n"

@@ -64,29 +64,15 @@ def csidh_precompute_strategy(ctx):
         + tuned
     )
     file_path = resource_filename('sibc', file_path)
-    try:
-        f = open(file_path)
-        print("// Strategies to be read from a file")
-        S_out = []
-        for i in range(0, len(r_out), 1):
+    print("// Strategies to be computed")
+    C_out, L_out, R_out, S_out, r_out = strategy_block_cost(
+        L[::-1], m[::-1]
+    )
+    f = open(file_path, 'w')
+    for i in range(0, len(r_out)):
 
-            tmp = f.readline()
-            tmp = [int(b) for b in tmp.split()]
-            S_out.append(tmp)
+        f.writelines(' '.join([str(tmp) for tmp in S_out[i]]) + '\n')
 
-        f.close()
-
-    except IOError:
-
-        print("// Strategies to be computed")
-        C_out, L_out, R_out, S_out, r_out = strategy_block_cost(
-            L[::-1], m[::-1]
-        )
-        f = open(file_path, 'w')
-        for i in range(0, len(r_out)):
-
-            f.writelines(' '.join([str(tmp) for tmp in S_out[i]]) + '\n')
-
-        f.close()
+    f.close()
 
     return attrdict(name='csidh-precompute-strategy', **locals())

@@ -33,14 +33,16 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
 
         def __init__(self, curve, tuned, multievaluation):
             self.name = name
+            self.multievaluation_name = {True:'scaled', False:'unscaled'}[multievaluation]
+            self.tuned_name = {True:'-tuned', False:''}[tuned]
+            self.uninitialized = uninitialized
 
             # Get cost of the isogeny constructions and evaluations
             if tuned:
                 # Reading tuned velusqrt parameters from the stored data
                 self.sI_list = []
                 self.sJ_list = []
-                self.multieval = {True:'scaled', False:'unscaled'}[multievaluation]
-                path = resource_filename('sibc', "data/ijk/" + curve.name + '-' + self.multieval)
+                path = resource_filename('sibc', "data/ijk/" + curve.name + '-' + self.multievaluation_name)
                 f = open(path)
 
                 for i in range(0, curve.n, 1):

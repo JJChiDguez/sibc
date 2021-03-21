@@ -59,9 +59,20 @@ class Strategy(object):
         self.PA_b, self.QA_b, self.PQA_b = None, None, None
         self.PB_a, self.QB_a, self.PQB_a = None, None, None
 
-        f_name = 'data/strategies/bsidh-'+prime+'-'+formula.name+('-classical','-suitable')[self.tuned]
-        try:
-            f = open(resource_filename('sibc', f_name))
+        if not formula.uninitialized:
+            file_path = (
+                "data/strategies/"
+                + 'bsidh'
+                + '-'
+                + prime
+                + '-'
+                + formula.name
+                + '-'
+                + formula.multievaluation_name
+                + formula.tuned_name
+            )
+            file_path = resource_filename('sibc', file_path)
+            f = open(file_path)
             # Corresponding to the list of Small Isogeny Degree, Lp := [l_0, ...,
             # l_{n-1}] [We need to include case l=2 and l=4]
             tmp = f.readline()
@@ -72,17 +83,6 @@ class Strategy(object):
             tmp = f.readline()
             tmp = [int(b) for b in tmp.split()]
             self.Sm = list(tmp)
-            f.close()
-        except IOError:
-            print("// Strategies to be computed")
-            # List of Small Isogeny Degree, Lp := [l_0, ..., l_{n-1}] [We need to
-            # include case l=2 and l=4]
-            self.Sp, Cp = dynamic_programming_algorithm(self.SIDp[::-1], len(self.SIDp))
-            # List of Small Isogeny Degree, Lm := [l_0, ..., l_{n-1}]
-            self.Sm, Cm = dynamic_programming_algorithm(self.SIDm[::-1], len(self.SIDm))
-            f = open(f_name, 'w')
-            f.writelines(' '.join([str(tmp) for tmp in self.Sp]) + '\n')
-            f.writelines(' '.join([str(tmp) for tmp in self.Sm]) + '\n')
             f.close()
         ######################################################################################################################
 
