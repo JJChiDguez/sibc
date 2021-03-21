@@ -16,6 +16,7 @@ def write_list_of_lists_of_ints_to_file(path, data):
     type=str,
     default=None,
     show_default=True,
+    help='Prime number description given as either csidh or bsidh format (see README.md file for more details)',
 )
 @click.option(
     "-a",

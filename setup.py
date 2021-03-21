@@ -42,15 +42,7 @@ setuptools.setup(
     entry_points={
         "console_scripts": [
             "sibc=sibc.__main__:main",
-            "sibc-bench=sibc.csidh.bench:main",
-            "sibc-test=sibc.csidh.test:main",
-            "sibc-plot-strategy=sibc.plot_strategy:main",
-            "sibc-precompute-parameters=sibc.csidh.parameters:main",
-            "sibc-bounds=sibc.csidh.bounds:main",
-            "sibc-header=sibc.csidh.header:main",
-            "sibc-sdacs=sibc.csidh.sdacs:main",
-            "sibc-ijk=sibc.csidh.ijk:main",
-            "sibc-csidh-util=sibc.csidh.util:main",
+            "sibc-precompute-sdacs=sibc.precompute_sdacs:main", 
         ]
     },
     zip_safe=False,
