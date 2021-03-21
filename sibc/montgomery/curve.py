@@ -25,14 +25,6 @@ def filename_to_list_of_lists_of_ints(path):
         res = []
     return res
 
-
-def write_list_of_lists_of_ints_to_file(path, data):
-    with open(path, 'w') as fh:
-        for line in data:
-            fh.writelines(' '.join(str(v) for v in line))
-        fh.writelines('')
-
-
 # MontgomeryCurve class determines the family of supersingular elliptic curves over GF(p)
 def MontgomeryCurve(prime):
 
@@ -72,59 +64,10 @@ def MontgomeryCurve(prime):
     else:
         assert False, "only CSIDH and B-SIDH are currently implemented"
 
-    def generate_sdacs(L):
-        return list(
-            map(sdac, L)
-        )  # Shortest Differential Addition Chains for each small odd prime l in L
-
-    def measure(x):
-        """
-        Field additions, multiplications, and squarings
-        SQR = 1.00
-        # In F_p, we have SQR_{F_p} = SQR x MUL_{F_p}
-        ADD = 0.00
-        # In F_p, we have ADD_{F_p} = ADD x MUL_{F_p}
-        """
-        return x[0] + SQR * x[1] + ADD * x[2]
-
-    def dacs(l, r0, r1, r2, chain):
-        """
-        dacs()
-        inputs: a small odd prime number l, three integer numbers, and a list
-        output: all the differential additions chains corresponding with the input l
-
-        NOTE: this is a recursive approach
-        """
-        if r2 == l:
-
-            return [(chain, r2)]
-        elif r2 < l and len(chain) <= 1.5 * math.log(l, 2):
-
-            return dacs(l, r0, r2, r2 + r0, chain + [1]) + dacs(
-                l, r1, r2, r2 + r1, chain + [0]
-            )
-        else:
-            return []
-
-    def sdac(l):
-        """
-        sdac()
-        input: a small odd prime number l
-        output: the shortest differential additions chains corresponding with the input l
-
-        NOTE: this function uses a recursive function
-        """
-        all_dacs = dacs(l, 1, 2, 3, [])
-        return min(all_dacs, key=lambda t: len(t[0]))[0]
-
     # Shortest Differential Addition Chains (SDACs) for each l_i
     path = resource_filename('sibc', "data/sdacs/" + prime)
     SDACS = filename_to_list_of_lists_of_ints(path)
-    if len(SDACS) == 0:
-        print("// SDAC's to be computed")
-        SDACS = generate_sdacs(L)
-        print("// Storing SDAC's in a file")
-        write_list_of_lists_of_ints_to_file(path, SDACS)
+    assert len(SDACS) > 0, f'There is file precomputed sdacs for {prime} prime'
     SDACS_LENGTH = list(map(len, SDACS))
 
     cmul = lambda l: numpy.array(
@@ -138,6 +81,15 @@ def MontgomeryCurve(prime):
 
     SQR = 1.00
     ADD = 0.00
+    def measure(x):
+        """
+        Field additions, multiplications, and squarings
+        SQR = 1.00
+        # In F_p, we have SQR_{F_p} = SQR x MUL_{F_p}
+        ADD = 0.00
+        # In F_p, we have ADD_{F_p} = ADD x MUL_{F_p}
+        """
+        return x[0] + SQR * x[1] + ADD * x[2]
 
     random = SystemRandom()
 
