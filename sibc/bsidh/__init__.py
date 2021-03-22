@@ -50,8 +50,8 @@ class BSIDH(object):
         prime,
         formula,
         tuned,
-        uninitialized,
         multievaluation,
+        uninitialized,
         verbose
     ):
 

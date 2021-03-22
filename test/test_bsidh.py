@@ -17,9 +17,9 @@ class BSIDH_strategy_test_base(object):
             curvemodel='montgomery',
             prime=self.prime,
             formula=self.formula,
-            uninitialized=self.uninitialized,
             tuned=self.tuned,
             multievaluation=self.multievaluation,
+            uninitialized=self.uninitialized,
             verbose=self.verbose,
         )
 
@@ -51,8 +51,8 @@ for prime in PRIMES:
                     formula = formula
                     prime = prime
                     tuned = tuned
-                    uninitialized = False
                     multievaluation = multievaluation
+                    uninitialized = False
                     verbose = False
 
                 globals()[

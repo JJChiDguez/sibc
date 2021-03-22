@@ -37,8 +37,8 @@ class CSIDH_gae_test_base(object):
             style=self.style,
             exponent=self.exponent,
             tuned=self.tuned,
-            uninitialized=self.uninitialized,
             multievaluation=self.multievaluation,
+            uninitialized=self.uninitialized,
             verbose=self.verbose,
         )
 
@@ -67,8 +67,8 @@ for prime, style, exponent in configuration:
                     style = style
                     exponent = exponent
                     tuned = tuned
-                    uninitialized = False
                     multievaluation = multievaluation
+                    uninitialized = False
                     verbose = False
 
                 globals()[

@@ -29,10 +29,10 @@ class CSIDH(object):
 
     Here is one group action test with random keys:
 
-    >>> csidh_tvelu_wd1 = CSIDH('montgomery', 'p512', 'tvelu', 'wd1', 10, True, False, False, False)
-    >>> sk_a, sk_b = csidh_tvelu_wd1.secret_key(), csidh_tvelu_wd1.secret_key()
-    >>> pk_a, pk_b = csidh_tvelu_wd1.public_key(sk_a), csidh_tvelu_wd1.public_key(sk_b)
-    >>> csidh_tvelu_wd1.dh(sk_a, pk_b) == csidh_tvelu_wd1.dh(sk_b, pk_a)
+    >>> csidh_hvelu_wd1 = CSIDH('montgomery', 'p512', 'hvelu', 'wd1', 10, True, False, False, False)
+    >>> sk_a, sk_b = csidh_hvelu_wd1.secret_key(), csidh_hvelu_wd1.secret_key()
+    >>> pk_a, pk_b = csidh_hvelu_wd1.public_key(sk_a), csidh_hvelu_wd1.public_key(sk_b)
+    >>> csidh_hvelu_wd1.dh(sk_a, pk_b) == csidh_hvelu_wd1.dh(sk_b, pk_a)
     True
 
     >>> from sibc.csidh import CSIDH, default_parameters
@@ -61,10 +61,10 @@ class CSIDH(object):
         prime,
         formula,
         style,
-        tuned,
-        uninitialized,
         exponent,
+        tuned,
         multievaluation,
+        uninitialized,
         verbose,
     ):
         self.curvemodel = curvemodel
