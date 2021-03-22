@@ -8,8 +8,6 @@ import matplotlib.pyplot as plt
 import networkx as nx
 
 from sibc.common import attrdict, strategy_evaluation, geometric_serie, rounds
-from sibc.constants import strategy_data
-
 from pkg_resources import resource_filename
 
 @click.command()

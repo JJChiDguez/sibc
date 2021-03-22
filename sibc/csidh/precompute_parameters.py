@@ -4,7 +4,6 @@ from pkg_resources import resource_filename
 import numpy
 
 from sibc.common import attrdict, printl
-from sibc.constants import strategy_data
 from math import floor, sqrt, pi
 
 

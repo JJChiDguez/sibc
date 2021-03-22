@@ -10,7 +10,7 @@ from sibc.quadraticfield import QuadraticField
 
 from functools import reduce
 
-from sibc.constants import sdacs_data, bitlength, parameters
+from sibc.constants import bitlength, parameters
 from sibc.common import attrdict
 from sibc.math import cswap
 from math import sqrt

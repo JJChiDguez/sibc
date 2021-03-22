@@ -7,7 +7,7 @@ from sibc.polymul import PolyMul
 from sibc.polyredc import PolyRedc
 
 from sibc.math import isequal, bitlength, hamming_weight, cswap
-from sibc.constants import ijk_data, parameters
+from sibc.constants import parameters
 
 import numpy
 from math import floor, sqrt

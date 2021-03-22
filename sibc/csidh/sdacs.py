@@ -1,7 +1,6 @@
 import click
 
 from sibc.common import attrdict, printl
-from sibc.constants import strategy_data
 
 @click.command()
 @click.pass_context

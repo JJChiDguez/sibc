@@ -4,8 +4,7 @@ import numpy
 from math import ceil, log
 
 from sibc.common import attrdict, printl
-from sibc.constants import tmp_dir
-
+tmp_dir = "./"  # Drop the files in the current working directory
 
 @click.command()
 @click.pass_context

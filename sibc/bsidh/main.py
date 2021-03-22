@@ -2,7 +2,6 @@ from pkg_resources import resource_filename
 import click
 
 from sibc.common import attrdict, geometric_serie, rounds
-from sibc.constants import strategy_data
 
 @click.command()
 @click.pass_context

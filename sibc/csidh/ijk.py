@@ -2,7 +2,6 @@ import click
 import numpy
 
 from sibc.common import attrdict, printl
-from sibc.constants import strategy_data
 from sibc.math import isequal, bitlength
 
 # example: sibc -a csidh -p p512 -f hvelu -t csidh-ijk

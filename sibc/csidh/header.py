@@ -2,8 +2,6 @@ import click
 import numpy
 
 from sibc.common import attrdict, geometric_serie, rounds, printl
-from sibc.constants import strategy_data
-
 from pkg_resources import resource_filename
 
 @click.command()
