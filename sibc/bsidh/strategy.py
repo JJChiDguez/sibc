@@ -37,7 +37,7 @@ class Strategy(object):
             self.S[i] = {}
 
         # Reading public generators points
-        f = open(resource_filename('sibc', 'data/gen/' + prime))
+        f = open(resource_filename('sibc', 'data/gen/' + curve.model + '/' + prime))
 
         # x(PA), x(QA) and x(PA - QA)
         PQA = f.readline()
@@ -62,6 +62,8 @@ class Strategy(object):
         if not formula.uninitialized:
             file_path = (
                 "data/strategies/"
+                + curve.model
+                + '/'
                 + 'bsidh'
                 + '-'
                 + prime

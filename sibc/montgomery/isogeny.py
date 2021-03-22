@@ -42,7 +42,7 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
                 # Reading tuned velusqrt parameters from the stored data
                 self.sI_list = []
                 self.sJ_list = []
-                path = resource_filename('sibc', "data/ijk/" + curve.name + '-' + self.multievaluation_name)
+                path = resource_filename('sibc', "data/ijk/" + curve.model + '/' + curve.name + '-' + self.multievaluation_name)
                 f = open(path)
 
                 for i in range(0, curve.n, 1):

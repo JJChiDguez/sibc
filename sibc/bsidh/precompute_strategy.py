@@ -19,6 +19,8 @@ def bsidh_precompute_strategy(ctx):
     multievaluation = {True:'scaled', False:'unscaled'}[setting.multievaluation]
     file_path = (
         "data/strategies/"
+        + algo.curve.model
+        + '/'
         + 'bsidh'
         + '-'
         + setting.prime

@@ -29,6 +29,7 @@ def filename_to_list_of_lists_of_ints(path):
 def MontgomeryCurve(prime):
 
     name = prime
+    model= 'montgomery'
     if prime in parameters['csidh'].keys():
         # CSIDH only requires the factorization of p + 1
         L = parameters['csidh'][prime]['L']

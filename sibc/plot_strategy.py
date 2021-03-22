@@ -41,6 +41,8 @@ def plot_strategy(ctx):
 
         file_path = (
             "data/strategies/"
+            + algo.curve.model
+            + '/'
             + 'csidh'
             + '-'
             + setting.prime
@@ -57,7 +59,6 @@ def plot_strategy(ctx):
         )
         file_path = resource_filename('sibc', file_path)
         f = open(file_path)
-        print("// Strategies to be read from a file")
         S_out = []
         for i in range(0, len(r_out), 1):
 
@@ -81,11 +82,15 @@ def plot_strategy(ctx):
             + '-'
             + algo.formula.multievaluation_name
             + algo.formula.tuned_name
+            + '-'
+            + algo.curve.model
         )
 
     elif setting.algorithm == 'bsidh':
         file_path = (
             "data/strategies/"
+            + algo.curve.model
+            + '/'
             + 'bsidh'
             + '-'
             + setting.prime
@@ -121,6 +126,8 @@ def plot_strategy(ctx):
             + '-'
             + algo.formula.multievaluation_name
             + algo.formula.tuned_name
+            + '-'
+            + algo.curve.model
         )        
 
     else:

@@ -49,6 +49,8 @@ def csidh_precompute_strategy(ctx):
 
     file_path = (
         "data/strategies/"
+        + algo.curve.model
+        + '/'
         + 'csidh'
         + '-'
         + setting.prime
