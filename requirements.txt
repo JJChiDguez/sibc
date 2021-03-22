@@ -3,4 +3,3 @@ matplotlib
 networkx
 numpy
 progress
-sympy
