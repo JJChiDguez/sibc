@@ -25,10 +25,10 @@ class BSIDH(object):
 
     Here is one group action test with random keys:
 
-    >>> bsidh_tvelu = BSIDH('montgomery', 'b2', 'hvelu', True, False, False, False)
-    >>> sk_a, sk_b = bsidh_tvelu.secret_key_a(), bsidh_tvelu.secret_key_b()
-    >>> pk_a, pk_b = bsidh_tvelu.public_key_a(sk_a), bsidh_tvelu.public_key_b(sk_b)
-    >>> curve_ss_a, curve_ss_b = bsidh_tvelu.dh_a(sk_a, pk_b), bsidh_tvelu.dh_b(sk_b, pk_a)
+    >>> bsidh_hvelu = BSIDH('montgomery', 'b2', 'hvelu', True, False, False, False)
+    >>> sk_a, sk_b = bsidh_hvelu.secret_key_a(), bsidh_hvelu.secret_key_b()
+    >>> pk_a, pk_b = bsidh_hvelu.public_key_a(sk_a), bsidh_hvelu.public_key_b(sk_b)
+    >>> curve_ss_a, curve_ss_b = bsidh_hvelu.dh_a(sk_a, pk_b), bsidh_hvelu.dh_b(sk_b, pk_a)
     >>> curve_ss_a == curve_ss_b
     True
 
