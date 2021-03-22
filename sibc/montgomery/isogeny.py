@@ -1048,7 +1048,7 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
                 random = SystemRandom()
 
                 # Reading public generators points
-                f = open(resource_filename('sibc', 'data/gen/' + self.curve.name))
+                f = open(resource_filename('sibc', 'data/gen/' + self.curve.model + '/' + self.curve.name))
 
                 # x(PA), x(QA) and x(PA - QA)
                 PQA = f.readline()
