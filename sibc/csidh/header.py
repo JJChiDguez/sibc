@@ -151,7 +151,7 @@ def csidh_header(ctx):
         "// L_STRATEGY[i] determines the small odd primes l_i per each strategy"
     )
     print(L_string)
-    print("\n// W_STRATEGY[i] determines L \ L_STRATEGY[i]")
+    print("\n// W_STRATEGY[i] determines L - L_STRATEGY[i]")
     print(R_string)
     print(
         "\n// S_STRATEGY[i] determines the optimal strategy for L_STRATEGY[i]"
