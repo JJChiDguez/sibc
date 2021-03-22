@@ -1,10 +1,16 @@
 # **S**upersingular **I**sogeny-**B**ased **C**ryptography constructions
 
 This repository includes a python-code library named **sibc**, which allows an user-
-friendly usage.
+friendly usage to deal with some isogeny-based cryptographic primitive.
 
 The current version of **sibc** library has integrated CSIDH and B-SIDH schemes using
 traditional and velusqrt formulae on Montgomery curve x-only projective coordinates.
+
+The current version allows working with prime and quadratic field classes that permit
+operating field elements as integers. Moreover, the current cryptographic primitives
+are implemented in constant-time concerning the number of field operations. Here, a
+constant-time algorithm means its running time does not depend on the input or possibly
+from randomness as CSIDH does.
 
 ## Installation 
 
@@ -222,7 +228,7 @@ implementations).
 
 ```bash
 # Suitable bounds search with e = 10.
-sibc -a csidh -p p512 -s df -f hvelu -e 10 csidh-bounds # The greedy-based algorithm is slow (the space search is large!), it could take hours or even days!
+sibc -a csidh -p p512 -s df -f hvelu -e 10 -u csidh-bounds # The greedy-based algorithm on a large searching space, it could take hours or even days!: option -u is required
 # SDACs (options -s and -e do not affect the output)
 sibc -p p512 -f hvelu -a csidh -s df -e 10 csidh-sdacs
 # Optimal sizes of I, J, and K required in velusqrt (options -s and -e do not affect the output)
