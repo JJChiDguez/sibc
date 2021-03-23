@@ -36,50 +36,46 @@ class Gae_df(object):
         # Next functions are used for computing optimal bounds
         self.basis = numpy.eye(n, dtype=int)
 
-    def GAE_at_0(self, exp):
-        C_out, L_out, R_out, S_out, r_out = self.strategy_block_cost(
+        self.C_out, self.L_out, self.R_out, self.S_out, self.r_out = self.strategy_block_cost(
             self.L[::-1], self.m[::-1]
         )
-        temporal_m = list(set(self.m))
-        if (len(temporal_m) == 1) or (
-            (len(temporal_m) == 2) and (0 in temporal_m)
+        self.temporal_m = list(set(self.m))
+
+    def GAE_at_0(self, exp):
+        if (len(self.temporal_m) == 1) or (
+            (len(self.temporal_m) == 2) and (0 in self.temporal_m)
         ):
             return self.GAE(
                 [self.curve.field(2), self.curve.field(4)],
                 exp,
-                [L_out[0]],
-                [R_out[0]],
-                [S_out[0]],
-                [temporal_m[-1]],
+                [self.L_out[0]],
+                [self.R_out[0]],
+                [self.S_out[0]],
+                [self.temporal_m[-1]],
                 self.m,
             )
         else:
             return self.GAE(
                 [self.curve.field(2), self.curve.field(4)],
-                exp, L_out, R_out, S_out, r_out, self.m
+                exp, self.L_out, self.R_out, self.S_out, self.r_out, self.m
             )
 
     def GAE_at_A(self, exp, A):
         assert self.curve.issupersingular(A), "non-supersingular input curve"
-        temporal_m = list(set(self.m))
-        C_out, L_out, R_out, S_out, r_out = self.strategy_block_cost(
-            self.L[::-1], self.m[::-1]
-        )
-        temporal_m = list(set(self.m))
-        if (len(temporal_m) == 1) or (
-            (len(temporal_m) == 2) and (0 in temporal_m)
+        if (len(self.temporal_m) == 1) or (
+            (len(self.temporal_m) == 2) and (0 in self.temporal_m)
         ):
             ss = self.GAE(
                 A,
                 exp,
-                [L_out[0]],
-                [R_out[0]],
-                [S_out[0]],
-                [temporal_m[-1]],
+                [self.L_out[0]],
+                [self.R_out[0]],
+                [self.S_out[0]],
+                [self.temporal_m[-1]],
                 self.m,
             )
         else:
-            ss = self.GAE(A, exp, L_out, R_out, S_out, r_out, self.m)
+            ss = self.GAE(A, exp, self.L_out, self.R_out, self.S_out, self.r_out, self.m)
         return ss
 
     def random_exponents(self, m=None):

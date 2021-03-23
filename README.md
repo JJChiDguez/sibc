@@ -9,8 +9,8 @@ traditional and velusqrt formulae on Montgomery curve x-only projective coordina
 The current version allows working with prime and quadratic field classes that permit
 operating field elements as integers. Moreover, the current cryptographic primitives
 are implemented in constant-time concerning the number of field operations. Here, a
-constant-time algorithm means its running time does not depend on the input or possibly
-from randomness as CSIDH does.
+constant-time algorithm means its running time does not depend on the input or it possibly
+does from randomness as CSIDH does.
 
 ## Installation 
 
@@ -282,7 +282,7 @@ in the next library version.
 ## Changes
 
 Significant changes are listed in the [CHANGELOG](CHANGELOG.md) file. Future integrations/modifications
-are listed in the [TODOLIST](TODOLIST) file.
+are listed in the [TODOLIST](TODOLIST.md) file.
 
 ## Authors
 

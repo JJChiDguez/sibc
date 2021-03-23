@@ -20,57 +20,8 @@ def csidh_main(ctx):
     measure = algo.curve.measure
     GAE_at_0 = algo.gae.GAE_at_0
     GAE_at_A = algo.gae.GAE_at_A
-    strategy_block_cost = algo.gae.strategy_block_cost
     random_exponents = algo.gae.random_exponents
     print_exponents = algo.gae.print_exponents
-
-    if algo.formula.name != 'tvelu':
-        set_parameters_velu = algo.formula.set_parameters_velu
-
-    temporal_m = list(set(m))
-    if len(temporal_m) > 1:
-        # Maximum number of degree-(l_i) isogeny constructions is m_i (different for each l_i)
-        bounds = '-diffbounds'
-    else:
-        # Maximum number of degree-(l_i) isogeny constructions is m (the same for each l_i)
-        bounds = '-samebounds'
-
-    # List of Small Odd Primes, L := [l_0, ..., l_{n-1}]
-    m_prime = [geometric_serie(m[k], L[k]) for k in range(n)]
-    r_out, L_out, R_out = rounds(m_prime[::-1], n)
-    for j in range(0, len(r_out), 1):
-
-        R_out[j] = list([L[::-1][k] for k in R_out[j]])
-        L_out[j] = list([L[::-1][k] for k in L_out[j]])
-
-    file_path = (
-        "data/strategies/"
-        + algo.curve.model
-        + '/'
-        + 'csidh'
-        + '-'
-        + setting.prime
-        + '-'
-        + setting.style
-        + '-e'
-        + setting.exponent
-        + bounds
-        + '-'
-        + setting.formula
-        + '-'
-        + algo.formula.multievaluation_name
-        + algo.formula.tuned_name
-    )
-    file_path = resource_filename('sibc', file_path)
-    f = open(file_path)
-    S_out = []
-    for i in range(0, len(r_out), 1):
-
-        tmp = f.readline()
-        tmp = [int(b) for b in tmp.split()]
-        S_out.append(tmp)
-
-    f.close()
 
     print(
         "// The running time is assuming S = %1.2f x M and a = %1.2f x M, and giving in millions of field operations.\n"
