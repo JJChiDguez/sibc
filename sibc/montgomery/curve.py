@@ -200,6 +200,34 @@ def MontgomeryCurve(prime):
 
         return output
 
+    def get_A(XP, XQ, XPQ):
+        """
+        ----------------------------------------------------------------------
+        coeff()
+        input : the affine Montgomery x-coordinate points x(P) := (XP : 1), 
+                x(Q) := (XQ : 1), and x(P - Q) := (XPQ : 1) on the curve 
+                E : y^2 = x^3 + A*x^2 + x
+        output: the affine Montgomery coefficient A
+        ----------------------------------------------------------------------
+        """
+        t1 = (XP + XQ)
+        t0 = (XP * XQ)
+        A = (XPQ * t1)
+        A = (A + t0)
+        # ---
+        t0 = (t0 * XPQ)
+        A = (A - 1)
+        t0 = (t0 + t0)
+        t1 = (t1 + XPQ)
+        # ---
+        t0 = (t0 + t0)
+        A = (A ** 2)
+        t0 = (t0 ** -1)
+        A = (A * t0)
+        # ---
+        A = (A - t1)
+        return A
+
     def isinfinity(P):
         """ isinfinity(P) determines if x(P) := (XP : ZP) = (1 : 0) """
         return P[1] == 0
@@ -255,10 +283,77 @@ def MontgomeryCurve(prime):
         return [X, Z]
 
     def xdbladd(P, Q, PQ, A):
-        """ xdbladd() computes both of x([2]P) and x(P + Q) """
-        S = xadd(P, Q, PQ)
-        T = xdbl(P, A)
-        return T, S
+        """
+        ----------------------------------------------------------------------
+        xdbladd()
+        input : a projective Montgomery x-coordinate point x(P) := XP/ZP,
+                x(Q) := XQ/ZQ, and x(P-Q) := XPQ/ZPQ, and the affine Montgomery
+                constant A where E : y^2 = x^3 + Ax^2 + x
+        output: the projective Montgomery x-coordinate point x([2]P), x([P+Q])
+        ----------------------------------------------------------------------
+        """
+        t0 = (P[0] + P[1])
+        t1 = (P[0] - P[1])
+        TX = (t0 ** 2)
+        t2 = (Q[0] - Q[1])
+        SX = (Q[0] + Q[1])
+        t0 = (t0 * t2)
+        TZ = (t1 ** 2)
+        # ---
+        t1 = (t1 * SX)
+        t2 = (TX - TZ)
+        TX = (TX * TZ)
+        SX = (A * t2)
+        SZ = (t0 - t1)
+        TZ = (SX + TZ)
+        SX = (t0 + t1)
+        # ---
+        TZ = (TZ * t2)
+        SZ = (SZ ** 2)
+        SX = (SX ** 2)
+        SZ = (PQ[0] * SZ)
+        SX = (PQ[1] * SX)
+        return [TX, TZ], [SX, SZ]
+
+    def xtpl(P, A):
+        """
+        ----------------------------------------------------------------------
+        xtpl()
+        input : a projective Montgomery x-coordinate point x(P) := XP/ZP, and
+                the  projective Montgomery constants A24:= A + 2C and C24:=4C
+                where E : y^2 = x^3 + (A/C)*x^2 + x
+        output: the projective Montgomery x-coordinate point x([3]P)
+        ----------------------------------------------------------------------
+        """
+        # A - 2C
+        C = A[0] - A[1]
+        # ---
+        t0 = (P[0] - P[1])
+        t2 = (t0 ** 2)
+        t1 = (P[0] + P[1])
+        t3 = (t1 ** 2)
+        t4 = (t1 + t0)
+        t0 = (t1 - t0)
+        # ---
+        t1 = (t4 ** 2)
+        t1 = (t1 - t3)
+        t1 = (t1 - t2)
+        t5 = (t3 * A[0])
+        t3 = (t5 * t3)
+        t6 = (t2 * C)
+        # ---
+        t2 = (t2 * t6)
+        t3 = (t2 - t3)
+        t2 = (t5 - t6)
+        t1 = (t2 * t1)
+        t2 = (t3 + t1)
+        t2 = (t2 ** 2)
+        # ---
+        X = (t2 * t4)
+        t1 = (t3 - t1)
+        t1 = (t1 ** 2)
+        Z = (t1 * t0)
+        return [X,Z]
 
     def xmul(P, A, j):
         """
@@ -287,7 +382,16 @@ def MontgomeryCurve(prime):
         return R[2]
 
     def Ladder3pt(m, P, Q, PQ, A):
-        """ Ladder3pt() computes x(P + [m]Q) """
+        """
+        ----------------------------------------------------------------------
+        Ladder3pt()
+        input : a projective Montgomery x-coordinate point x(P) := XP/ZP,
+                x(Q) := XQ/ZQ, and x(P-Q) := XPQ/ZPQ, the affine Montgomery
+                constant A where E : y^2 = x^3 + Ax^2 + x, and a positive
+                integer m
+        output: the projective Montgomery x-coordinate point x(P + [m]Q)
+        ----------------------------------------------------------------------
+        """
         X0 = list([field(Q[0]), field(Q[1])])
         X1 = list([field(P[0]), field(P[1])])
         X2 = list([field(PQ[0]), field(PQ[1])])
