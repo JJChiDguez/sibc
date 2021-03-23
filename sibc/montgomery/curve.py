@@ -303,15 +303,37 @@ def MontgomeryCurve(prime):
         """
         ----------------------------------------------------------------------
         xdbladd()
-        input : a projective Montgomery x-coordinate point x(P) := XP/ZP,
-                x(Q) := XQ/ZQ, and x(P-Q) := XPQ/ZPQ, and the affine Montgomery
-                constant A where E : y^2 = x^3 + Ax^2 + x
+        input : a projective Montgomery x-coordinate point x(P) := XP/ZP, x(Q) := XQ/ZQ, 
+                and x(P-Q) := XPQ/ZPQ, and the projective Montgomery constant (a24 : 1) 
+                = (A + 2C: 4C)  where E : y^2 = x^3 + (A/C)x^2 + x
         output: the projective Montgomery x-coordinate point x([2]P), x([P+Q])
         ----------------------------------------------------------------------
         """
-        T = xdbl(P, A)
-        S = xadd(P, Q, PQ)
-        return T, S
+        #T = xdbl(P, A)
+        #S = xadd(P, Q, PQ)
+        #return T, S
+        t0 = (P[0] + P[1])
+        t1 = (P[0] - P[1])
+        X2 = (t0 ** 2)
+        t2 = (Q[0] - Q[1])
+        X3 = (Q[0] + Q[1])
+        t0 = (t0 * t2)
+        Z2 = (t1 ** 2)
+        # ---
+        t1 = (t1 * X3)
+        t2 = (X2 - Z2)
+        X2 = (X2 * Z2)
+        X3 = (A * t2)
+        Z3 = (t0 - t1)
+        Z2 = (X3 + Z2)
+        X3 = (t0 + t1)
+        # ---
+        Z2 = (Z2 * t2)
+        Z3 = (Z3 ** 2)
+        X3 = (X3 ** 2)
+        Z3 = (PQ[0] * Z3)
+        X3 = (PQ[1] * X3)
+        return [X2, Z2], [X3, Z3]
 
     def xtpl(P, A):
         """

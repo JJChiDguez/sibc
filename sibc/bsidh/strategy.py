@@ -166,7 +166,8 @@ class Strategy(object):
     def random_scalar_B(self): return self.random.randint(0, self.curve.p - 1)
 
     def strategy_at_6_A(self, sk_a):
-        Ra = self.curve.Ladder3pt(sk_a, self.PA, self.QA, self.PQA, [self.field(8), self.field(4)])
+        # a24 = (A + 2) / 4 = (6 + 2) / 4 = 2
+        Ra = self.curve.Ladder3pt(sk_a, self.PA, self.QA, self.PQA, self.field(2))
         pk_a, self.PB_a, self.QB_a, self.PQB_a = self.evaluate_strategy(
             True,
             self.PB,
@@ -181,8 +182,8 @@ class Strategy(object):
         return pk_a
 
     def strategy_at_6_B(self, sk_b):
-        # a24 = (A + 2) / 2 = (6 + 2) / 4 = 2
-        Rb = self.curve.Ladder3pt(sk_b, self.PB, self.QB, self.PQB, [self.field(8), self.field(4)])
+        # a24 = (A + 2) / 4 = (6 + 2) / 4 = 2
+        Rb = self.curve.Ladder3pt(sk_b, self.PB, self.QB, self.PQB, self.field(2))
         pk_b, self.PA_b, self.QA_b, self.PQA_b = self.evaluate_strategy(
             True,
             self.PA,
@@ -199,13 +200,9 @@ class Strategy(object):
     def strategy_A(self, sk_a, pk_b):
         A = self.curve.get_A(self.PA_b, self.QA_b, self.PQA_b)
         assert self.curve.issupersingular(A), "non-supersingular input curve"
-        RB_a = self.curve.Ladder3pt(
-            sk_a,
-            self.PA_b,
-            self.QA_b,
-            self.PQA_b,
-            A
-        )
+        a24 = A[1] ** -1
+        a24 = a24 * A[0]
+        RB_a = self.curve.Ladder3pt(sk_a, self.PA_b, self.QA_b, self.PQA_b, a24)
         ss_a, _, _, _ = self.evaluate_strategy(
             False,
             self.PB,
@@ -222,14 +219,9 @@ class Strategy(object):
     def strategy_B(self, sk_b, pk_a):
         A = self.curve.get_A(self.PB_a, self.QB_a, self.PQB_a)
         assert self.curve.issupersingular(A), "non-supersingular input curve"
-        # ---
-        RA_b = self.curve.Ladder3pt(
-            sk_b,
-            self.PB_a,
-            self.QB_a,
-            self.PQB_a,
-            A
-        )
+        a24 = A[1] ** -1
+        a24 = a24 * A[0]
+        RA_b = self.curve.Ladder3pt(sk_b, self.PB_a, self.QB_a, self.PQB_a, a24)
         ss_b, _, _, _ = self.evaluate_strategy(
             False,
             self.PA,
