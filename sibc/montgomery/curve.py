@@ -200,33 +200,50 @@ def MontgomeryCurve(prime):
 
         return output
 
-    def get_A(XP, XQ, XPQ):
+    def get_A(P, Q, PQ):
         """
         ----------------------------------------------------------------------
         coeff()
-        input : the affine Montgomery x-coordinate points x(P) := (XP : 1), 
-                x(Q) := (XQ : 1), and x(P - Q) := (XPQ : 1) on the curve 
-                E : y^2 = x^3 + A*x^2 + x
-        output: the affine Montgomery coefficient A
+        input : the affine Montgomery x-coordinate points x(P) := (XP : YP), 
+                x(Q) := (XQ : ZQ), and x(P - Q) := (XPQ : ZPQ) on the curve 
+                E : y^2 = x^3 + (A/C)*x^2 + x
+        output: the projective Montgomery coefficient (A + 2C : 4C)
         ----------------------------------------------------------------------
         """
-        t1 = (XP + XQ)
-        t0 = (XP * XQ)
-        A = (XPQ * t1)
-        A = (A + t0)
+        t0 = (P[0] + P[1])   # XP + ZP
+        t1 = (Q[0] + Q[1])   # XQ + ZQ
+
+        t = (t0 * t1)        # (XP + ZP) * (XQ + ZQ)
+        XPXQ = (P[0] * Q[0]) # XP * XQ
+        ZPZQ = (P[1] * Q[1]) # ZP * ZQ
+
+        t = (t - XPXQ)
+        t = (t - ZPZQ)      # XPZQ + ZPXQ
+        s = (XPXQ - ZPZQ)   # XPXQ - ZPZQ
+
+        t0 = (t *  PQ[0])   # (XPZQ + ZPXQ) * XPQ
+        t1 = (s *  PQ[1])   # (XPXQ - ZPZQ) * ZPQ
+        t0 = (t0 + t1)      # (XPZQ + ZPXQ) * XPQ + (XPXQ - ZPZQ) * ZPQ
+        t0 = (t0 ** 2)      # [(XPZQ + ZPXQ) * XPQ + (XPXQ - ZPZQ) * ZPQ] ^ 2
+
+        t1 = (t * PQ[1])    # (XPZQ + ZPXQ) * ZPQ
+        s = (ZPZQ * PQ[0])  # ZPZQ * XPQ
+        t1 = (t1 + s)       # (XPZQ + ZPXQ) * ZPQ + ZPZQ * XPQ
+        s = (XPXQ * PQ[0])  # (XPXQ) * XPQ
+        s = (s + s)         # 2 * [(XPXQ) * XPQ]
+        s = (s + s)         # 4 * [(XPXQ) * XPQ]
+        t1 = (t1 * s)       # [(XPZQ + ZPXQ) * ZPQ + ZPZQ * XPQ] * (4 * [(XPXQ) * XPQ])
+
+        t = (ZPZQ * PQ[1])  # ZPZQ * ZPQ
+
+        XPXQ = (t0 - t1)    # [(XPZQ + ZPXQ) * XPQ + (XPXQ - ZPZQ) * ZPQ] ^ 2 - [(XPZQ + ZPXQ) * ZPQ + ZPZQ * XPQ] * (4 * [(XPXQ) * XPQ])
+        ZPZQ = (s * t)      # (4 * [(XPXQ) * XPQ]) * (ZPZQ * ZPQ)
+
         # ---
-        t0 = (t0 * XPQ)
-        A = (A - 1)
-        t0 = (t0 + t0)
-        t1 = (t1 + XPQ)
-        # ---
-        t0 = (t0 + t0)
-        A = (A ** 2)
-        t0 = (t0 ** -1)
-        A = (A * t0)
-        # ---
-        A = (A - t1)
-        return A
+        B1 = (ZPZQ + ZPZQ)  # 2C
+        B0 = (XPXQ + B1)    # A + 2C
+        B1 = (B1 + B1)      # 4C
+        return [B0, B1]
 
     def isinfinity(P):
         """ isinfinity(P) determines if x(P) := (XP : ZP) = (1 : 0) """
@@ -292,28 +309,9 @@ def MontgomeryCurve(prime):
         output: the projective Montgomery x-coordinate point x([2]P), x([P+Q])
         ----------------------------------------------------------------------
         """
-        t0 = (P[0] + P[1])
-        t1 = (P[0] - P[1])
-        TX = (t0 ** 2)
-        t2 = (Q[0] - Q[1])
-        SX = (Q[0] + Q[1])
-        t0 = (t0 * t2)
-        TZ = (t1 ** 2)
-        # ---
-        t1 = (t1 * SX)
-        t2 = (TX - TZ)
-        TX = (TX * TZ)
-        SX = (A * t2)
-        SZ = (t0 - t1)
-        TZ = (SX + TZ)
-        SX = (t0 + t1)
-        # ---
-        TZ = (TZ * t2)
-        SZ = (SZ ** 2)
-        SX = (SX ** 2)
-        SZ = (PQ[0] * SZ)
-        SX = (PQ[1] * SX)
-        return [TX, TZ], [SX, SZ]
+        T = xdbl(P, A)
+        S = xadd(P, Q, PQ)
+        return T, S
 
     def xtpl(P, A):
         """
@@ -397,16 +395,9 @@ def MontgomeryCurve(prime):
         X2 = list([field(PQ[0]), field(PQ[1])])
         t = 0x1
         for i in range(0, bitlength(p), 1):
-            # In C-code implementations this branch should be implemented with cswap's
             X1, X2 = cswap(X1, X2, t & m == 0)
             X0, X1 = xdbladd(X0, X1, X2, A)
             X1, X2 = cswap(X1, X2, t & m == 0)
-            """
-            if t & m != 0:
-                X0, X1 = xdbladd(X0, X1, X2, A)
-            else:
-                X0, X2 = xdbladd(X0, X2, X1, A)
-            """
             t <<= 1
         return X1
 

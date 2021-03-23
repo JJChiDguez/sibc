@@ -77,6 +77,8 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
 
             # An extra global variable which is used in xisog and xeval
             self.XZJ4 = None
+            self.ADD_SQUARED = None
+            self.SUB_SQUARED = None
 
             self.SCALED_MULTIEVALUATION = multievaluation
             self.tuned = tuned
@@ -354,6 +356,19 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
                 else:
                     self.K = []
 
+                self.SUB_SQUARED = [
+                    self.J[0][0] - self.J[0][1]
+                ]  # (Xj - Zj)
+                self.SUB_SQUARED[0] = (self.SUB_SQUARED[0] ** 2)  # (Xj - Zj)^2
+
+                self.ADD_SQUARED = [
+                    self.J[0][0] + self.J[0][1]
+                ]  # (Xj + Zj)
+                self.ADD_SQUARED[0] = (self.ADD_SQUARED[0] ** 2)  # (Xj + Zj)^2
+
+                self.XZJ4 = [
+                    self.SUB_SQUARED[0] - self.ADD_SQUARED[0]
+                ]  # -4*Xj*Zj
                 return None
 
             # At this step, sI > 1
@@ -410,6 +425,19 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
                 else:
                     self.K = []
 
+                self.SUB_SQUARED = [
+                    self.J[0][0] - self.J[0][1]
+                ]  # (Xj - Zj)
+                self.SUB_SQUARED[0] = (self.SUB_SQUARED[0] ** 2)  # (Xj - Zj)^2
+
+                self.ADD_SQUARED = [
+                    self.J[0][0] + self.J[0][1]
+                ]  # (Xj + Zj)
+                self.ADD_SQUARED[0] = (self.ADD_SQUARED[0] ** 2)  # (Xj + Zj)^2
+
+                self.XZJ4 = [
+                    self.SUB_SQUARED[0] - self.ADD_SQUARED[0]
+                ]  # -4*Xj*Zj
                 return None
 
             # Now, we ensure sI >= sJ > 1
@@ -523,8 +551,29 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
                     )
 
             # Polynomial D_j of algorithm 2 from https://eprint.iacr.org/2020/341 is not required,
-            # but we need some squares and products determined by list J
+            # but we need some some squares and products determined by list J
             # In order to avoid costly inverse computations in fp, we are gonna work with projective coordinates
+
+            self.SUB_SQUARED = [0 for j in range(0, self.sJ, 1)]  #
+            self.ADD_SQUARED = [0 for j in range(0, self.sJ, 1)]  #
+
+            # List XZJ4 is required for degree-l isogeny evaluations...
+            self.XZJ4 = [0 for j in range(0, self.sJ, 1)]  # 2*Xj*Zj
+            for j in range(0, self.sJ, 1):
+
+                self.SUB_SQUARED[j] = (
+                    self.J[j][0] - self.J[j][1]
+                )  # (Xj - Zj)
+                self.SUB_SQUARED[j] = (self.SUB_SQUARED[j] ** 2)  # (Xj - Zj)^2
+
+                self.ADD_SQUARED[j] = (
+                    self.J[j][0] + self.J[j][1]
+                )  # (Xj + Zj)
+                self.ADD_SQUARED[j] = (self.ADD_SQUARED[j] ** 2)  # (Xj + Zj)^2
+
+                self.XZJ4[j] = (
+                    self.SUB_SQUARED[j] - self.ADD_SQUARED[j]
+                )  # -4*Xj*Zj
 
             # Ensuring the cardinality of each ser coincide with the expected one
             assert len(I) == self.sI
@@ -541,31 +590,6 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
             AA = (AA - A[1])  # 2A'
             AA = (AA + AA)  # 4A'
 
-            # Polynomial D_j of algorithm 2 from https://eprint.iacr.org/2020/341 is not required,
-            # but we need some some squares and products determined by list J
-            # In order to avoid costly inverse computations in fp, we are gonna work with projective coordinates
-
-            SUB_SQUARED = [0 for j in range(0, self.sJ, 1)]  #
-            ADD_SQUARED = [0 for j in range(0, self.sJ, 1)]  #
-
-            # List XZJ4 is required for degree-l isogeny evaluations...
-            self.XZJ4 = [0 for j in range(0, self.sJ, 1)]  # 2*Xj*Zj
-            for j in range(0, self.sJ, 1):
-
-                SUB_SQUARED[j] = (
-                    self.J[j][0] - self.J[j][1]
-                )  # (Xj - Zj)
-                SUB_SQUARED[j] = (SUB_SQUARED[j] ** 2)  # (Xj - Zj)^2
-
-                ADD_SQUARED[j] = (
-                    self.J[j][0] + self.J[j][1]
-                )  # (Xj + Zj)
-                ADD_SQUARED[j] = (ADD_SQUARED[j] ** 2)  # (Xj + Zj)^2
-
-                self.XZJ4[j] = (
-                    SUB_SQUARED[j] - ADD_SQUARED[j]
-                )  # -4*Xj*Zj
-
             # --------------------------------------------------------------------------------------------------
             #                   ~~~~~~~~
             #                    |    |
@@ -581,9 +605,9 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
 
             for j in range(0, self.sJ, 1):
 
-                # However, each SUB_SQUARED[j] and ADD_SQUARED[j] should be multiplied by C
-                tadd = (ADD_SQUARED[j] * A[1])
-                tsub = (SUB_SQUARED[j] * A[1])
+                # However, each self.SUB_SQUARED[j] and self.ADD_SQUARED[j] should be multiplied by C
+                tadd = (self.ADD_SQUARED[j] * A[1])
+                tsub = (self.SUB_SQUARED[j] * A[1])
 
                 # We require the double of tadd and tsub
                 tadd2 = (tadd + tadd)
@@ -912,18 +936,21 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
 
             return [XX, ZZ]
 
-        # Degree-4 isogeny construction
-        def xisog_4(self, P):
-
-            self.K = [[0, 0], [0, 0], [0, 0]]
+        # Kernel computation for xeval_4 and xisog_4
+        def kps_4(self, P):
+            self.K = [ None, None, None, None]
 
             self.K[1] = (P[0] - P[1])
             self.K[2] = (P[0] + P[1])
             self.K[0] = (P[1] ** 2)
-            self.K[0] = (self.K[0] + self.K[0])
+            self.K[3] = (self.K[0] + self.K[0])
+            self.K[0] = (self.K[3] + self.K[3])
+            return None
 
-            C24 = (self.K[0] ** 2)
-            self.K[0] = (self.K[0] + self.K[0])
+        # Degree-4 isogeny construction
+        def xisog_4(self, P):
+
+            C24 = (self.K[3] ** 2)
             A24 = (P[0] ** 2)
             A24 = (A24 + A24)
             A24 = (A24 ** 2)
@@ -952,7 +979,7 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
         def kps(self, P, A, i):
 
             if self.L[i] == 4:
-                return None
+                return self.kps_4(P)
 
             if self.L[i] <= self.HYBRID_BOUND:
                 return self.kps_t(P, A, i)

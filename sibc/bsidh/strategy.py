@@ -166,15 +166,13 @@ class Strategy(object):
     def random_scalar_B(self): return self.random.randint(0, self.curve.p - 1)
 
     def strategy_at_6_A(self, sk_a):
-        #nonlocal PB_a, QB_a, PQB_a
-        A = [self.curve.field(8), self.curve.field(4)]
-        Ra = self.curve.Ladder3pt(sk_a, self.PA, self.QA, self.PQA, A)
+        Ra = self.curve.Ladder3pt(sk_a, self.PA, self.QA, self.PQA, [self.field(8), self.field(4)])
         pk_a, self.PB_a, self.QB_a, self.PQB_a = self.evaluate_strategy(
             True,
             self.PB,
             self.QB,
             self.PQB,
-            A,
+            [self.field(8), self.field(4)],
             Ra,
             self.SIDp[::-1],
             self.Sp,
@@ -183,15 +181,14 @@ class Strategy(object):
         return pk_a
 
     def strategy_at_6_B(self, sk_b):
-        #nonlocal PA_b, QA_b, PQA_b
-        A = [self.curve.field(8), self.curve.field(4)]
-        Rb = self.curve.Ladder3pt(sk_b, self.PB, self.QB, self.PQB, A)
+        # a24 = (A + 2) / 2 = (6 + 2) / 4 = 2
+        Rb = self.curve.Ladder3pt(sk_b, self.PB, self.QB, self.PQB, [self.field(8), self.field(4)])
         pk_b, self.PA_b, self.QA_b, self.PQA_b = self.evaluate_strategy(
             True,
             self.PA,
             self.QA,
             self.PQA,
-            A,
+            [self.field(8), self.field(4)],
             Rb,
             self.SIDm[::-1],
             self.Sm,
@@ -200,17 +197,21 @@ class Strategy(object):
         return pk_b
 
     def strategy_A(self, sk_a, pk_b):
-        # sk here is alice's secret key
-        # pk_b here is from bob (not processed by coeff)
-        #nonlocal PA_b, QA_b, PQA_b
-        assert self.curve.issupersingular(pk_b), "non-supersingular input curve"
-        RB_a = self.curve.Ladder3pt(sk_a, self.PA_b, self.QA_b, self.PQA_b, pk_b)
+        A = self.curve.get_A(self.PA_b, self.QA_b, self.PQA_b)
+        assert self.curve.issupersingular(A), "non-supersingular input curve"
+        RB_a = self.curve.Ladder3pt(
+            sk_a,
+            self.PA_b,
+            self.QA_b,
+            self.PQA_b,
+            A
+        )
         ss_a, _, _, _ = self.evaluate_strategy(
             False,
             self.PB,
             self.QB,
             self.PQB,
-            pk_b,
+            A,
             RB_a,
             self.SIDp[::-1],
             self.Sp,
@@ -219,17 +220,22 @@ class Strategy(object):
         return ss_a
 
     def strategy_B(self, sk_b, pk_a):
-        # sk_b here is bob's secret key
-        # pk_a here is from alice (not processed by coeff)
-        #nonlocal PB_a, QB_a, PQB_a
-        assert self.curve.issupersingular(pk_a), "non-supersingular input curve"
-        RA_b = self.curve.Ladder3pt(sk_b, self.PB_a, self.QB_a, self.PQB_a, pk_a)
+        A = self.curve.get_A(self.PB_a, self.QB_a, self.PQB_a)
+        assert self.curve.issupersingular(A), "non-supersingular input curve"
+        # ---
+        RA_b = self.curve.Ladder3pt(
+            sk_b,
+            self.PB_a,
+            self.QB_a,
+            self.PQB_a,
+            A
+        )
         ss_b, _, _, _ = self.evaluate_strategy(
             False,
             self.PA,
             self.QA,
             self.PQA,
-            pk_a,
+            A,
             RA_b,
             self.SIDm[::-1],
             self.Sm,
@@ -317,20 +323,21 @@ class Strategy(object):
             # Kernel Points computation
             self.formula.kps(ramifications[-1], E_i, pos)
 
-            # Isogeny construction
-            ramifications[-1][0], E_i[0] = cswap(
-                ramifications[-1][0], E_i[0], self.L[pos] == 4
-            )
-            ramifications[-1][1], E_i[1] = cswap(
-                ramifications[-1][1], E_i[1], self.L[pos] == 4
-            )
-            C_i = self.formula.xisog(E_i, pos)
-            ramifications[-1][0], E_i[0] = cswap(
-                ramifications[-1][0], E_i[0], self.L[pos] == 4
-            )
-            ramifications[-1][1], E_i[1] = cswap(
-                ramifications[-1][1], E_i[1], self.L[pos] == 4
-            )
+            if not EVAL:
+                # Isogeny construction
+                ramifications[-1][0], E_i[0] = cswap(
+                    ramifications[-1][0], E_i[0], self.L[pos] == 4
+                )
+                ramifications[-1][1], E_i[1] = cswap(
+                    ramifications[-1][1], E_i[1], self.L[pos] == 4
+                )
+                C_i = self.formula.xisog(E_i, pos)
+                ramifications[-1][0], E_i[0] = cswap(
+                    ramifications[-1][0], E_i[0], self.L[pos] == 4
+                )
+                ramifications[-1][1], E_i[1] = cswap(
+                    ramifications[-1][1], E_i[1], self.L[pos] == 4
+                )               
 
             # Now, we proceed by perform horizontal edges (isogeny evaluations)
             for j in range(0, len(moves) - 1, 1):
@@ -367,6 +374,8 @@ class Strategy(object):
                     T_out = self.formula.xeval(T_out, E_i)
                     ST_out = self.formula.xeval(ST_out, E_i)
 
+                C_i = self.curve.get_A(S_out, T_out, ST_out)
+
             # Updating the Montogmery curve coefficients
             E_i = [self.field(C_i[0]), self.field(C_i[1])]
 
@@ -397,22 +406,24 @@ class Strategy(object):
         # Kernel Points computations
         self.formula.kps(ramifications[0], E_i, pos)
 
-        # Isogeny construction
-        ramifications[0][0], E_i[0] = cswap(
-            ramifications[0][0], E_i[0], self.L[pos] == 4
-        )
-        ramifications[0][1], E_i[1] = cswap(
-            ramifications[0][1], E_i[1], self.L[pos] == 4
-        )
-        C_i = self.formula.xisog(E_i, pos)
-        ramifications[0][0], E_i[0] = cswap(
-            ramifications[0][0], E_i[0], self.L[pos] == 4
-        )
-        ramifications[0][1], E_i[1] = cswap(
-            ramifications[0][1], E_i[1], self.L[pos] == 4
-        )
+        if not EVAL:
+            # Isogeny construction
+            ramifications[0][0], E_i[0] = cswap(
+                ramifications[0][0], E_i[0], self.L[pos] == 4
+            )
+            ramifications[0][1], E_i[1] = cswap(
+                ramifications[0][1], E_i[1], self.L[pos] == 4
+            )
+            C_i = self.formula.xisog(E_i, pos)
+            ramifications[0][0], E_i[0] = cswap(
+                ramifications[0][0], E_i[0], self.L[pos] == 4
+            )
+            ramifications[0][1], E_i[1] = cswap(
+                ramifications[0][1], E_i[1], self.L[pos] == 4
+            )
 
-        if EVAL:
+        else:
+            
             # Evaluating public points
             if (
                 self.formula_name == 'tvelu'
@@ -429,6 +440,8 @@ class Strategy(object):
                 S_out = self.formula.xeval(S_out, E_i)
                 T_out = self.formula.xeval(T_out, E_i)
                 ST_out = self.formula.xeval(ST_out, E_i)
+
+            C_i = self.curve.get_A(S_out, T_out, ST_out)
 
         # Updating the Montogmery curve coefficients
         E_i = [self.field(C_i[0]), self.field(C_i[1])]
