@@ -90,6 +90,7 @@ class CSIDH(object):
         self.multievaluation = multievaluation
         self.params = attrdict(parameters['csidh'][prime])
         self.params.update(self.params[style])
+        self.p_bytes = (self.params.p_bits + (self.params.p_bits % 8)) // 8
 
         if self.curvemodel == 'montgomery':
             self.isogeny = MontgomeryIsogeny(formula, uninitialized = self.uninitialized)
@@ -115,7 +116,7 @@ class CSIDH(object):
         pk = int.from_bytes(pk, 'little')
         pk = self.curve.affine_to_projective(pk)
         ss = self.curve.coeff(self.gae.GAE_at_A(sk, pk)).x.to_bytes(
-            length=(self.params.p_bits // 8), byteorder='little'
+            length=self.p_bytes, byteorder='little'
         )
         return ss
 
@@ -124,7 +125,7 @@ class CSIDH(object):
         pk = int.from_bytes(pk, 'little')
         pk = self.curve.affine_to_projective(pk)
         ss = self.curve.coeff(self.gae.GAE_at_A(sk, pk)).x.to_bytes(
-            length=(self.params.p_bits // 8), byteorder='little'
+            length=self.p_bytes, byteorder='little'
         )
         return ss
 
@@ -137,14 +138,14 @@ class CSIDH(object):
         xy = self.gae.GAE_at_0(sk)
         pk = self.curve.coeff(xy)
         # this implies a y of 4 on the receiver side
-        return pk.x.to_bytes(length=(self.params.p_bits // 8), byteorder='little')
+        return pk.x.to_bytes(length=self.p_bytes, byteorder='little')
 
     def keygen(self):
         sk = self.gae.random_exponents()
         xy = self.gae.GAE_at_0(sk)
         pk = self.curve.coeff(xy)
         # this implies a y of 4 on the receiver side
-        return pack('<{}b'.format(len(sk)), *sk), pk.x.to_bytes(length=(self.params.p_bits // 8), byteorder='little')
+        return pack('<{}b'.format(len(sk)), *sk), pk.x.to_bytes(length=self.p_bytes, byteorder='little')
 
 if __name__ == "__main__":
     import doctest

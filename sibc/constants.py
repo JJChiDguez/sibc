@@ -24,7 +24,7 @@ def csidh_get_sop_from_disk(prime):
         p=p,
         p_minus_one_halves=p_minus_one_halves,
         validation_stop=validation_stop,
-        p_bits=int(prime[1:]),
+        p_bits=bitlength(p),
     )
 
 def csidh_get_exp_from_disk(exponent, style, security, attack, n):
