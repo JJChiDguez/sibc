@@ -176,7 +176,7 @@ def bsidh_test(ctx):
             ST = xmul(ST, A, i)
 
     k = random.randint(0, p)
-    R = Ladder3pt(k, S, T, ST, A)
+    R = Ladder3pt(k, S, T, ST, algo.curve.field(2))
     T_p = list(R)
     T_m = list(S)
     print(
@@ -307,7 +307,7 @@ def bsidh_test(ctx):
             ST = xmul(ST, A, i)
 
     k = random.randint(0, p)
-    R = Ladder3pt(k, S, T, ST, A)
+    R = Ladder3pt(k, S, T, ST, algo.curve.field(2))
     T_p = list(R)
     T_m = list(S)
     print(
