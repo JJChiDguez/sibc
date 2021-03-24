@@ -86,7 +86,7 @@ def bsidh_get_sop_from_disk(prime):
         pm=pm,
         p=p,
         p_minus_one_halves=p_minus_one_halves,
-        p_bits=int(prime[1:]),
+        p_bits=bitlength(p),
         p_minus_3_quarters=p_minus_3_quarters,
     )
 

@@ -42,22 +42,18 @@ class Strategy(object):
         # x(PA), x(QA) and x(PA - QA)
         PQA = f.readline()
         PQA = [int(x, 16) for x in PQA.split()]
-        self.PA = [self.field(PQA[0:2]), self.field(1)]
-        self.QA = [self.field(PQA[2:4]), self.field(1)]
-        self.PQA= [self.field(PQA[4:6]), self.field(1)]
+        self.PA = self.field(PQA[0:2])
+        self.QA = self.field(PQA[2:4])
+        self.PQA= self.field(PQA[4:6])
 
         # x(PB), x(QB) and x(PB - QB)
         PQB = f.readline()
         PQB = [int(x, 16) for x in PQB.split()]
-        self.PB = [self.field(PQB[0:2]), self.field(1)]
-        self.QB = [self.field(PQB[2:4]), self.field(1)]
-        self.PQB= [self.field(PQB[4:6]), self.field(1)]
+        self.PB = self.field(PQB[0:2])
+        self.QB = self.field(PQB[2:4])
+        self.PQB= self.field(PQB[4:6])
 
         f.close()
-
-        # These are for nonlocal in the pk/dh functions
-        self.PA_b, self.QA_b, self.PQA_b = None, None, None
-        self.PB_a, self.QB_a, self.PQB_a = None, None, None
 
         if not formula.uninitialized:
             file_path = (
@@ -167,47 +163,102 @@ class Strategy(object):
 
     def strategy_at_6_A(self, sk_a):
         # a24 = (A + 2) / 4 = (6 + 2) / 4 = 2
-        Ra = self.curve.Ladder3pt(sk_a, self.PA, self.QA, self.PQA, self.field(2))
-        pk_a, self.PB_a, self.QB_a, self.PQB_a = self.evaluate_strategy(
+        Ra = self.curve.Ladder3pt(
+            sk_a,
+            [self.PA, self.field(1)],
+            [self.QA, self.field(1)],
+            [self.PQA, self.field(1)],
+            self.field(2)
+        )
+        _, P, Q, PQ = self.evaluate_strategy(
             True,
-            self.PB,
-            self.QB,
-            self.PQB,
+            [self.PB, self.field(1)],
+            [self.QB, self.field(1)],
+            [self.PQB, self.field(1)],
             [self.field(8), self.field(4)],
             Ra,
             self.SIDp[::-1],
             self.Sp,
             len(self.SIDp)
         )
-        return pk_a
+        # --- from proj to affine
+        inv = (P[1] * Q[1])
+        inv = (inv * PQ[1])
+        inv = (inv ** -1)
+        # --- P
+        PB_a = (Q[1] * PQ[1])
+        PB_a = (PB_a * inv)
+        PB_a = (PB_a * P[0])
+        # --- Q
+        QB_a = (P[1] * PQ[1])
+        QB_a = (QB_a * inv)
+        QB_a = (QB_a * Q[0])
+        # --- PQ
+        PQB_a = (P[1] * Q[1])
+        PQB_a = (PQB_a * inv)
+        PQB_a = (PQB_a * PQ[0])
+        return (PB_a, QB_a, PQB_a)
 
     def strategy_at_6_B(self, sk_b):
         # a24 = (A + 2) / 4 = (6 + 2) / 4 = 2
-        Rb = self.curve.Ladder3pt(sk_b, self.PB, self.QB, self.PQB, self.field(2))
-        pk_b, self.PA_b, self.QA_b, self.PQA_b = self.evaluate_strategy(
+        Rb = self.curve.Ladder3pt(
+            sk_b,
+            [self.PB, self.field(1)],
+            [self.QB, self.field(1)],
+            [self.PQB, self.field(1)],
+            self.field(2)
+        )
+        _, P, Q, PQ = self.evaluate_strategy(
             True,
-            self.PA,
-            self.QA,
-            self.PQA,
+            [self.PA, self.field(1)],
+            [self.QA, self.field(1)],
+            [self.PQA, self.field(1)],
             [self.field(8), self.field(4)],
             Rb,
             self.SIDm[::-1],
             self.Sm,
             len(self.SIDm)
         )
-        return pk_b
+        # --- from proj to affine
+        inv = (P[1] * Q[1])
+        inv = (inv * PQ[1])
+        inv = (inv ** -1)
+        # --- P
+        PA_b = (Q[1] * PQ[1])
+        PA_b = (PA_b * inv)
+        PA_b = (PA_b * P[0])
+        # --- Q
+        QA_b = (P[1] * PQ[1])
+        QA_b = (QA_b * inv)
+        QA_b = (QA_b * Q[0])
+        # --- PQ
+        PQA_b = (P[1] * Q[1])
+        PQA_b = (PQA_b * inv)
+        PQA_b = (PQA_b * PQ[0])
+        return (PA_b, QA_b, PQA_b)
 
     def strategy_A(self, sk_a, pk_b):
-        A = self.curve.get_A(self.PA_b, self.QA_b, self.PQA_b)
+        (PA_b, QA_b, PQA_b) = pk_b
+        A = self.curve.get_A(
+            [PA_b, self.field(1)],
+            [QA_b, self.field(1)],
+            [PQA_b, self.field(1)]
+        )
         assert self.curve.issupersingular(A), "non-supersingular input curve"
         a24 = A[1] ** -1
         a24 = a24 * A[0]
-        RB_a = self.curve.Ladder3pt(sk_a, self.PA_b, self.QA_b, self.PQA_b, a24)
+        RB_a = self.curve.Ladder3pt(
+            sk_a,
+            [PA_b, self.field(1)],
+            [QA_b, self.field(1)],
+            [PQA_b, self.field(1)],
+            a24
+        )
         ss_a, _, _, _ = self.evaluate_strategy(
             False,
-            self.PB,
-            self.QB,
-            self.PQB,
+            None,
+            None,
+            None,
             A,
             RB_a,
             self.SIDp[::-1],
@@ -217,16 +268,27 @@ class Strategy(object):
         return ss_a
 
     def strategy_B(self, sk_b, pk_a):
-        A = self.curve.get_A(self.PB_a, self.QB_a, self.PQB_a)
+        (PB_a, QB_a, PQB_a) = pk_a
+        A = self.curve.get_A(
+            [PB_a, self.field(1)],
+            [QB_a, self.field(1)],
+            [PQB_a, self.field(1)]
+        )
         assert self.curve.issupersingular(A), "non-supersingular input curve"
         a24 = A[1] ** -1
         a24 = a24 * A[0]
-        RA_b = self.curve.Ladder3pt(sk_b, self.PB_a, self.QB_a, self.PQB_a, a24)
+        RA_b = self.curve.Ladder3pt(
+            sk_b,
+            [PB_a, self.field(1)],
+            [QB_a, self.field(1)],
+            [PQB_a, self.field(1)],
+            a24
+        )
         ss_b, _, _, _ = self.evaluate_strategy(
             False,
-            self.PA,
-            self.QA,
-            self.PQA,
+            None,
+            None,
+            None,
             A,
             RA_b,
             self.SIDm[::-1],

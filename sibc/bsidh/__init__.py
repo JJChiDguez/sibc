@@ -28,18 +28,26 @@ class BSIDH(object):
     >>> bsidh_hvelu = BSIDH('montgomery', 'b2', 'hvelu', True, False, False, False)
     >>> sk_a, sk_b = bsidh_hvelu.secret_key_a(), bsidh_hvelu.secret_key_b()
     >>> pk_a, pk_b = bsidh_hvelu.public_key_a(sk_a), bsidh_hvelu.public_key_b(sk_b)
-    >>> curve_ss_a, curve_ss_b = bsidh_hvelu.dh_a(sk_a, pk_b), bsidh_hvelu.dh_b(sk_b, pk_a)
-    >>> curve_ss_a == curve_ss_b
+    >>> ss_a, ss_b = bsidh_hvelu.dh_a(sk_a, pk_b), bsidh_hvelu.dh_b(sk_b, pk_a)
+    >>> ss_a == ss_b
     True
 
     >>> from sibc.bsidh import BSIDH, default_parameters
     >>> b = BSIDH(**default_parameters)
     >>> sk_a, sk_b = b.secret_key_a(), b.secret_key_b()
     >>> pk_a, pk_b = b.public_key_a(sk_a), b.public_key_b(sk_b)
-    >>> curve_ss_a, curve_ss_b = b.dh_a(sk_a, pk_b), b.dh_b(sk_b, pk_a)
-    >>> curve_ss_a == curve_ss_b
+    >>> ss_a, ss_b = b.dh_a(sk_a, pk_b), b.dh_b(sk_b, pk_a)
+    >>> ss_a == ss_b
     True
 
+    >>> from sibc.bsidh import BSIDH, default_parameters
+    >>> b = BSIDH(**default_parameters)
+    >>> sk_a, pk_a = b.keygen_a()
+    >>> sk_b, pk_b = b.keygen_b()
+    >>> ss_a, ss_b = b.dh_a(sk_a, pk_b), b.dh_b(sk_b, pk_a)
+    >>> ss_a == ss_b
+    True
+    
     Other tests which were previously here are now in the test directory.
 
     """
@@ -56,6 +64,7 @@ class BSIDH(object):
     ):
 
         self.params = attrdict(parameters['bsidh'][prime])
+        self.p_bytes = (self.params.p_bits + (self.params.p_bits % 8)) // 8
         self.prime = prime
         self.tuned = tuned
         self.uninitialized = uninitialized
@@ -83,79 +92,133 @@ class BSIDH(object):
 
     def secret_key_a(self):
         k = self.strategy.random_scalar_A()
-        return k.to_bytes(length=32, byteorder='little')
+        return k.to_bytes(length=self.p_bytes, byteorder='little')
 
     def secret_key_b(self):
         k = self.strategy.random_scalar_B()
-        return k.to_bytes(length=32, byteorder='little')
+        return k.to_bytes(length=self.p_bytes, byteorder='little')
 
     def public_key_a(self, sk):
-        # To be modified: public key will corresponds with the image point if PB, QB, and PQB
         sk = int.from_bytes(sk, byteorder='little')
-        x, y = self.strategy.strategy_at_6_A(sk)
-        a = x.re.x; b = x.im.x;
-        c = y.re.x; d = y.im.x;
-        pk = a.to_bytes(length=32, byteorder='little') + b.to_bytes(length=32, byteorder='little') +\
-            c.to_bytes(length=32, byteorder='little') + d.to_bytes(length=32, byteorder='little')
+        x, y, z = self.strategy.strategy_at_6_A(sk)
+        pk = x.re.x.to_bytes(length=self.p_bytes, byteorder='little') +\
+        x.im.x.to_bytes(length=self.p_bytes, byteorder='little') +\
+        y.re.x.to_bytes(length=self.p_bytes, byteorder='little') +\
+        y.im.x.to_bytes(length=self.p_bytes, byteorder='little') +\
+        z.re.x.to_bytes(length=self.p_bytes, byteorder='little') +\
+        z.im.x.to_bytes(length=self.p_bytes, byteorder='little')
         return pk
 
     def public_key_b(self, sk):
-        # To be modified: public key will corresponds with the image point if PA, QA, and PQA
         sk = int.from_bytes(sk, byteorder='little')
-        x, y = self.strategy.strategy_at_6_B(sk)
-        a = x.re.x; b = x.im.x;
-        c = y.re.x; d = y.im.x;
-        e = a.to_bytes(length=32, byteorder='little') + b.to_bytes(length=32, byteorder='little') +\
-            c.to_bytes(length=32, byteorder='little') + d.to_bytes(length=32, byteorder='little')
-        return e
+        x, y, z = self.strategy.strategy_at_6_B(sk)
+        pk = x.re.x.to_bytes(length=self.p_bytes, byteorder='little') +\
+        x.im.x.to_bytes(length=self.p_bytes, byteorder='little') +\
+        y.re.x.to_bytes(length=self.p_bytes, byteorder='little') +\
+        y.im.x.to_bytes(length=self.p_bytes, byteorder='little') +\
+        z.re.x.to_bytes(length=self.p_bytes, byteorder='little') +\
+        z.im.x.to_bytes(length=self.p_bytes, byteorder='little')
+        return pk
 
     def dh_a(self, sk, pk):
         sk = int.from_bytes(sk, byteorder='little')
-        a, b = int.from_bytes(pk[0:32], byteorder='little'), int.from_bytes(pk[32:64], byteorder='little')
-        c, d = int.from_bytes(pk[64:96], byteorder='little'), int.from_bytes(pk[96:128], byteorder='little')
-        pk = [self.field([a, b]), self.field([c, d])]
+        # --- P
+        P_re = int.from_bytes(pk[0:self.p_bytes], byteorder='little')
+        P_im = int.from_bytes(pk[self.p_bytes:(2*self.p_bytes)], byteorder='little')
+        # --- Q
+        Q_re = int.from_bytes(pk[(2*self.p_bytes):(3*self.p_bytes)], byteorder='little')
+        Q_im = int.from_bytes(pk[(3*self.p_bytes):(4*self.p_bytes)], byteorder='little')
+        # --- Q
+        PQ_re = int.from_bytes(pk[(4*self.p_bytes):(5*self.p_bytes)], byteorder='little')
+        PQ_im = int.from_bytes(pk[(5*self.p_bytes):(6*self.p_bytes)], byteorder='little')
+
+        pk = (self.field([P_re, P_im]), self.field([Q_re, Q_im]), self.field([PQ_re, PQ_im]))
         ss = self.strategy.strategy_A(sk, pk)
-        curve_ss_a = self.curve.coeff(ss)
-        x, y = curve_ss_a.re, curve_ss_a.im
-        x = x.x.to_bytes(length=32, byteorder='little')
-        y = y.x.to_bytes(length=32, byteorder='little')
+        ss = self.curve.coeff(ss)
+        x = ss.re.x.to_bytes(length=self.p_bytes, byteorder='little')
+        y = ss.im.x.to_bytes(length=self.p_bytes, byteorder='little')
         return x + y
 
     def dh_b(self, sk, pk):
         sk = int.from_bytes(sk, byteorder='little')
-        a, b = int.from_bytes(pk[0:32], byteorder='little'), int.from_bytes(pk[32:64], byteorder='little')
-        c, d = int.from_bytes(pk[64:96], byteorder='little'), int.from_bytes(pk[96:128], byteorder='little')
-        pk = [self.field([a, b]), self.field([c, d])]
+        # --- P
+        P_re = int.from_bytes(pk[0:self.p_bytes], byteorder='little')
+        P_im = int.from_bytes(pk[self.p_bytes:(2*self.p_bytes)], byteorder='little')
+        # --- Q
+        Q_re = int.from_bytes(pk[(2*self.p_bytes):(3*self.p_bytes)], byteorder='little')
+        Q_im = int.from_bytes(pk[(3*self.p_bytes):(4*self.p_bytes)], byteorder='little')
+        # --- Q
+        PQ_re = int.from_bytes(pk[(4*self.p_bytes):(5*self.p_bytes)], byteorder='little')
+        PQ_im = int.from_bytes(pk[(5*self.p_bytes):(6*self.p_bytes)], byteorder='little')
+
+        pk = (self.field([P_re, P_im]), self.field([Q_re, Q_im]), self.field([PQ_re, PQ_im]))
         ss = self.strategy.strategy_B(sk, pk)
-        curve_ss_b = self.curve.coeff(ss)
-        x, y = curve_ss_b.re, curve_ss_b.im
-        x = x.x.to_bytes(length=32, byteorder='little')
-        y = y.x.to_bytes(length=32, byteorder='little')
+        ss = self.curve.coeff(ss)
+        x = ss.re.x.to_bytes(length=self.p_bytes, byteorder='little')
+        y = ss.im.x.to_bytes(length=self.p_bytes, byteorder='little')
         return x + y
 
     def derive_a(self, sk, pk):
         sk = int.from_bytes(sk, byteorder='little')
-        a, b = int.from_bytes(pk[0:32], byteorder='little'), int.from_bytes(pk[32:64], byteorder='little')
-        c, d = int.from_bytes(pk[64:96], byteorder='little'), int.from_bytes(pk[96:128], byteorder='little')
-        pk = [self.field([a, b]), self.field([c, d])]
+        # --- P
+        P_re = int.from_bytes(pk[0:self.p_bytes], byteorder='little')
+        P_im = int.from_bytes(pk[self.p_bytes:(2*self.p_bytes)], byteorder='little')
+        # --- Q
+        Q_re = int.from_bytes(pk[(2*self.p_bytes):(3*self.p_bytes)], byteorder='little')
+        Q_im = int.from_bytes(pk[(3*self.p_bytes):(4*self.p_bytes)], byteorder='little')
+        # --- Q
+        PQ_re = int.from_bytes(pk[(4*self.p_bytes):(5*self.p_bytes)], byteorder='little')
+        PQ_im = int.from_bytes(pk[(5*self.p_bytes):(6*self.p_bytes)], byteorder='little')
+
+        pk = (self.field([P_re, P_im]), self.field([Q_re, Q_im]), self.field([PQ_re, PQ_im]))
         ss = self.strategy.strategy_A(sk, pk)
-        curve_ss_a = self.curve.coeff(ss)
-        x, y = curve_ss_a.re, curve_ss_a.im
-        x = x.x.to_bytes(length=32, byteorder='little')
-        y = y.x.to_bytes(length=32, byteorder='little')
+        ss = self.curve.coeff(ss)
+        x = ss.re.x.to_bytes(length=self.p_bytes, byteorder='little')
+        y = ss.im.x.to_bytes(length=self.p_bytes, byteorder='little')
         return x + y
 
     def derive_b(self, sk, pk):
         sk = int.from_bytes(sk, byteorder='little')
-        a, b = int.from_bytes(pk[0:32], byteorder='little'), int.from_bytes(pk[32:64], byteorder='little')
-        c, d = int.from_bytes(pk[64:96], byteorder='little'), int.from_bytes(pk[96:128], byteorder='little')
-        pk = [self.field([a, b]), self.field([c, d])]
+        # --- P
+        P_re = int.from_bytes(pk[0:self.p_bytes], byteorder='little')
+        P_im = int.from_bytes(pk[self.p_bytes:(2*self.p_bytes)], byteorder='little')
+        # --- Q
+        Q_re = int.from_bytes(pk[(2*self.p_bytes):(3*self.p_bytes)], byteorder='little')
+        Q_im = int.from_bytes(pk[(3*self.p_bytes):(4*self.p_bytes)], byteorder='little')
+        # --- Q
+        PQ_re = int.from_bytes(pk[(4*self.p_bytes):(5*self.p_bytes)], byteorder='little')
+        PQ_im = int.from_bytes(pk[(5*self.p_bytes):(6*self.p_bytes)], byteorder='little')
+
+        pk = (self.field([P_re, P_im]), self.field([Q_re, Q_im]), self.field([PQ_re, PQ_im]))
         ss = self.strategy.strategy_B(sk, pk)
-        curve_ss_b = self.curve.coeff(ss)
-        x, y = curve_ss_b.re, curve_ss_b.im
-        x = x.x.to_bytes(length=32, byteorder='little')
-        y = y.x.to_bytes(length=32, byteorder='little')
+        ss = self.curve.coeff(ss)
+        x = ss.re.x.to_bytes(length=self.p_bytes, byteorder='little')
+        y = ss.im.x.to_bytes(length=self.p_bytes, byteorder='little')
         return x + y
+
+    def keygen_a(self):
+        sk = self.strategy.random_scalar_A()
+        x, y, z = self.strategy.strategy_at_6_A(sk)
+        sk = sk.to_bytes(length=self.p_bytes, byteorder='little')
+        pk = x.re.x.to_bytes(length=self.p_bytes, byteorder='little') +\
+        x.im.x.to_bytes(length=self.p_bytes, byteorder='little') +\
+        y.re.x.to_bytes(length=self.p_bytes, byteorder='little') +\
+        y.im.x.to_bytes(length=self.p_bytes, byteorder='little') +\
+        z.re.x.to_bytes(length=self.p_bytes, byteorder='little') +\
+        z.im.x.to_bytes(length=self.p_bytes, byteorder='little')
+        return sk, pk
+
+    def keygen_b(self):
+        sk = self.strategy.random_scalar_B()
+        x, y, z = self.strategy.strategy_at_6_B(sk)
+        sk = sk.to_bytes(length=self.p_bytes, byteorder='little')
+        pk = x.re.x.to_bytes(length=self.p_bytes, byteorder='little') +\
+        x.im.x.to_bytes(length=self.p_bytes, byteorder='little') +\
+        y.re.x.to_bytes(length=self.p_bytes, byteorder='little') +\
+        y.im.x.to_bytes(length=self.p_bytes, byteorder='little') +\
+        z.re.x.to_bytes(length=self.p_bytes, byteorder='little') +\
+        z.im.x.to_bytes(length=self.p_bytes, byteorder='little')
+        return sk, pk
 
 if __name__ == "__main__":
     import doctest

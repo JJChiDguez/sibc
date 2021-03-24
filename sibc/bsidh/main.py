@@ -14,6 +14,7 @@ def bsidh_main(ctx):
     init_runtime_basefield = algo.basefield.init_runtime
     init_runtime_field = algo.field.init_runtime
     validate = algo.curve.issupersingular
+    get_A = algo.curve.get_A
     measure = algo.curve.measure
     strategy_at_6_A = algo.strategy.strategy_at_6_A
     strategy_at_6_B = algo.strategy.strategy_at_6_B
@@ -92,7 +93,8 @@ def bsidh_main(ctx):
     print("// --- \033[0;35mAlice\033[0m")
     init_runtime_basefield()
     init_runtime_field()
-    public_validation = validate(b_public)
+    pk_b = get_A([b_public[0], algo.field(1)], [b_public[1], algo.field(1)], [b_public[2], algo.field(1)])
+    public_validation = validate(pk_b)
     assert public_validation
     
     print(
@@ -141,7 +143,8 @@ def bsidh_main(ctx):
     print("// --- \033[0;34mBob\033[0m")
     init_runtime_basefield()
     init_runtime_field()
-    public_validation = validate(a_public)
+    pk_a = get_A([a_public[0], algo.field(1)], [a_public[1], algo.field(1)], [a_public[2], algo.field(1)])
+    public_validation = validate(pk_a)
     assert public_validation
     
     print(
