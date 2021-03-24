@@ -29,10 +29,10 @@ class CSIDH(object):
 
     Here is one group action test with random keys:
 
-    >>> csidh_hvelu_wd1 = CSIDH('montgomery', 'p512', 'hvelu', 'wd1', 10, True, False, False, False)
-    >>> sk_a, sk_b = csidh_hvelu_wd1.secret_key(), csidh_hvelu_wd1.secret_key()
-    >>> pk_a, pk_b = csidh_hvelu_wd1.public_key(sk_a), csidh_hvelu_wd1.public_key(sk_b)
-    >>> csidh_hvelu_wd1.dh(sk_a, pk_b) == csidh_hvelu_wd1.dh(sk_b, pk_a)
+    >>> csidh_tvelu_wd1 = CSIDH('montgomery', 'p512', 'tvelu', 'wd1', 10, False, False, False, False)
+    >>> sk_a, sk_b = csidh_tvelu_wd1.secret_key(), csidh_tvelu_wd1.secret_key()
+    >>> pk_a, pk_b = csidh_tvelu_wd1.public_key(sk_a), csidh_tvelu_wd1.public_key(sk_b)
+    >>> csidh_tvelu_wd1.dh(sk_a, pk_b) == csidh_tvelu_wd1.dh(sk_b, pk_a)
     True
 
     >>> from sibc.csidh import CSIDH, default_parameters
@@ -43,6 +43,20 @@ class CSIDH(object):
     >>> # bob generates a key
     >>> bob_secret_key = c.secret_key()
     >>> bob_public_key = c.public_key(bob_secret_key)
+    >>> # if either alice or bob use their secret key with the other's respective
+    >>> # public key, the resulting shared secrets are the same
+    >>> shared_secret_alice = c.dh(alice_secret_key, bob_public_key)
+    >>> shared_secret_bob = c.dh(bob_secret_key, alice_public_key)
+    >>> # Alice and bob produce an identical shared secret
+    >>> shared_secret_alice == shared_secret_bob
+    True
+
+    >>> from sibc.csidh import CSIDH, default_parameters
+    >>> c = CSIDH(**default_parameters)
+    >>> # alice generates a key
+    >>> alice_secret_key, alice_public_key = c.keygen()
+    >>> # bob generates a key
+    >>> bob_secret_key, bob_public_key = c.keygen()
     >>> # if either alice or bob use their secret key with the other's respective
     >>> # public key, the resulting shared secrets are the same
     >>> shared_secret_alice = c.dh(alice_secret_key, bob_public_key)
