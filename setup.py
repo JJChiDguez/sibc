@@ -30,7 +30,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     license="GPLv3",
-    url="https://github.com/JJChiDguez/velusqrt",
+    url="https://github.com/JJChiDguez/sibc",
     packages=setuptools.find_packages(),
     keywords="csidh, bsidh, sibc, encryption",
     classifiers=[
