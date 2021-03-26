@@ -94,7 +94,7 @@ def is_prime(n):
         return True
 
     #bar = Bar('// Primality test on p', max=128)
-    iters = 7
+    iters = 1
     for i in range(iters):  # number of trials
         a = random.randrange(2, n)
         if trial_composite(a):

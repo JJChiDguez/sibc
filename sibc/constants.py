@@ -8,18 +8,18 @@ def csidh_get_sop_from_disk(prime):
     # List of Small odd primes, L := [l_0, ..., l_{n-1}]
     L = resource_string(__name__, "data/sop/" + prime)
     L = [int(l) for l in L.split()]
-    exponent_of_two = L[0]  #   Exponent of cofactor-2
+    cofactor = L[0]
     L = list(L[1:])  #   Small Odd Primes l_i's
     n = len(L)  #   Number of l_i's to be used
-    p = (2 ** (exponent_of_two)) * reduce(
+    p = cofactor * reduce(
         lambda x, y: (x * y), L
-    ) - 1  # p := 4 * l_0 * ... * l_n - 1
+    ) - 1  # p := cofactor * l_0 * ... * l_n - 1
     p_minus_one_halves = (p - 1) // 2  # (p - 1) / 2
 
     validation_stop = sum([bitlength(l_i) for l_i in L]) / 2.0 + 2
     return dict(
         L=L,
-        exponent_of_two=exponent_of_two,
+        cofactor=cofactor,
         n=n,
         p=p,
         p_minus_one_halves=p_minus_one_halves,

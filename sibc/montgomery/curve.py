@@ -34,13 +34,8 @@ def MontgomeryCurve(prime):
         # CSIDH only requires the factorization of p + 1
         L = parameters['csidh'][prime]['L']
         n = parameters['csidh'][prime]['n']
-        exponent_of_two = parameters['csidh'][prime]['exponent_of_two']
-
-        p = (2 ** (exponent_of_two)) * reduce(
-            lambda x, y: (x * y), L
-        ) - 1  # p := 4 * l_0 * ... * l_n - 1
-        cofactor = 2 ** (exponent_of_two)
-        # p_minus_one_halves = (p - 1) // 2  # (p - 1) / 2
+        cofactor = parameters['csidh'][prime]['cofactor']
+        p = parameters['csidh'][prime]['p']
         p_minus_one_halves = parameters['csidh'][prime]['p_minus_one_halves']
         validation_stop = sum([bitlength(l_i) for l_i in L]) / 2.0 + 2
         field = PrimeField(p)
@@ -573,7 +568,6 @@ def MontgomeryCurve(prime):
 
                 T_p, _ = elligator(A) # T_p is always in GF(p), and thus has torsion (p+1)
                 T_p = prac(cofactor, T_p, A)
-
                 P = cofactor_multiples(T_p, A, range(0, n, 1))
 
                 bits_of_the_order = 0

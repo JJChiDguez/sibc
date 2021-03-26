@@ -146,8 +146,8 @@ The field characteristic `p` should be stored in directory `data/sop/`, and
 CSIDH and BSIDH have different structures (see below):
 
 ```bash
-# CSIDH format (here p = 2^c * l_1 * .... l_n - 1)
-c l_1 l_2 ... l_n
+# CSIDH format (here p = cofactor * l_1 * .... l_n - 1)
+cofactor l_1 l_2 ... l_n
 
 # BSIDH format
 Hexadecimal representation of the prime p
