@@ -35,7 +35,7 @@ setuptools.setup(
     keywords="csidh, bsidh, sibc, encryption",
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: GPL License",
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.7",
@@ -53,6 +53,6 @@ setuptools.setup(
         sdist_dsc=sdist_dsc,
     ),
     package_data = {
-            "" : [ "data/*/*" ]
+            "" : [ "sibc/data/*" ]
         }
 )
