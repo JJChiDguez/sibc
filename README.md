@@ -1,16 +1,21 @@
 # **S**upersingular **I**sogeny-**B**ased **C**ryptography constructions
 
-This repository includes a python-code library named **sibc**, which allows an user-
-friendly usage to deal with some isogeny-based cryptographic primitive.
+<img align="center" src="sibc-logo.png">
 
-The current version of **sibc** library has integrated CSIDH and B-SIDH schemes using
-traditional and velusqrt formulae on Montgomery curve x-only projective coordinates.
+This repository includes a python-code library named **sibc**, which allows a user-friendly
+interface to deal with some isogeny-based cryptographic primitive.
 
-The current version allows working with prime and quadratic field classes that permit
-operating field elements as integers. Moreover, the current cryptographic primitives
-are implemented in constant-time concerning the number of field operations. Here, a
-constant-time algorithm means its running time does not depend on the input or it possibly
-does from randomness as CSIDH does.
+The current version of the **sibc** library has integrated CSIDH and B-SIDH schemes using traditional
+and velusqrt formulae on Montgomery curve x-only projective coordinates; in particular, **sibc** allows
+working with prime and quadratic field classes that permit operating field elements as integers.
+Additionally, the cryptographic primitives are implemented in constant-time concerning the number
+of field operations, where a constant-time procedure refers to its running time does not depend on
+the input or it possibly does from randomness as CSIDH does.
+
+It is worthing to mention, the library is constantly extended, and sidh/sike (and initially, also
+some signature schemes) will be integrated into the **sibc** library.
+
+The **sibc** library aims to allow isogeny-contributors for building new primitives with a constant-time nature.
 
 ## Installation 
 
@@ -279,6 +284,11 @@ cost of 3 and 2 multiplications in `GF(p)`, respectively.
 The current implementation does not have implemented the B-SIDH key validation, it will be included
 in the next library version.
 
+### Adding new prime instances
+When adding a new isogeny-based instances (the prime number, and public parameters) should be included
+in parameter list of `sibc/__main__.py` (click option `-p`, `--prime`) and `sibc/constants.py` (in the
+function `[csidh/bsidh]_get_sop_from_disk()` and the dictionary `parameters`).
+
 ## Changes
 
 Significant changes are listed in the [CHANGELOG](CHANGELOG.md) file. Future integrations/modifications
@@ -294,6 +304,10 @@ are listed in the [TODOLIST](TODOLIST.md) file.
 
 1. Jacob Appelbaum <j.appelbaum@tue.nl>; and
 2. Leif Ryge <leif@synthesize.us>.
+
+### Logo creator contributor
+
+Fabiola-Argentina Hern&aacute;ndez-Torres <farg.cls@outlook.com>
 
 All contributors are listed in the [CONTRIBUTORS](CONTRIBUTORS) file.
 
