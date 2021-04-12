@@ -307,7 +307,7 @@ are listed in the [TODOLIST](TODOLIST.md) file.
 
 ### Logo creator contributor
 
-Fabiola-Argentina Hern&aacute;ndez-Torres <farg.cls@outlook.com>
+1. Fabiola-Argentina Hern&aacute;ndez-Torres <farg.cls@outlook.com>
 
 All contributors are listed in the [CONTRIBUTORS](CONTRIBUTORS) file.
 
