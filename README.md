@@ -300,7 +300,7 @@ are listed in the [TODOLIST](TODOLIST.md) file.
 2. **_Jesús-Javier Chi-Domínguez_** <jesus.chidominguez@tuni.fi>, <chidoys@gmail.com>, <jjchi@computacion.cs.cinvestav.mx>; and
 3. **_Francisco Rodríguez-Henríquez_** <francisco@cs.cinvestav.mx>.
 
-### Main contributors
+### User-friendly interface contributors
 
 1. Jacob Appelbaum <j.appelbaum@tue.nl>; and
 2. Leif Ryge <leif@synthesize.us>.
