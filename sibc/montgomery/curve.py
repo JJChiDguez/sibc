@@ -304,9 +304,6 @@ def MontgomeryCurve(prime):
         output: the projective Montgomery x-coordinate point x([2]P), x([P+Q])
         ----------------------------------------------------------------------
         """
-        #T = xdbl(P, A)
-        #S = xadd(P, Q, PQ)
-        #return T, S
         t0 = (P[0] + P[1])
         t1 = (P[0] - P[1])
         X2 = (t0 ** 2)
@@ -335,13 +332,11 @@ def MontgomeryCurve(prime):
         ----------------------------------------------------------------------
         xtpl()
         input : a projective Montgomery x-coordinate point x(P) := XP/ZP, and
-                the  projective Montgomery constants A24:= A + 2C and C24:=4C
+                the  projective Montgomery constants A24p:=A+2C and A24m:=A-2C
                 where E : y^2 = x^3 + (A/C)*x^2 + x
         output: the projective Montgomery x-coordinate point x([3]P)
         ----------------------------------------------------------------------
         """
-        # A - 2C
-        C = A[0] - A[1]
         # ---
         t0 = (P[0] - P[1])
         t2 = (t0 ** 2)
@@ -355,7 +350,7 @@ def MontgomeryCurve(prime):
         t1 = (t1 - t2)
         t5 = (t3 * A[0])
         t3 = (t5 * t3)
-        t6 = (t2 * C)
+        t6 = (t2 * A[1])
         # ---
         t2 = (t2 * t6)
         t3 = (t2 - t3)

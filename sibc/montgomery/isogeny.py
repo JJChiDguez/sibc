@@ -1005,6 +1005,51 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
             ZQ = (ZQ * t0)
             return [XQ, ZQ]
 
+        # Kernel computation for xeval_3 and xisog_3
+        def kps_3(self, P):
+
+            self.K = [None, None]
+            self.K[0] = (P[0] - P[1])
+            self.K[1] = (P[0] + P[1])
+            return None
+
+        # Degree-3 isogeny construction
+        def xisog_3(self, P):
+
+            # This function returns (A' + 2C, A' - 2C), which is required for tripling a point
+            t0 = (self.K[0] ** 2)
+            t1 = (self.K[1] ** 2)
+            t2 = (t0 + t1)
+            t3 = (self.K[0] + self.K[1])
+            t3 = (t3 ** 2)
+            t3 = (t3 - t2)
+            t2 = (t1 + t3)
+            t3 = (t3 + t0)
+            t4 = (t3 + t0)
+            t4 = (t4 + t4)
+            t4 = (t1 + t4)
+            A24m = (t2 * t4)
+            t4 = (t1 + t2)
+            t4 = (t4 + t4)
+            t4 = (t0 + t4)
+            A24p = (t3 * t4)
+            return [A24p, A24m]
+
+        # Degree-3 isogeny evaluation
+        def xeval_3(self, Q):
+
+            t0 = (Q[0] + Q[1])
+            t1 = (Q[0] - Q[1])
+            t0 = (self.K[0] * t0)
+            t1 = (self.K[1] * t1)
+            t2 = (t1 + t0)
+            t0 = (t1 - t0)
+            t2 = (t2 ** 2)
+            t0 = (t0 ** 2)
+            XQ = (Q[0] * t2)
+            ZQ = (Q[1] * t0)
+            return [XQ, ZQ]
+
         def kps(self, P, A, i):
 
             if self.L[i] == 4:
