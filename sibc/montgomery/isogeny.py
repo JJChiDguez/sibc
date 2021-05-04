@@ -936,6 +936,35 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
 
             return [XX, ZZ]
 
+        # Kernel computation for xeval_2 and xisog_2
+        def kps_2(self, P):
+
+            self.K = [None, None]
+            self.K[0] = (P[0] + P[1])
+            self.K[1] = (P[0] - P[1])
+            return None
+
+        # Degree-2 isogeny construction
+        def xisog_2(self, P):
+
+            A24 = (P[0] ** 2)
+            C24 = (P[1] ** 2)
+            A24 = (C24 - A24)
+            return [A24, C24]
+
+        # Degree-2 isogeny evluation
+        def xeval_2(self, Q):
+
+            t2 = (Q[0] + Q[1])
+            t3 = (Q[0] - Q[1])
+            t0 = (self.K[0] * t3)
+            t1 = (self.K[1] * t2)
+            t2 = (t0 + t1)
+            t3 = (t0 - t1)
+            XQ = (Q[0] * t2)
+            ZQ = (Q[1] * t3)
+            return [XQ, ZQ]
+
         # Kernel computation for xeval_4 and xisog_4
         def kps_4(self, P):
             self.K = [ None, None, None, None]
