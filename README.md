@@ -1,4 +1,4 @@
-# **S**upersingular **I**sogeny-**B**ased **C**ryptography constructions
+# **S**upersingular **I**sogeny-**B**ased **C**ryptographic constructions
 
 <img align="center" src="sibc-logo.png">
 
@@ -296,8 +296,8 @@ are listed in the [TODOLIST](TODOLIST.md) file.
 
 ## Authors
 
-1. **Gora Adj** <gora.adj@gmail.com>, <gora.adj@udl.cat>;
-2. **_Jesús-Javier Chi-Domínguez_** <jesus.chidominguez@tuni.fi>, <chidoys@gmail.com>, <jjchi@computacion.cs.cinvestav.mx>; and
+1. **_Gora Adj_** <gora.adj@udl.cat>, <gora.adj@gmail.com>;
+2. **_Jesús-Javier Chi-Domínguez_** <Jesus.Dominguez@tii.ae>, <chidoys@gmail.com>; and
 3. **_Francisco Rodríguez-Henríquez_** <francisco@cs.cinvestav.mx>.
 
 ### User-friendly interface contributors
@@ -310,6 +310,17 @@ are listed in the [TODOLIST](TODOLIST.md) file.
 1. Fabiola-Argentina Hern&aacute;ndez-Torres <farg.cls@outlook.com>
 
 All contributors are listed in the [CONTRIBUTORS](CONTRIBUTORS) file.
+
+### How to cite this library
+
+```latex
+@misc{sibc,
+  author = {{Gora Adj}, {Jes\'us-Javier Chi-Dom\'inguez}, {Francisco Rodr\'iguez-Henr\'iquez}},
+  title = {{SIBC} Python library,
+  year = {2021},
+  howpublished = {\url{https://github.com/JJChiDguez/sibc/}}
+}
+```
 
 ## License
 
