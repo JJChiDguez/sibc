@@ -51,7 +51,7 @@ def csidh_precompute_strategy(ctx):
         "data/strategies/"
         + algo.curve.model
         + '/'
-        + 'csidh'
+        + 'csidh/csidh'
         + '-'
         + setting.prime
         + '-'

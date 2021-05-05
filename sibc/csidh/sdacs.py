@@ -11,7 +11,7 @@ def csidh_sdacs(ctx):
     L = algo.params.L
     n = algo.params.n
     m = algo.params.m
-    exponent_of_two = algo.curve.exponent_of_two
+    exponent_of_two = (len(bin(algo.curve.cofactor)[2:]) - 1)
     validation_stop = algo.curve.validation_stop
     SDACS = algo.curve.SDACS
 
@@ -24,11 +24,12 @@ def csidh_sdacs(ctx):
     print("")
     assert n == len(L)
 
-    print(
-        "#define cofactor %d\t// Exponent of 2 in the factorization of (p + 1) "
-        % exponent_of_two
-    )
-    print("")
+    if (2**exponent_of_two ) == algo.curve.cofactor:
+        print(
+            "#define cofactor %d\t// Exponent of 2 in the factorization of (p + 1) "
+            % exponent_of_two
+        )
+        print("")
     print("#ifdef _MONT_C_CODE_")
 
     print(

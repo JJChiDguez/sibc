@@ -43,7 +43,7 @@ def csidh_precompute_parameters(ctx):
 
     original_stdout = sys.stdout # Save a reference to the original standard output
     multievaluation = {True:'scaled', False:'unscaled'}[setting.multievaluation]
-    path = resource_filename('sibc', "data/ijk/" + algo.curve.model + '/' + algo.curve.name + '-' + multievaluation)
+    path = resource_filename('sibc', "data/ijk/csidh" + algo.curve.model + '/' + algo.curve.name + '-' + multievaluation)
     with open(path, 'w') as f:
         sys.stdout = f # Change the standard output to the file we created.
         parameters = dict()

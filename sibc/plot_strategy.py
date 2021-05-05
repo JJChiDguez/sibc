@@ -42,7 +42,7 @@ def plot_strategy(ctx):
         file_path = (
             "data/strategies/"
             + algo.curve.model
-            + '/'
+            + '/csidh/'
             + 'csidh'
             + '-'
             + setting.prime
@@ -90,7 +90,7 @@ def plot_strategy(ctx):
         file_path = (
             "data/strategies/"
             + algo.curve.model
-            + '/'
+            + '/bsidh/'
             + 'bsidh'
             + '-'
             + setting.prime

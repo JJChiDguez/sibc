@@ -42,7 +42,7 @@ bsidh_primes = (
 def csidh_get_sop_from_disk(prime):
     assert prime in csidh_primes.keys(), "unsupported prime for csidh"
     # List of Small odd primes, L := [l_0, ..., l_{n-1}]
-    L = resource_string(__name__, "data/sop/" + prime)
+    L = resource_string(__name__, "data/sop/csidh/" + prime)
     L = [int(l) for l in L.split()]
     cofactor = L[0]
     L = list(L[1:])  #   Small Odd Primes l_i's
@@ -72,7 +72,7 @@ def csidh_get_exp_from_disk(exponent, style, security, attack, n):
 
 def bsidh_get_sop_from_disk(prime):
     assert prime in bsidh_primes, "unsupported prime for bsidh"
-    f = open(resource_filename('sibc', 'data/sop/'+ prime))
+    f = open(resource_filename('sibc', 'data/sop/bsidh/'+ prime))
 
     # The prime to be used
     p = f.readline()

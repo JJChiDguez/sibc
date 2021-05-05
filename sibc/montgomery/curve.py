@@ -39,6 +39,8 @@ def MontgomeryCurve(prime):
         p_minus_one_halves = parameters['csidh'][prime]['p_minus_one_halves']
         validation_stop = sum([bitlength(l_i) for l_i in L]) / 2.0 + 2
         field = PrimeField(p)
+        # Shortest Differential Addition Chains (SDACs) for each l_i
+        path = resource_filename('sibc', "data/sdacs/csidh/" + prime)
 
     elif prime in parameters['bsidh'].keys():
         # B-SIDH only requires the factorization of p + 1 and p - 1
@@ -57,11 +59,11 @@ def MontgomeryCurve(prime):
         p_minus_one_halves = parameters['bsidh'][prime]['p_minus_one_halves']
         p_minus_3_quarters = parameters['bsidh'][prime]['p_minus_3_quarters']
         field = QuadraticField(p)
+        # Shortest Differential Addition Chains (SDACs) for each l_i
+        path = resource_filename('sibc', "data/sdacs/bsidh/" + prime)
     else:
         assert False, "only CSIDH and B-SIDH are currently implemented"
 
-    # Shortest Differential Addition Chains (SDACs) for each l_i
-    path = resource_filename('sibc', "data/sdacs/" + prime)
     SDACS = filename_to_list_of_lists_of_ints(path)
     assert len(SDACS) > 0, f'There is file precomputed sdacs for {prime} prime'
     SDACS_LENGTH = list(map(len, SDACS))
@@ -364,6 +366,17 @@ def MontgomeryCurve(prime):
         t1 = (t1 ** 2)
         Z = (t1 * t0)
         return [X,Z]
+
+    def xdbl_twice(P, A):
+        """
+        xdbl_twice()
+        input : a projective Montgomery x-coordinate point x(P) := XP/ZP, and
+                the  projective Montgomery constants A24:= A + 2C and C24:=4C
+                where E : y^2 = x^3 + (A/C)*x^2 + x
+        output: the projective Montgomery x-coordinate point x([4]P)
+        ----------------------------------------------------------------------
+        """
+        return xdbl(xdbl(P,A), A)
 
     def xmul(P, A, j):
         """

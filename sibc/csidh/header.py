@@ -43,7 +43,7 @@ def csidh_header(ctx):
         "data/strategies/"
         + algo.curve.model
         + '/'
-        + 'csidh'
+        + 'csidh/csidh'
         + '-'
         + setting.prime
         + '-'

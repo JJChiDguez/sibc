@@ -42,7 +42,15 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
                 # Reading tuned velusqrt parameters from the stored data
                 self.sI_list = []
                 self.sJ_list = []
-                path = resource_filename('sibc', "data/ijk/" + curve.model + '/' + curve.name + '-' + self.multievaluation_name)
+
+                if curve.name in parameters['csidh'].keys():
+                    algorithm = '/csidh'
+                elif curve.name in parameters['bsidh'].keys():
+                    algorithm = '/bsidh'
+                else:
+                    assert False, "only CSIDH and B-SIDH are currently implemented"
+
+                path = resource_filename('sibc', "data/ijk/" + curve.model + algorithm + '/' + curve.name + '-' + self.multievaluation_name)
                 f = open(path)
 
                 for i in range(0, curve.n, 1):
@@ -1020,7 +1028,9 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
             t0 = (self.K[0] ** 2)
             t1 = (self.K[1] ** 2)
             t2 = (t0 + t1)
-            t3 = (self.K[0] + self.K[1])
+            assert((self.K[0] + self.K[1]) == (P[0] + P[0]))
+            #t3 = (self.K[0] + self.K[1])
+            t3 = (P[0] + P[0])
             t3 = (t3 ** 2)
             t3 = (t3 - t2)
             t2 = (t1 + t3)
@@ -1149,7 +1159,7 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
                 random = SystemRandom()
 
                 # Reading public generators points
-                f = open(resource_filename('sibc', 'data/gen/' + self.curve.model + '/' + self.curve.name))
+                f = open(resource_filename('sibc', 'data/gen/bsidh/' + self.curve.model + '/' + self.curve.name))
 
                 # x(PA), x(QA) and x(PA - QA)
                 PQA = f.readline()

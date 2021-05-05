@@ -28,7 +28,7 @@ def write_list_of_lists_of_ints_to_file(path, data):
 def main(prime, algorithm):
     assert prime != None, 'argument --prime is required'
     """ Computing and storing sdacs """
-    f = open(resource_filename('sibc', 'data/sop/'+ prime))
+    f = open(resource_filename('sibc', 'data/sop/' + algorithm + '/' + prime))
     if algorithm == 'csidh':
         # CSIDH only requires the factorization of p + 1
         L = f.readline()
@@ -106,7 +106,7 @@ def main(prime, algorithm):
         )
 
     # Shortest Differential Addition Chains (SDACs) for each l_i
-    path = resource_filename('sibc', "data/sdacs/" + prime)
+    path = resource_filename('sibc', "data/sdacs/" + algorithm + '/' + prime)
     print("// Computing sdacs")
     SDACS = generate_sdacs(L)
     print("// Storing sdacs into a file")
