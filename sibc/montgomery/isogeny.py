@@ -1159,7 +1159,7 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
                 random = SystemRandom()
 
                 # Reading public generators points
-                f = open(resource_filename('sibc', 'data/gen/bsidh/' + self.curve.model + '/' + self.curve.name))
+                f = open(resource_filename('sibc', 'data/gen/' + self.curve.model + '/bsidh/' + self.curve.name))
 
                 # x(PA), x(QA) and x(PA - QA)
                 PQA = f.readline()
@@ -1193,7 +1193,7 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
                         ST = self.curve.xmul(ST, A, i)
 
                 k = random.randint(0, self.field.basefield.p + 1)
-                R = self.curve.Ladder3pt(k, S, T, ST, A)
+                R = self.curve.Ladder3pt(k, S, T, ST, self.field(6))
                 T_p = list(R)
                 T_m = list(S)
                 for idx in range(0, self.curve.np, 1):
@@ -1277,7 +1277,7 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
                         ST= self.curve.xmul(ST, A, i)
 
                 k = random.randint(0, self.field.basefield.p - 1)
-                R = self.curve.Ladder3pt(k, S, T, ST, A)
+                R = self.curve.Ladder3pt(k, S, T, ST, self.field(6))
                 T_p = list(R)
                 T_m = list(S)
 

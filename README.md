@@ -275,6 +275,9 @@ sudo sibc -p p253 -f svelu -a bsidh -u bsidh-precompute-strategy # Strategies
 Furthermore, you can create tests by running `bash misc/create-tests.sh` and `bash misc/test-cli.sh`
 (only csidh is handled by now).
 
+If either a new prime instace or primitive is included, then you should add it to misc directory.
+New primitives require new bash scripts.
+
 ## Remarks
 
 The primes labeled as `p253`, `p255`, `p247`, and `p237` correspond with the examples 2, 3, 5, and 6 from

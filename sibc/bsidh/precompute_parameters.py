@@ -47,13 +47,13 @@ def bsidh_precompute_parameters(ctx):
     random = SystemRandom()
 
     # ---Generators in E[p + 1]
-    PA = list(algo.strategy.PA)
-    QA = list(algo.strategy.QA)
-    PQA = list(algo.strategy.PQA)
+    PA = [algo.strategy.PA, field(1)]
+    QA = [algo.strategy.QA, field(1)]
+    PQA = [algo.strategy.PQA, field(1)]
     # ---Generators in E[p - 1]
-    PB = list(algo.strategy.PB)
-    QB = list(algo.strategy.QB)
-    PQB = list(algo.strategy.PQB)
+    PB = [algo.strategy.PB, field(1)]
+    QB = [algo.strategy.QB, field(1)]
+    PQB = [algo.strategy.PQB, field(1)]
 
     S = list(PA)
     T = list(QA)
@@ -136,13 +136,13 @@ def bsidh_precompute_parameters(ctx):
             ST = xmul(ST, A, i)
 
     k = random.randint(0, p)
-    R = Ladder3pt(k, S, T, ST, A)
+    R = Ladder3pt(k, S, T, ST, algo.curve.field(6))
     T_p = list(R)
     T_m = list(S)
 
     original_stdout = sys.stdout # Save a reference to the original standard output
     multievaluation = {True:'scaled', False:'unscaled'}[setting.multievaluation]
-    path = resource_filename('sibc', "data/ijk/" + algo.curve.model + '/' + algo.curve.name + '-' + multievaluation)
+    path = resource_filename('sibc', "data/ijk/" + algo.curve.model + '/bsidh/' + algo.curve.name + '-' + multievaluation)
     with open(path, 'w') as f:
         sys.stdout = f # Change the standard output to the file we created.
         parameters = dict()
@@ -245,7 +245,7 @@ def bsidh_precompute_parameters(ctx):
                 ST = xmul(ST, A, i)
 
         k = random.randint(0, p)
-        R = Ladder3pt(k, S, T, ST, A)
+        R = Ladder3pt(k, S, T, ST, algo.curve.field(6))
         T_p = list(R)
         T_m = list(S)
         for idx in range(np, np + nm, 1):
