@@ -71,7 +71,7 @@ Usage: sibc [OPTIONS] COMMAND [ARGS]...
   =(  _____| (_________|
 
 Options:
-  -p, --prime [b2|b3|b5|b6|p1024|p1792|p512|s1]
+  -p, --prime [p253|p255|p247|p237|p257|p512|p1024|p1792]
                                   [default: p512]
   -f, --formula [tvelu|svelu|hvelu]
                                   [default: hvelu]
@@ -87,6 +87,7 @@ Options:
   -u, --uninitialized             [default: False]
   -v, --verbose                   Not the kind of verbosity you might expect
                                   [default: False]
+
   --version                       Show the version and exit.
   --help                          Show this message and exit.
 
@@ -99,6 +100,7 @@ Commands:
   csidh-bounds                 Greedy-based search of optimal exponents
   csidh-dh                     Derive shared secret key from CSIDH sk,
                                CSIDH...
+
   csidh-genkey                 Generate random CSIDH secret key
   csidh-header                 Optimal strategies as C-code headers files
   csidh-ijk                    Velusqrt parameters as C-code headers files
@@ -203,14 +205,14 @@ sibc -p p512 -f hvelu -a csidh -t -m csidh-test
 
 # BSIDH
 # A single random intances of a key exchange
-sibc -p b2 -f hvelu -a bsidh bsidh-main
-sibc -p b2 -f hvelu -a bsidh -m bsidh-main
-sibc -p b2 -f hvelu -a bsidh -t bsidh-main
-sibc -p b2 -f hvelu -a bsidh -t -m bsidh-main
+sibc -p p253 -f hvelu -a bsidh bsidh-main
+sibc -p p253 -f hvelu -a bsidh -m bsidh-main
+sibc -p p253 -f hvelu -a bsidh -t bsidh-main
+sibc -p p253 -f hvelu -a bsidh -t -m bsidh-main
 # GF(p²)-operation cost of kps, xisog, and xeval blocks
-sibc -p b2 -f tvelu -a bsidh bsidh-test
-sibc -p b2 -f svelu -a bsidh bsidh-test
-sibc -p b2 -f hvelu -a bsidh -t bsidh-test
+sibc -p p253 -f tvelu -a bsidh bsidh-test
+sibc -p p253 -f svelu -a bsidh bsidh-test
+sibc -p p253 -f hvelu -a bsidh -t bsidh-test
 ```
 
 Remark, our implementation allows us to plot each optimal strategy required:
@@ -222,9 +224,9 @@ sibc -p p512 -f svelu -a csidh -s wd1 -e 10 plot-strategy
 sibc -p p512 -f hvelu -a csidh -s wd2 -e 5 plot-strategy
 
 # BSIDH
-sibc -p b2 -f hvelu -a bsidh plot-strategy
-sibc -p b2 -f hvelu -a bsidh -m plot-strategy
-sibc -p b2 -f hvelu -a bsidh -t -m plot-strategy
+sibc -p p253 -f hvelu -a bsidh plot-strategy
+sibc -p p253 -f hvelu -a bsidh -m plot-strategy
+sibc -p p253 -f hvelu -a bsidh -t -m plot-strategy
 ```
 
 Additionally, one can created files with extension `.h` that includes all the
@@ -243,7 +245,7 @@ sibc -p p512 -f hvelu -a csidh -s df -e 10 -t csidh-header
 ```
 
 ## BSIDH primes
-Currently only `b2`, `b3`, `b5`, `b6`, and `s1` are implemented and tested in the current API.
+Currently only `p253`, `p255`, `p247`, `p237`, and `p257` are implemented and tested in the current API.
 Extending this to other primes is straight-forward.
 
 
@@ -265,9 +267,9 @@ sibc-precompute-sdacs -p p512 -a csidh # SDACs
 sibc -p p512 -f hvelu -a csidh -m -t csidh-precompute-parameters # Tuned velusqrt parameters
 sibc -p p512 -f hvelu -a csidh -s df -m csidh-precompute-strategy # Strategies
 # BSIDH
-sibc-precompute-sdacs -p b2 -a bsidh # SDACs
-sudo sibc -p b2 -f svelu -a bsidh -u bsidh-precompute-parameters # Tuned velusqrt parameters: the option -u is required
-sudo sibc -p b2 -f svelu -a bsidh -u bsidh-precompute-strategy # Strategies
+sibc-precompute-sdacs -p p253 -a bsidh # SDACs
+sudo sibc -p p253 -f svelu -a bsidh -u bsidh-precompute-parameters # Tuned velusqrt parameters: the option -u is required
+sudo sibc -p p253 -f svelu -a bsidh -u bsidh-precompute-strategy # Strategies
 ```
 
 Furthermore, you can create tests by running `bash misc/create-tests.sh` and `bash misc/test-cli.sh`
@@ -275,8 +277,8 @@ Furthermore, you can create tests by running `bash misc/create-tests.sh` and `ba
 
 ## Remarks
 
-The primes labeled as `b2`, `b3`, `b5`, and `b6` correspond with the examples 2, 3, 5, and 6 from
-[B-SIDH paper](https://eprint.iacr.org/2019/1145), respectively. In particular,  `s1` denotes the
+The primes labeled as `p253`, `p255`, `p247`, and `p237` correspond with the examples 2, 3, 5, and 6 from
+[B-SIDH paper](https://eprint.iacr.org/2019/1145), respectively. In particular,  `p257` denotes the
 prime number given in [velusqrt paper](https://eprint.iacr.org/2020/341). The field airthmetic is
 centered on primes `p = 3 mod 4`. Multiplying and squaring in `GF(p²) = GF(p)[u]/(u^2 + 1)` have a
 cost of 3 and 2 multiplications in `GF(p)`, respectively.
@@ -286,8 +288,10 @@ in the next library version.
 
 ### Adding new prime instances
 When adding a new isogeny-based instances (the prime number, and public parameters) should be included
-in parameter list of `sibc/__main__.py` (click option `-p`, `--prime`) and `sibc/constants.py` (in the
-function `[csidh/bsidh]_get_sop_from_disk()` and the dictionary `parameters`).
+in parameter list of `sibc/__main__.py` (click option `-p`, `--prime`) by modifying `sibc/constants.py`
+(updating the lists/dictionary `[csidh/bsidh]_primes`). If a new primitive is included, then you need
+to update `sibc/__main__.py` by extending the click options `-p` (`--prime`) and `-a` (`--algorithm`),
+and also to include its branch in `sibc/montgomery/curve.py` and `sibc/montgomery/isogeny.py` files.
 
 ## Changes
 
@@ -297,7 +301,7 @@ are listed in the [TODOLIST](TODOLIST.md) file.
 ## Authors
 
 1. **_Gora Adj_** <gora.adj@udl.cat>, <gora.adj@gmail.com>;
-2. **_Jesús-Javier Chi-Domínguez_** <Jesus.Dominguez@tii.ae>, <chidoys@gmail.com>; and
+2. **_Jesús-Javier Chi-Domínguez_** <jesus.dominguez@tii.ae>, <chidoys@gmail.com>; and
 3. **_Francisco Rodríguez-Henríquez_** <francisco@cs.cinvestav.mx>.
 
 ### User-friendly interface contributors
@@ -307,7 +311,7 @@ are listed in the [TODOLIST](TODOLIST.md) file.
 
 ### Logo creator contributor
 
-1. Fabiola-Argentina Hern&aacute;ndez-Torres <farg.cls@outlook.com>
+1. **_Fabiola-Argentina Hern&aacute;ndez-Torres_** <farg.cls@outlook.com>
 
 All contributors are listed in the [CONTRIBUTORS](CONTRIBUTORS) file.
 
@@ -330,6 +334,7 @@ This project is licensed under the GNU general public license - see the
 ## Funding
 
 This project has initially received funding from the European Research Council (ERC) under the
-European Union's Horizon 2020 research and innovation programme (grant agreement No 804476).
+European Union's Horizon 2020 research and innovation programme (grant agreement No 804476),
+while the second author was doing a postdoctoral research stay in Tampere University.
 
 The third author received partial funds from the Mexican Science council CONACyT project 313572.

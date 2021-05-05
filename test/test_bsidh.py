@@ -6,7 +6,7 @@ and multievaluation.
 from unittest import TestCase
 from sibc.bsidh import BSIDH
 
-PRIMES = ('b2', 'b3', 'b5', 'b6', 's1')
+PRIMES = ('p253', 'p255', 'p247', 'p237', 'p257')
 
 FORMULAS = ('tvelu', 'svelu', 'hvelu')
 

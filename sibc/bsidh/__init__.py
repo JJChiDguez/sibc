@@ -10,7 +10,7 @@ from sibc.common import attrdict
 
 default_parameters = dict(
     curvemodel='montgomery',
-    prime='b2',
+    prime='p253',
     formula='hvelu',
     tuned=True,
     uninitialized=False,
@@ -23,9 +23,9 @@ class BSIDH(object):
 
     BSIDH
 
-    Here is one group action test with random keys:
+    Here is one isogeny strategy evaluation test with random keys:
 
-    >>> bsidh_hvelu = BSIDH('montgomery', 'b2', 'hvelu', True, False, False, False)
+    >>> bsidh_hvelu = BSIDH('montgomery', 'p253', 'hvelu', True, False, False, False)
     >>> sk_a, sk_b = bsidh_hvelu.secret_key_a(), bsidh_hvelu.secret_key_b()
     >>> pk_a, pk_b = bsidh_hvelu.public_key_a(sk_a), bsidh_hvelu.public_key_b(sk_b)
     >>> ss_a, ss_b = bsidh_hvelu.dh_a(sk_a, pk_b), bsidh_hvelu.dh_b(sk_b, pk_a)

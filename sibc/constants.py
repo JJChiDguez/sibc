@@ -3,8 +3,44 @@ from functools import reduce
 from .math import bitlength, is_prime
 from pkg_resources import resource_string, resource_filename
 
+# When including a new csidh-prime, you need to update the next list
+# The csidh format in the following dictionary is
+# PRIME:[
+#   EXPONENT,
+#   STYLE,
+#   SECURITY (KEYSPACE SIZE IN BITS),
+#   ATTACK (either mitm or vow-gcs),
+#   NUMBER n OF SMALL ODD PRIMES IN THE FACTORIZATION OF p + 1
+# ]
+csidh_primes = {
+    'p512':[
+        ('5', 'wd2', '128', 'mitm', 74),
+        ('10', 'wd1', '128', 'mitm', 74),
+        ('10', 'df', '128', 'mitm', 74)
+    ],
+    'p1024':[
+        ('2', 'wd2', '128', 'mitm', 130),
+        ('3', 'wd1', '128', 'mitm', 130),
+        ('3', 'df', '128', 'mitm', 130)
+    ],
+    'p1792':[
+        ('1', 'wd2', '128', 'mitm', 207),
+        ('2', 'wd1', '128', 'mitm', 207),
+        ('2', 'df', '128', 'mitm', 207)
+    ]
+}
+
+# When including a new bsidh-prime, you need to update the next list
+bsidh_primes = (
+    'p253',
+    'p255',
+    'p247',
+    'p237',
+    'p257'
+)
+
 def csidh_get_sop_from_disk(prime):
-    assert prime in ('p512', 'p1024', 'p1792'), "unsupported prime for csidh"
+    assert prime in csidh_primes.keys(), "unsupported prime for csidh"
     # List of Small odd primes, L := [l_0, ..., l_{n-1}]
     L = resource_string(__name__, "data/sop/" + prime)
     L = [int(l) for l in L.split()]
@@ -35,6 +71,7 @@ def csidh_get_exp_from_disk(exponent, style, security, attack, n):
     return m + [0]*(n - len(m))
 
 def bsidh_get_sop_from_disk(prime):
+    assert prime in bsidh_primes, "unsupported prime for bsidh"
     f = open(resource_filename('sibc', 'data/sop/'+ prime))
 
     # The prime to be used
@@ -90,61 +127,17 @@ def bsidh_get_sop_from_disk(prime):
         p_minus_3_quarters=p_minus_3_quarters,
     )
 
-
 parameters = dict(
-    csidh=dict(
-        p512=dict(
-            wd2=dict(
-                m=csidh_get_exp_from_disk('5', 'wd2', '128', 'mitm', 74),
-            ),
-            wd1=dict(
-                m=csidh_get_exp_from_disk('10', 'wd1', '128', 'mitm', 74),
-            ),
-            df=dict(
-                m=csidh_get_exp_from_disk('10', 'df', '128', 'mitm', 74),
-            ),
-            **csidh_get_sop_from_disk('p512')
-        ),
-        p1024=dict(
-            wd2=dict(
-                m=csidh_get_exp_from_disk('2', 'wd2', '128', 'mitm', 130),
-            ),
-            wd1=dict(
-                m=csidh_get_exp_from_disk('3', 'wd1', '128', 'mitm', 130),
-            ),
-            df=dict(
-                m=csidh_get_exp_from_disk('3', 'df', '128', 'mitm', 130),
-            ),
-            **csidh_get_sop_from_disk('p1024')
-        ),
-        p1792=dict(
-            wd2=dict(
-                m=csidh_get_exp_from_disk('1', 'wd2', '128', 'mitm', 207),
-            ),
-            wd1=dict(
-                m=csidh_get_exp_from_disk('2', 'wd1', '128', 'mitm', 207),
-            ),
-            df=dict(
-                m=csidh_get_exp_from_disk('2', 'df', '128', 'mitm', 207),
-            ),
-            **csidh_get_sop_from_disk('p1792')
-        ),
-    ),
-    bsidh=dict(
-        b2=dict(
-            **bsidh_get_sop_from_disk('b2')
-        ),
-        b3=dict(
-            **bsidh_get_sop_from_disk('b3')
-        ),
-        b5=dict(
-            **bsidh_get_sop_from_disk('b5')
-        ),
-        b6=dict(
-            **bsidh_get_sop_from_disk('b6')
-        ),
-        s1=dict(
-            **bsidh_get_sop_from_disk('s1')
-        ),
-    ),
+    csidh=dict({
+        PRIME:{
+            **{style:{
+                'm':csidh_get_exp_from_disk(exp, style, sec, attack, n)
+                } for (exp, style, sec, attack, n) in csidh_primes[PRIME]
+            },
+            **csidh_get_sop_from_disk(PRIME)
+        } for PRIME in csidh_primes.keys()
+    }),
+    bsidh=dict({
+        PRIME:dict(**bsidh_get_sop_from_disk(PRIME)) for PRIME in bsidh_primes
+    })
 )
