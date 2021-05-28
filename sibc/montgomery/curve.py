@@ -39,7 +39,6 @@ def MontgomeryCurve(prime):
         p_minus_one_halves = parameters['csidh'][prime]['p_minus_one_halves']
         validation_stop = sum([bitlength(l_i) for l_i in L]) / 2.0 + 2
         field = PrimeField(p)
-        # Shortest Differential Addition Chains (SDACs) for each l_i
         path = resource_filename('sibc', "data/sdacs/csidh/" + prime)
 
     elif prime in parameters['bsidh'].keys():
@@ -59,13 +58,28 @@ def MontgomeryCurve(prime):
         p_minus_one_halves = parameters['bsidh'][prime]['p_minus_one_halves']
         p_minus_3_quarters = parameters['bsidh'][prime]['p_minus_3_quarters']
         field = QuadraticField(p)
-        # Shortest Differential Addition Chains (SDACs) for each l_i
         path = resource_filename('sibc', "data/sdacs/bsidh/" + prime)
-    else:
-        assert False, "only CSIDH and B-SIDH are currently implemented"
 
+    elif prime in parameters['sidh'].keys():
+        # SIDH only requires the exponents two and three such that p + 1 = 2^two x 3^three
+        p = parameters['sidh'][prime]['p']
+        two =  parameters['sidh'][prime]['two']
+        three =  parameters['sidh'][prime]['three']
+        p_minus_one_halves = parameters['sidh'][prime]['p_minus_one_halves']
+        p_minus_3_quarters = parameters['sidh'][prime]['p_minus_3_quarters']
+        field = QuadraticField(p)
+        # Next path give a fixed list of sdacs (only for three and four),
+        # but it is not required in sidh configuration
+        L = [3,4]
+        n = 2
+        path = resource_filename('sibc', "data/sdacs/sidh")
+
+    else:
+        assert False, "only csidh, bsidh, and sidh are currently implemented"
+
+    # Shortest Differential Addition Chains (SDACs) for each l_i
     SDACS = filename_to_list_of_lists_of_ints(path)
-    assert len(SDACS) > 0, f'There is file precomputed sdacs for {prime} prime'
+    assert len(SDACS) > 0, f'Not precomputed sdacs for {prime} prime'
     SDACS_LENGTH = list(map(len, SDACS))
 
     cmul = lambda l: numpy.array(
@@ -572,46 +586,53 @@ def MontgomeryCurve(prime):
     if prime in parameters['csidh'].keys():
         def issupersingular(A):
             """ issupersingular() verifies supersingularity """
-            while True:
+            T_p, _ = elligator(A) # T_p is always in GF(p), and thus has torsion (p+1)
+            T_p = prac(cofactor, T_p, A)
+            P = cofactor_multiples(T_p, A, range(0, n, 1))
 
-                T_p, _ = elligator(A) # T_p is always in GF(p), and thus has torsion (p+1)
-                T_p = prac(cofactor, T_p, A)
-                P = cofactor_multiples(T_p, A, range(0, n, 1))
+            bits_of_the_order = 0
+            for i in range(0, n, 1):
 
-                bits_of_the_order = 0
-                for i in range(0, n, 1):
+                if isinfinity(P[i]) == False:
 
-                    if isinfinity(P[i]) == False:
+                    Q = xmul(P[i], A, i)
 
-                        Q = xmul(P[i], A, i)
+                    if isinfinity(Q) == False:
+                        return False
 
-                        if isinfinity(Q) == False:
-                            return False
-
-                        bits_of_the_order += bitlength(L[i])
-                        if bits_of_the_order > validation_stop:
-                            return True
+                    bits_of_the_order += bitlength(L[i])
+                    if bits_of_the_order > validation_stop:
+                        return True
 
     elif prime in parameters['bsidh'].keys():
         def issupersingular(A):
             """ issupersingular() verifies supersingularity """
-            while True:
+            P, _ = elligator(A) # T_p is always in GF(p²)
 
-                P, _ = elligator(A) # T_p is always in GF(p²)
+            # Is P a torsion-(p + 1)?
+            T_p = prac(cofactor_p, P, A)
+            Tp = cofactor_multiples(T_p, A, range(0, np, 1))
+            Tp = [xmul(Tp[i], A, i) for i in range(0, np, 1)]
+            Tp = [isinfinity(Tp_i) for Tp_i in Tp]
 
-                # Is P a torsion-(p + 1)?
-                T_p = prac(cofactor_p, P, A)
-                Tp = cofactor_multiples(T_p, A, range(0, np, 1))
-                Tp = [xmul(Tp[i], A, i) for i in range(0, np, 1)]
-                Tp = [isinfinity(Tp_i) for Tp_i in Tp]
+            # Is P a torsion-(p - 1)?
+            T_m = prac(cofactor_m, P, A)
+            Tm = cofactor_multiples(T_m, A, range(np, n, 1))
+            Tm = [xmul(Tm[i - np], A, i) for i in range(np, n, 1)]
+            Tm = [isinfinity(Tm_i) for Tm_i in Tm]
 
-                # Is P a torsion-(p - 1)?
-                T_m = prac(cofactor_m, P, A)
-                Tm = cofactor_multiples(T_m, A, range(np, n, 1))
-                Tm = [xmul(Tm[i - np], A, i) for i in range(np, n, 1)]
-                Tm = [isinfinity(Tm_i) for Tm_i in Tm]
-
-                return reduce(lambda x, y: (x and y), Tp) or reduce(lambda x, y: (x and y), Tm)
+            return reduce(lambda x, y: (x and y), Tp) or reduce(lambda x, y: (x and y), Tm)
+    elif prime in parameters['sidh'].keys():
+        def issupersingular(A):
+            """ issupersingular() verifies supersingularity """
+            x = field(random.randint(1, p))
+            T = [x, field(1)]
+            for i in range(0, two):
+                T = xdbl(T, A)
+            for i in range(0, three):
+                T = xtpl(T, A)
+            
+            return isinfinity(T)
     else:
         assert False, "only CSIDH and B-SIDH are currently implemented"
 

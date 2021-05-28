@@ -39,6 +39,14 @@ bsidh_primes = (
     'p257'
 )
 
+# When including a new [sidh/sike]-prime, you need to update the next list
+sidh_primes = (
+    'p434',
+    'p503',
+    'p610',
+    'p751'
+)
+
 def csidh_get_sop_from_disk(prime):
     assert prime in csidh_primes.keys(), "unsupported prime for csidh"
     # List of Small odd primes, L := [l_0, ..., l_{n-1}]
@@ -127,6 +135,30 @@ def bsidh_get_sop_from_disk(prime):
         p_minus_3_quarters=p_minus_3_quarters,
     )
 
+def sidh_get_sop_from_disk(prime):
+    assert prime in sidh_primes, "unsupported prime for sidh/sike"
+    f = open(resource_filename('sibc', 'data/sop/sidh/'+ prime))
+
+    # p + 1 = 2^two x 3^three
+    Exponents = f.readline()
+    two, three = [int(e) for e in Exponents.split()]
+    p = (2 ** two) * (3 ** three) - 1
+
+    if p % 4 == 1:
+        print("// Case p = 1 mod 4 is not implemented yet!")
+        exit(-1)
+
+    p_minus_one_halves = (p - 1) // 2
+    p_minus_3_quarters = (p - 3) // 4
+    return dict(
+        two=two,
+        three=three,
+        p=p,
+        p_minus_one_halves=p_minus_one_halves,
+        p_bits=bitlength(p),
+        p_minus_3_quarters=p_minus_3_quarters,
+    )
+
 parameters = dict(
     csidh=dict({
         PRIME:{
@@ -139,5 +171,8 @@ parameters = dict(
     }),
     bsidh=dict({
         PRIME:dict(**bsidh_get_sop_from_disk(PRIME)) for PRIME in bsidh_primes
+    }),
+    sidh=dict({
+        PRIME:dict(**sidh_get_sop_from_disk(PRIME)) for PRIME in sidh_primes
     })
 )

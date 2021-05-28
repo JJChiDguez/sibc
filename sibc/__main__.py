@@ -21,7 +21,7 @@ from sibc.bsidh.main import bsidh_main
 from sibc.plot_strategy import plot_strategy
 from sibc.timing import print_timing
 from sibc.common import attrdict
-from sibc.constants import parameters, bsidh_primes, csidh_primes
+from sibc.constants import parameters, sidh_primes, bsidh_primes, csidh_primes
 
 
 @click.version_option()
@@ -30,7 +30,7 @@ from sibc.constants import parameters, bsidh_primes, csidh_primes
     "-p",
     "--prime",
     type=click.Choice(
-        bsidh_primes + tuple(csidh_primes.keys())
+        sidh_primes + bsidh_primes + tuple(csidh_primes.keys())
     ),
     default="p512",
     show_default=True,
@@ -45,7 +45,7 @@ from sibc.constants import parameters, bsidh_primes, csidh_primes
 @click.option(
     "-a",
     "--algorithm",
-    type=click.Choice(["csidh", "bsidh"]),
+    type=click.Choice(["sidh", "sike", "csidh", "bsidh", "bsike"]),
     default='csidh',
     show_default=True,
 )
