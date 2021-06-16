@@ -20,13 +20,24 @@ The **sibc** library aims to allow isogeny-contributors for building new primiti
 ## Installation 
 
 Install the `sibc` module which provides the `sibc` program:
+
 ```
 sudo python3 setup.py install
 ```
 
-For development:
+## For development:
+For this installation method, any further modification in sibc directory will be reflect when running sibc library.
+
 ```
-sudo pip3 install -e . 
+# Installing required package
+# Before running the following commands, ensure you have the lastest version of pip
+pip3 install dh click numpy progress matplotlib networkx stdeb setuptools-scm setuptools
+
+# only pip3 install cpuinfo is missing for macOS (to be fixed in coming versions)
+pip3 install pytest pytest-xdist
+
+# Installing the library
+sudo pip3 install -e .
 ```
 
 ### Debian package build
@@ -264,8 +275,8 @@ Also, you can do it manually by doing something as follows:
 ```bash
 # CSIDH
 sibc-precompute-sdacs -p p512 -a csidh # SDACs
-sibc -p p512 -f hvelu -a csidh -m -t csidh-precompute-parameters # Tuned velusqrt parameters
-sibc -p p512 -f hvelu -a csidh -s df -m csidh-precompute-strategy # Strategies
+sibc -p p512 -f hvelu -a csidh -m -t -u csidh-precompute-parameters # Tuned velusqrt parameters
+sibc -p p512 -f hvelu -a csidh -s df -m -u csidh-precompute-strategy # Strategies
 # BSIDH
 sibc-precompute-sdacs -p p253 -a bsidh # SDACs
 sudo sibc -p p253 -f svelu -a bsidh -u bsidh-precompute-parameters # Tuned velusqrt parameters: the option -u is required
@@ -307,14 +318,20 @@ are listed in the [TODOLIST](TODOLIST.md) file.
 2. **_Jesús-Javier Chi-Domínguez_** <jesus.dominguez@tii.ae>, <chidoys@gmail.com>; and
 3. **_Francisco Rodríguez-Henríquez_** <francisco@cs.cinvestav.mx>.
 
+### Main cryptographer contributors (collaborators):
+
+1. **_Jorge Ch&aacute;vez-Saab_** <jchavez@computacion.cs.cinvestav.mx>, <jorgechavezsaab@gmail.com>
+
+### Logo creator contributor
+
+1. **_Fabiola-Argentina Hern&aacute;ndez-Torres_** <farg.cls@outlook.com>
+
 ### User-friendly interface contributors
 
 1. Jacob Appelbaum <j.appelbaum@tue.nl>; and
 2. Leif Ryge <leif@synthesize.us>.
 
-### Logo creator contributor
 
-1. **_Fabiola-Argentina Hern&aacute;ndez-Torres_** <farg.cls@outlook.com>
 
 All contributors are listed in the [CONTRIBUTORS](CONTRIBUTORS) file.
 
