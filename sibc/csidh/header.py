@@ -79,6 +79,7 @@ def csidh_header(ctx):
 
     print("#ifndef _STRATEGIES_H_")
     print("#define _STRATEGIES_H_\n")
+    print("#include <inttypes.h>\n\n")
     print(
         "// This script assumes the C-code implementation has the list of Small Odd Primes (SOPs) stored such that l_0 < l_1 < ... < l_{n-1}"
     )
