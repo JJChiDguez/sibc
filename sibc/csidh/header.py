@@ -178,4 +178,6 @@ def csidh_header(ctx):
         "\n#endif /* required framework for the strategies to be used in CSIDH-%s using %s */"
         % (setting.prime[1:], STYLE_NAME)
     )
+    # Need empty line at EOF for -Wnewline-eof
+    print("") 
     return attrdict(name='header', **locals())
