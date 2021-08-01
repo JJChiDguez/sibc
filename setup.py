@@ -10,7 +10,7 @@ except ImportError:
     bdist_deb = None
 
 
-__version__ = '0.0.1'
+__version__ = '0.1.2'
 
 if os.path.exists('requirements.txt'):
     with open("requirements.txt", "r") as obj:
@@ -32,7 +32,7 @@ setuptools.setup(
     license="GPLv3",
     url="https://github.com/JJChiDguez/sibc",
     packages=setuptools.find_packages(),
-    keywords="csidh, bsidh, sibc, encryption",
+    keywords="csidh, bsidh, sidh, sike, sibc, encryption",
     classifiers=[
         "Programming Language :: Python :: 3",
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',

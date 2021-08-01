@@ -104,7 +104,7 @@ def plot_strategy(ctx):
         f = open(file_path)
         S_out = []
         # Corresponding to the list of Small Isogeny Degree, Lp := [l_0, ...,
-        # l_{n-1}] [We need to include case l=2 and l=4]
+        # l_{n-1}]
         tmp = f.readline()
         tmp = [int(b) for b in tmp.split()]
         S_out.append(list(tmp))
@@ -128,10 +128,40 @@ def plot_strategy(ctx):
             + algo.formula.tuned_name
             + '-'
             + algo.curve.model
-        )        
+        )
+
+    elif setting.algorithm == 'bsidh':
+        file_path = (
+                "data/strategies/"
+                + algo.curve.model
+                + '/sidh/'
+                + 'sidh'
+                + '-'
+                + setting.prime
+        )
+        file_path = resource_filename('sibc', file_path)
+        f = open(file_path)
+        S_out = []
+        # Corresponding to 2-isogenies
+        tmp = f.readline()
+        tmp = [int(b) for b in tmp.split()]
+        S_out.append(list(tmp))
+        # Corresponding to 3-isogenies
+        tmp = f.readline()
+        tmp = [int(b) for b in tmp.split()]
+        S_out.append(list(tmp))
+        f.close()
+
+        file_path = (
+                'sidh'
+                + '-'
+                + setting.prime
+                + '-'
+                + algo.curve.model
+        )
 
     else:
-        print("only csidh and bsidh are implemented")
+        print("only csidh, bsidh, and sidh are implemented")
         click.Exit(1)
 
     # ----

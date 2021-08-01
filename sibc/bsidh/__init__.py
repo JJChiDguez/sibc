@@ -25,6 +25,7 @@ class BSIDH(object):
 
     Here is one isogeny strategy evaluation test with random keys:
 
+    >>> from sibc.bsidh import BSIDH
     >>> bsidh_hvelu = BSIDH('montgomery', 'p253', 'hvelu', True, False, False, False)
     >>> sk_a, sk_b = bsidh_hvelu.secret_key_a(), bsidh_hvelu.secret_key_b()
     >>> pk_a, pk_b = bsidh_hvelu.public_key_a(sk_a), bsidh_hvelu.public_key_b(sk_b)
@@ -33,18 +34,18 @@ class BSIDH(object):
     True
 
     >>> from sibc.bsidh import BSIDH, default_parameters
-    >>> b = BSIDH(**default_parameters)
-    >>> sk_a, sk_b = b.secret_key_a(), b.secret_key_b()
-    >>> pk_a, pk_b = b.public_key_a(sk_a), b.public_key_b(sk_b)
-    >>> ss_a, ss_b = b.dh_a(sk_a, pk_b), b.dh_b(sk_b, pk_a)
+    >>> bsidh = BSIDH(**default_parameters)
+    >>> sk_a, sk_b = bsidh.secret_key_a(), bsidh.secret_key_b()
+    >>> pk_a, pk_b = bsidh.public_key_a(sk_a), bsidh.public_key_b(sk_b)
+    >>> ss_a, ss_b = bsidh.dh_a(sk_a, pk_b), bsidh.dh_b(sk_b, pk_a)
     >>> ss_a == ss_b
     True
 
     >>> from sibc.bsidh import BSIDH, default_parameters
-    >>> b = BSIDH(**default_parameters)
-    >>> sk_a, pk_a = b.keygen_a()
-    >>> sk_b, pk_b = b.keygen_b()
-    >>> ss_a, ss_b = b.dh_a(sk_a, pk_b), b.dh_b(sk_b, pk_a)
+    >>> bsidh = BSIDH(**default_parameters)
+    >>> sk_a, pk_a = bsidh.keygen_a()
+    >>> sk_b, pk_b = bsidh.keygen_b()
+    >>> ss_a, ss_b = bsidh.derive_a(sk_a, pk_b), bsidh.derive_b(sk_b, pk_a)
     >>> ss_a == ss_b
     True
     
@@ -64,7 +65,7 @@ class BSIDH(object):
     ):
 
         self.params = attrdict(parameters['bsidh'][prime])
-        self.p_bytes = (self.params.p_bits + (self.params.p_bits % 8)) // 8
+        self.p_bytes = (self.params.p_bits + 8 - (self.params.p_bits % 8)) // 8
         self.prime = prime
         self.tuned = tuned
         self.uninitialized = uninitialized
@@ -159,42 +160,10 @@ class BSIDH(object):
         return x + y
 
     def derive_a(self, sk, pk):
-        sk = int.from_bytes(sk, byteorder='little')
-        # --- P
-        P_re = int.from_bytes(pk[0:self.p_bytes], byteorder='little')
-        P_im = int.from_bytes(pk[self.p_bytes:(2*self.p_bytes)], byteorder='little')
-        # --- Q
-        Q_re = int.from_bytes(pk[(2*self.p_bytes):(3*self.p_bytes)], byteorder='little')
-        Q_im = int.from_bytes(pk[(3*self.p_bytes):(4*self.p_bytes)], byteorder='little')
-        # --- Q
-        PQ_re = int.from_bytes(pk[(4*self.p_bytes):(5*self.p_bytes)], byteorder='little')
-        PQ_im = int.from_bytes(pk[(5*self.p_bytes):(6*self.p_bytes)], byteorder='little')
-
-        pk = (self.field([P_re, P_im]), self.field([Q_re, Q_im]), self.field([PQ_re, PQ_im]))
-        ss = self.strategy.strategy_A(sk, pk)
-        ss = self.curve.coeff(ss)
-        x = ss.re.x.to_bytes(length=self.p_bytes, byteorder='little')
-        y = ss.im.x.to_bytes(length=self.p_bytes, byteorder='little')
-        return x + y
+        return self.dh_a(sk, pk)
 
     def derive_b(self, sk, pk):
-        sk = int.from_bytes(sk, byteorder='little')
-        # --- P
-        P_re = int.from_bytes(pk[0:self.p_bytes], byteorder='little')
-        P_im = int.from_bytes(pk[self.p_bytes:(2*self.p_bytes)], byteorder='little')
-        # --- Q
-        Q_re = int.from_bytes(pk[(2*self.p_bytes):(3*self.p_bytes)], byteorder='little')
-        Q_im = int.from_bytes(pk[(3*self.p_bytes):(4*self.p_bytes)], byteorder='little')
-        # --- Q
-        PQ_re = int.from_bytes(pk[(4*self.p_bytes):(5*self.p_bytes)], byteorder='little')
-        PQ_im = int.from_bytes(pk[(5*self.p_bytes):(6*self.p_bytes)], byteorder='little')
-
-        pk = (self.field([P_re, P_im]), self.field([Q_re, Q_im]), self.field([PQ_re, PQ_im]))
-        ss = self.strategy.strategy_B(sk, pk)
-        ss = self.curve.coeff(ss)
-        x = ss.re.x.to_bytes(length=self.p_bytes, byteorder='little')
-        y = ss.im.x.to_bytes(length=self.p_bytes, byteorder='little')
-        return x + y
+        return self.dh_b(sk, pk)
 
     def keygen_a(self):
         sk = self.strategy.random_scalar_A()

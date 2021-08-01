@@ -244,7 +244,7 @@ class Strategy(object):
             [QA_b, self.field(1)],
             [PQA_b, self.field(1)]
         )
-        assert self.curve.issupersingular(A), "non-supersingular input curve"
+        #assert self.curve.issupersingular(A), "non-supersingular input curve"
         a24 = A[1] ** -1
         a24 = a24 * A[0]
         RB_a = self.curve.Ladder3pt(
@@ -274,7 +274,7 @@ class Strategy(object):
             [QB_a, self.field(1)],
             [PQB_a, self.field(1)]
         )
-        assert self.curve.issupersingular(A), "non-supersingular input curve"
+        #assert self.curve.issupersingular(A), "non-supersingular input curve"
         a24 = A[1] ** -1
         a24 = a24 * A[0]
         RA_b = self.curve.Ladder3pt(

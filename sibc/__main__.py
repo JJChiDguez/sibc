@@ -17,6 +17,8 @@ from sibc.bsidh.test import bsidh_test
 from sibc.bsidh.precompute_strategy import bsidh_precompute_strategy
 from sibc.bsidh.precompute_parameters import bsidh_precompute_parameters
 from sibc.bsidh.main import bsidh_main
+#sidh
+from sibc.sidh.precompute_strategy import sidh_precompute_strategy
 
 from sibc.plot_strategy import plot_strategy
 from sibc.timing import print_timing
@@ -109,13 +111,23 @@ def main(ctx, **kwargs):
     algo_args.pop('benchmark')
     if algorithm == 'csidh':
         from sibc.csidh import CSIDH
-
         algo = CSIDH(**algo_args)
+
     elif algorithm == 'bsidh':
         from sibc.bsidh import BSIDH
         algo_args.pop('style')
         algo_args.pop('exponent')
         algo = BSIDH(**algo_args)
+
+    elif algorithm == 'sidh':
+        from sibc.sidh import SIDH#, SIKE
+        algo_args.pop('style')
+        algo_args.pop('exponent')
+        algo_args.pop('tuned')
+        algo_args.pop('multievaluation')
+        algo_args.pop('formula')
+        algo = SIDH(**algo_args)
+        #algo.sike = SIKE(**algo_args)
     else:
         click.echo('algorithm not implemented')
         raise Exit(1)
@@ -169,6 +181,8 @@ main.add_command(bsidh_test)
 main.add_command(bsidh_precompute_strategy)
 main.add_command(bsidh_precompute_parameters)
 main.add_command(bsidh_main)
+#sidh
+main.add_command(sidh_precompute_strategy)
 
 if __name__ == '__main__':
     main()

@@ -104,6 +104,3 @@ for prime, style, exponent in configuration:
                     )
                 ] = cls
 del cls
-#assert (
-#    len([c for c in dir() if c.startswith('csidh_gae')]) == 81
-#), "unexpected number of permutations"

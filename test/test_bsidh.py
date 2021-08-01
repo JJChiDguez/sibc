@@ -77,6 +77,3 @@ for prime in PRIMES:
                     )
                 ] = cls
 del cls
-#assert (
-#    len([algo for algo in dir() if algo.startswith('bsidh_strategy')]) == 81
-#), "unexpected number of permutations"

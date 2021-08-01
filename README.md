@@ -12,8 +12,7 @@ Additionally, the cryptographic primitives are implemented in constant-time conc
 of field operations, where a constant-time procedure refers to its running time does not depend on
 the input or it possibly does from randomness as CSIDH does.
 
-It is worthing to mention, the library is constantly extended, and sidh/sike (and initially, also
-some signature schemes) will be integrated into the **sibc** library.
+It is worthing to mention, the library is constantly extended, and some signature schemes will be integrated into the **sibc** library.
 
 The **sibc** library aims to allow isogeny-contributors for building new primitives with a constant-time nature.
 
@@ -139,23 +138,59 @@ pydoc3 sibc.bsidh
 ### Basic shared secret generation example with CSIDH
 ```python3
 from sibc.csidh import CSIDH, default_parameters
-c = CSIDH(**default_parameters)
+csidh = CSIDH(**default_parameters)
 
 # alice generates a key
-alice_secret_key = c.secret_key()
-alice_public_key = c.public_key(alice_secret_key)
+alice_secret_key = csidh.secret_key()
+alice_public_key = csidh.public_key(alice_secret_key)
 
 # bob generates a key
-bob_secret_key = c.secret_key()
-bob_public_key = c.public_key(bob_secret_key)
+bob_secret_key = csidh.secret_key()
+bob_public_key = csidh.public_key(bob_secret_key)
 
 # if either alice or bob use their secret key with the other's respective
 # public key, the resulting shared secrets are the same
-shared_secret_alice = c.dh(alice_secret_key, bob_public_key)
-shared_secret_bob = c.dh(bob_secret_key, alice_public_key)
+shared_secret_alice = csidh.dh(alice_secret_key, bob_public_key)
+shared_secret_bob = csidh.dh(bob_secret_key, alice_public_key)
 
 # Alice and bob produce an identical shared secret
 assert shared_secret_alice == shared_secret_bob
+```
+
+### Basic shared secret generation example with BSIDH
+```python3
+from sibc.bsidh import BSIDH, default_parameters
+bsidh = BSIDH(**default_parameters)
+sk_a, pk_a = bsidh.keygen_a()
+sk_b, pk_b = bsidh.keygen_b()
+ss_a, ss_b = bsidh.derive_a(sk_a, pk_b), bsidh.derive_b(sk_b, pk_a)
+ss_a == ss_b
+```
+
+### Basic shared secret generation example with SIDH
+```python3
+from sibc.sidh import SIDH, default_parameters
+sidh = SIDH(**default_parameters)
+sk_a, pk_a = sidh.keygen_a()
+sk_b, pk_b = sidh.keygen_b()
+ss_a, ss_b = sidh.dh_a(sk_a, pk_b), sidh.dh_b(sk_b, pk_a)
+ss_a == ss_b
+```
+
+### Basic shared secret generation example with SIKE
+```python3
+from sibc.sidh import SIKE, default_parameters
+sike = SIKE(**default_parameters)
+s, sk3, pk3 = sike.KeyGen()
+c, K = sike.Encaps(pk3)
+K_ = sike.Decaps((s, sk3, pk3), c)
+K == K_
+
+sike503 = SIKE('montgomery', 'p503', False, False)
+s, sk3, pk3 = sike503.KeyGen()
+c, K = sike503.Encaps(pk3)
+K_ = sike503.Decaps((s, sk3, pk3), c)
+K == K_
 ```
 
 ## Adding new primes
@@ -173,6 +208,9 @@ Hexadecimal representation of the prime p
 c e_1 e_2 ... e_n
 l'_1 l'_2 ... l'_m
 e'_1 e'_2 ... e'_m
+
+# SIDH format: p = 2^{e_2} * 3^{e_3} - 1
+e_2 e_3
 ```
 
 For the case of BSIDH, `M := (4^c * l_1^{e_1} * l_2^{e_2} * ... * l_n^{e_n})`
@@ -190,7 +228,9 @@ Re(x(PB)) Im(x(PB)) Re(x(QB)) Im(x(QB)) Re(x(PQB)) Im(x(PQB))
 
 where `Re(X)` and `Im(X)` denote the real and imaginary parts of X with respect
 to `F_p[i]/(i^2 + 1)`, respectively. Moreover, all the above twelve integers
-should be stored in hexadecimal."
+should be stored in hexadecimal.
+
+For SIDH, generators have order either `M=2^{e_2}` or `N=3^{e_3}`.
 
 ## Examples
 
@@ -226,7 +266,7 @@ sibc -p p253 -f svelu -a bsidh bsidh-test
 sibc -p p253 -f hvelu -a bsidh -t bsidh-test
 ```
 
-Remark, our implementation allows us to plot each optimal strategy required:
+Remark, our implementation allows us to plot each optimal strategy required (only tested in Linux machines):
 
 ```bash
 # CSIDH
@@ -238,6 +278,12 @@ sibc -p p512 -f hvelu -a csidh -s wd2 -e 5 plot-strategy
 sibc -p p253 -f hvelu -a bsidh plot-strategy
 sibc -p p253 -f hvelu -a bsidh -m plot-strategy
 sibc -p p253 -f hvelu -a bsidh -t -m plot-strategy
+
+# SIDH
+sibc -p p434 -a sidh plot-strategy
+sibc -p p503 -a sidh plot-strategy
+sibc -p p610 -a sidh plot-strategy
+sibc -p p751 -a sidh plot-strategy
 ```
 
 Additionally, one can created files with extension `.h` that includes all the
@@ -259,6 +305,9 @@ sibc -p p512 -f hvelu -a csidh -s df -e 10 -t csidh-header
 Currently only `p253`, `p255`, `p247`, `p237`, and `p257` are implemented and tested in the current API.
 Extending this to other primes is straight-forward.
 
+## SIDH primes
+Currently only `p434`, `p503`, `p610`, and `p751` are implemented and tested in the current API.
+Extending this to other primes is straight-forward.
 
 ## Precomputing data for a new prime instances
 
@@ -281,14 +330,20 @@ sibc -p p512 -f hvelu -a csidh -s df -m -u csidh-precompute-strategy # Strategie
 sibc-precompute-sdacs -p p253 -a bsidh # SDACs
 sudo sibc -p p253 -f svelu -a bsidh -u bsidh-precompute-parameters # Tuned velusqrt parameters: the option -u is required
 sudo sibc -p p253 -f svelu -a bsidh -u bsidh-precompute-strategy # Strategies
+# SIDH
+sibc -p p434 -a sidh -u sidh-precompute-strategy # Strategies
+sibc -p p503 -a sidh -u sidh-precompute-strategy # Strategies
+sibc -p p610 -a sidh -u sidh-precompute-strategy # Strategies
+sibc -p p751 -a sidh -u sidh-precompute-strategy # Strategies
 ```
 
 Furthermore, you can create tests by running `bash misc/create-tests.sh` and `bash misc/test-cli.sh`
 (only csidh is handled by now).
 
 If either a new prime instace or primitive is included, then you should add it to misc directory.
-New primitives require new bash scripts.
-
+New primitives require new bash scripts. SIDH instances are simple, only one configuration (for now),
+and thus you can omit adding them in `misc` directory.
+ 
 ## Remarks
 
 The primes labeled as `p253`, `p255`, `p247`, and `p237` correspond with the examples 2, 3, 5, and 6 from

@@ -8,7 +8,7 @@ from sibc.math import isequal, bitlength, hamming_weight, cswap, sign
 from sibc.constants import parameters
 
 class Strategy(object):
-    def __init__(self, prime, curve):
+    def __init__(self, prime, curve, formula):
         self.random = SystemRandom()
 
         self.curve = curve
@@ -21,7 +21,7 @@ class Strategy(object):
         self.three = self.curve.three
 
         # Reading public generators points
-        f = open(resource_filename('sibc', 'data/gen/' + curve.model + '/' + prime))
+        f = open(resource_filename('sibc', 'data/gen/' + curve.model + '/sidh/' + prime))
 
         # x(PA), x(QA) and x(PA - QA)
         PQA = f.readline()
@@ -43,7 +43,7 @@ class Strategy(object):
             file_path = (
                 "data/strategies/"
                 + curve.model
-                + '/'
+                + '/sidh/'
                 + 'sidh'
                 + '-'
                 + prime
@@ -72,16 +72,16 @@ class Strategy(object):
         # My intuition says, e = 1 mod 2 can be improved
         n = {2:(e//2), 3:e}[ell]
         p = 12          # Both of x([4]P) and x([3]P) cost 4M + 8S, assuming M=S we have a cost of 12 multiplications
-        q = {2:8, 3:6}  # cost of a degree-4 and degree-3 isogeny evaluation (6M + 2S + 6a and 4M + 2S + 4am respectively)
+        q = {2:8, 3:6}[ell]  # cost of a degree-4 and degree-3 isogeny evaluation (6M + 2S + 6a and 4M + 2S + 4a, respectively)
 
         S = {1:[]}
         C = {1:0 }
-        for i in range(2, n+2):
+        for i in range(2, n+1):
             b, cost = min(((b, C[i-b] + C[b] + b*p + (i-b)*q) for b in range(1,i)), key=lambda t: t[1])
             S[i] = [b] + S[i-b] + S[b]
             C[i] = cost
 
-        return S[n+1]
+        return S[n], C[n]
 
     def random_scalar_A(self): return self.random.randint(0, 2 ** self.curve.two)
     def random_scalar_B(self): return self.random.randint(0, 3 ** self.curve.three)
@@ -125,6 +125,7 @@ class Strategy(object):
         return (PB_a, QB_a, PQB_a)
 
     def strategy_at_6_B(self, sk_b):
+        # A + 2C = 8, and A - 2C = 4
         # a24 = (A + 2) / 4 = (6 + 2) / 4 = 2
         Rb = self.curve.Ladder3pt(
             sk_b,
@@ -169,7 +170,7 @@ class Strategy(object):
             [QA_b, self.field(1)],
             [PQA_b, self.field(1)]
         )
-        assert self.curve.issupersingular(A), "non-supersingular input curve"
+        #assert self.curve.issupersingular(A), "non-supersingular input curve"
         a24 = A[1] ** -1
         a24 = a24 * A[0]
         RB_a = self.curve.Ladder3pt(
@@ -194,12 +195,14 @@ class Strategy(object):
 
     def strategy_B(self, sk_b, pk_a):
         (PB_a, QB_a, PQB_a) = pk_a
+        # Notice, get_A() returns (A'+2C:4C)
         A = self.curve.get_A(
             [PB_a, self.field(1)],
             [QB_a, self.field(1)],
             [PQB_a, self.field(1)]
         )
-        assert self.curve.issupersingular(A), "non-supersingular input curve"
+        # Recall, 3-isogenies work with (A'+2C: A'-2C) = (A[0] : A[0] - A[1])
+        #assert self.curve.issupersingular(A), "non-supersingular input curve"
         a24 = A[1] ** -1
         a24 = a24 * A[0]
         RA_b = self.curve.Ladder3pt(
@@ -214,13 +217,14 @@ class Strategy(object):
             None,
             None,
             None,
-            A,
+            [A[0], A[0] - A[1]],
             RA_b,
             3,
             self.S3,
             self.three
         )
-        return ss_b
+        # Now, we map from (A'+2C:A'-2C) into (A'+2C:4C) = (ss_b[0] : ss_b[0] - ss_b[1])
+        return [ss_b[0], ss_b[0] - ss_b[1]]
 
     def evaluate_strategy(self, EVAL, S_in, T_in, ST_in, E, P, ell, strategy, n):
         '''
@@ -229,10 +233,11 @@ class Strategy(object):
         output : the projective Montgomery constants a24:= a + 2c and c24:=4c where E': y^2 = x^3 + (a/c)*x^2 + x
                  is E / <P>
         '''
+        exp = {2:n//2, 3:n}[ell]
         xmul = {2:self.curve.xdbl_twice, 3:self.curve.xtpl}[ell]        # quadrupling or tripling of points
-        kps = {2:self.isogeny.kps_4, 3:self.isogeny.kps_3}[ell]         # kernel computation (cost of two additions)
-        xisog = {2:self.isogeny.xisog_4, 3:self.isogeny.xisog_3}[ell]   # degree-2 or degree-3 isogeny construction
-        xeval = {2:self.isogeny.xeval_4, 3:self.isogeny.xeval_3}[ell]   # degree-2 or degree-3 isogeny evaluation
+        kps = {2:self.formula.kps_4, 3:self.formula.kps_3}[ell]         # kernel computation (cost of two additions)
+        xisog = {2:self.formula.xisog_4, 3:self.formula.xisog_3}[ell]   # degree-2 or degree-3 isogeny construction
+        xeval = {2:self.formula.xeval_4, 3:self.formula.xeval_3}[ell]   # degree-2 or degree-3 isogeny evaluation
 
         ramifications = []
         moves = [
@@ -259,12 +264,13 @@ class Strategy(object):
             T_out = None
             ST_out = None
 
+        assert( (exp - 1) == len(strategy))
         if (ell == 2) and (n % 2 == 1):
             T = list(ramifications[0])  # New ramification
             for j in range(0, n - 1,1):
                 T = self.curve.xdbl(T, E_i)
             
-            self.isogeny.kps_2(T)
+            self.formula.kps_2(T)
             E_i = self.formula.xisog_2(T)
             ramifications[0] = self.formula.xeval_2(ramifications[0])
 
@@ -274,12 +280,12 @@ class Strategy(object):
                 T_out = self.formula.xeval_2(T_out)
                 ST_out = self.formula.xeval_2(ST_out)
 
-        for i in range(n - 1):
+        for i in range(0, exp - 1, 1):
 
             # Reaching the vertex (n - 1 - i, i)
             # Vertical edges (scalar multiplications)
             prev = sum(moves)
-            while prev < (n - 1 - i):
+            while prev < (exp - 1 - i):
 
                 moves.append(
                     strategy[k]
@@ -294,10 +300,8 @@ class Strategy(object):
 
             # Kernel Points computation
             kps(ramifications[-1])
-
             # Isogeny construction
             E_i = xisog(ramifications[-1])
-
             # Now, we proceed by perform horizontal edges (isogeny evaluations)
             for j in range(0, len(moves) - 1, 1):
                 ramifications[j] = xeval(ramifications[j])
@@ -313,19 +317,12 @@ class Strategy(object):
 
         # Kernel Points computations
         kps(ramifications[0])
-
-        if not EVAL:
-            # Isogeny construction
-            E_i = xisog(ramifications[0])
-
-        else:
-            
+        # Isogeny construction
+        E_i = xisog(ramifications[0])
+        if EVAL:
             # Evaluating public points
             S_out = xeval(S_out)
             T_out = xeval(T_out)
             ST_out = xeval(ST_out)
-
-            # Obtaining the curve coefficient from x(S), x(T), and x(S - T)
-            E_i = self.curve.get_A(S_out, T_out, ST_out)
 
         return E_i, S_out, T_out, ST_out

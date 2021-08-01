@@ -634,6 +634,6 @@ def MontgomeryCurve(prime):
             
             return isinfinity(T)
     else:
-        assert False, "only CSIDH and B-SIDH are currently implemented"
+        assert False, "only CSIDH, CSIDH, and B-SIDH are currently implemented"
 
     return attrdict(**locals())

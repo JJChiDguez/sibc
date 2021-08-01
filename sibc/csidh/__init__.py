@@ -29,6 +29,7 @@ class CSIDH(object):
 
     Here is one group action test with random keys:
 
+    >>> from sibc.csidh import CSIDH
     >>> csidh_tvelu_wd1 = CSIDH('montgomery', 'p512', 'tvelu', 'wd1', 10, False, False, False, False)
     >>> sk_a, sk_b = csidh_tvelu_wd1.secret_key(), csidh_tvelu_wd1.secret_key()
     >>> pk_a, pk_b = csidh_tvelu_wd1.public_key(sk_a), csidh_tvelu_wd1.public_key(sk_b)
@@ -36,31 +37,31 @@ class CSIDH(object):
     True
 
     >>> from sibc.csidh import CSIDH, default_parameters
-    >>> c = CSIDH(**default_parameters)
+    >>> csidh = CSIDH(**default_parameters)
     >>> # alice generates a key
-    >>> alice_secret_key = c.secret_key()
-    >>> alice_public_key = c.public_key(alice_secret_key)
+    >>> alice_secret_key = csidh.secret_key()
+    >>> alice_public_key = csidh.public_key(alice_secret_key)
     >>> # bob generates a key
-    >>> bob_secret_key = c.secret_key()
-    >>> bob_public_key = c.public_key(bob_secret_key)
+    >>> bob_secret_key = csidh.secret_key()
+    >>> bob_public_key = csidh.public_key(bob_secret_key)
     >>> # if either alice or bob use their secret key with the other's respective
     >>> # public key, the resulting shared secrets are the same
-    >>> shared_secret_alice = c.dh(alice_secret_key, bob_public_key)
-    >>> shared_secret_bob = c.dh(bob_secret_key, alice_public_key)
+    >>> shared_secret_alice = csidh.dh(alice_secret_key, bob_public_key)
+    >>> shared_secret_bob = csidh.dh(bob_secret_key, alice_public_key)
     >>> # Alice and bob produce an identical shared secret
     >>> shared_secret_alice == shared_secret_bob
     True
 
     >>> from sibc.csidh import CSIDH, default_parameters
-    >>> c = CSIDH(**default_parameters)
+    >>> csidh = CSIDH(**default_parameters)
     >>> # alice generates a key
-    >>> alice_secret_key, alice_public_key = c.keygen()
+    >>> alice_secret_key, alice_public_key = csidh.keygen()
     >>> # bob generates a key
-    >>> bob_secret_key, bob_public_key = c.keygen()
+    >>> bob_secret_key, bob_public_key = csidh.keygen()
     >>> # if either alice or bob use their secret key with the other's respective
     >>> # public key, the resulting shared secrets are the same
-    >>> shared_secret_alice = c.dh(alice_secret_key, bob_public_key)
-    >>> shared_secret_bob = c.dh(bob_secret_key, alice_public_key)
+    >>> shared_secret_alice = csidh.derive(alice_secret_key, bob_public_key)
+    >>> shared_secret_bob = csidh.derive(bob_secret_key, alice_public_key)
     >>> # Alice and bob produce an identical shared secret
     >>> shared_secret_alice == shared_secret_bob
     True
@@ -90,7 +91,7 @@ class CSIDH(object):
         self.multievaluation = multievaluation
         self.params = attrdict(parameters['csidh'][prime])
         self.params.update(self.params[style])
-        self.p_bytes = (self.params.p_bits + (self.params.p_bits % 8)) // 8
+        self.p_bytes = (self.params.p_bits + 8 - (self.params.p_bits % 8)) // 8
 
         if self.curvemodel == 'montgomery':
             self.isogeny = MontgomeryIsogeny(formula, uninitialized = self.uninitialized)
@@ -121,13 +122,7 @@ class CSIDH(object):
         return ss
 
     def derive(self, sk, pk):
-        sk = unpack('<{}b'.format(len(sk)), sk)
-        pk = int.from_bytes(pk, 'little')
-        pk = self.curve.affine_to_projective(pk)
-        ss = self.curve.coeff(self.gae.GAE_at_A(sk, pk)).x.to_bytes(
-            length=self.p_bytes, byteorder='little'
-        )
-        return ss
+        return self.dh(sk, pk)
 
     def secret_key(self):
         k = self.gae.random_exponents()
@@ -149,5 +144,4 @@ class CSIDH(object):
 
 if __name__ == "__main__":
     import doctest
-
     doctest.testmod(verbose=True)
