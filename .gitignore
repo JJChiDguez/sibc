@@ -12,3 +12,4 @@ sibc-installed.txt
 deb_dist/*
 sibc-*.*.*.tar.gz
 .idea
+.chglog
