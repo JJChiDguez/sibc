@@ -114,20 +114,21 @@ def main(ctx, **kwargs):
         algo = CSIDH(**algo_args)
 
     elif algorithm == 'bsidh':
-        from sibc.bsidh import BSIDH
+        from sibc.bsidh import BSIDH, BSIKE
         algo_args.pop('style')
         algo_args.pop('exponent')
         algo = BSIDH(**algo_args)
+        algo.kem = BSIKE(**algo_args)
 
     elif algorithm == 'sidh':
-        from sibc.sidh import SIDH#, SIKE
+        from sibc.sidh import SIDH, SIKE
         algo_args.pop('style')
         algo_args.pop('exponent')
         algo_args.pop('tuned')
         algo_args.pop('multievaluation')
         algo_args.pop('formula')
         algo = SIDH(**algo_args)
-        #algo.sike = SIKE(**algo_args)
+        algo.kem = SIKE(**algo_args)
     else:
         click.echo('algorithm not implemented')
         raise Exit(1)
@@ -162,6 +163,54 @@ def csidh_dh(ctx, secret_key, public_key):
     click.echo(
         b64encode(algo.dh(b64decode(secret_key.read()), b64decode(public_key)))
     )
+
+
+@main.command()
+@click.pass_context
+def keygen(ctx):
+    "Generate random (B)SIKE secret and pubilc keys"
+    algo = ctx.meta['sibc.kwargs']['algo'].kem
+    s, sk3, pk3 = algo.KeyGen()
+    click.echo(b64encode(s))
+    click.echo(b64encode(sk3))
+    click.echo(b64encode(pk3))
+
+
+@main.command()
+@click.argument('pk3', type=click.File())
+@click.pass_context
+def encaps(ctx, pk3):
+    "(B)SIKE encapsulation"
+    algo = ctx.meta['sibc.kwargs']['algo'].kem
+    # Ciphertext c0 and c1
+    # Secret Sharing K
+    (c0, c1), K = algo.Encaps(b64decode(pk3.readline().replace('\n','')))
+    click.echo(b64encode(c0))
+    click.echo(b64encode(c1))
+    click.echo(b64encode(K))
+
+@main.command()
+@click.argument('sk', type=click.File())
+@click.argument('c', type=str)
+@click.pass_context
+def decaps(ctx, sk, c):
+    "(B)SIKE decapsulation"
+    algo = ctx.meta['sibc.kwargs']['algo'].kem
+    # Secret keys: s, and sk3
+    s = sk.readline()
+    s = s.replace('\n','')
+    sk3 = sk.readline()
+    sk3 = sk3.replace('\n','')
+    # Public key pk3
+    pk3 = sk.readline()
+    pk3 = pk3.replace('\n','')
+    # Ciphertext
+    (c0, c1) = c.split(' ')
+    c0 = c0.replace('\n','')
+    c1 = c1.replace('\n','')
+    # Secret Sharing
+    K_ = algo.Decaps((b64decode(s), b64decode(sk3), b64decode(pk3)), (b64decode(c0), b64decode(c1)))
+    click.echo(b64encode(K_))
 
 
 main.add_command(print_timing)

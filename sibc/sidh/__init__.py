@@ -1,5 +1,4 @@
 from hashlib import shake_256
-from struct import pack, unpack
 from random import SystemRandom
 
 from sibc.montgomery.curve import MontgomeryCurve

@@ -1,4 +1,4 @@
-from struct import pack, unpack
+from hashlib import shake_256
 from random import SystemRandom
 
 from sibc.montgomery.curve import MontgomeryCurve
@@ -188,6 +188,117 @@ class BSIDH(object):
         z.re.x.to_bytes(length=self.p_bytes, byteorder='little') +\
         z.im.x.to_bytes(length=self.p_bytes, byteorder='little')
         return sk, pk
+
+class BSIKE(object):
+    """
+
+    SIKE
+
+    Here is one group action test with random keys:
+
+    >>> from sibc.bsidh import BSIKE, default_parameters
+    >>> bsike = BSIKE(**default_parameters)
+    >>> s, sk3, pk3 = bsike.KeyGen()
+    >>> c, K = bsike.Encaps(pk3)
+    >>> K_ = bsike.Decaps((s, sk3, pk3), c)
+    >>> K == K_
+    True
+
+    >>> bsike255 = BSIKE('montgomery', 'p255', 'hvelu', True, False, False, False)
+    >>> s, sk3, pk3 = bsike255.KeyGen()
+    >>> c, K = bsike255.Encaps(pk3)
+    >>> K_ = bsike255.Decaps((s, sk3, pk3), c)
+    >>> K == K_
+    True
+
+    >>> bsike247 = BSIKE('montgomery', 'p247', 'hvelu', True, False, False, False)
+    >>> s, sk3, pk3 = bsike247.KeyGen()
+    >>> c, K = bsike247.Encaps(pk3)
+    >>> K_ = bsike247.Decaps((s, sk3, pk3), c)
+    >>> K == K_
+    True
+
+    >>> bsike237 = BSIKE('montgomery', 'p237', 'hvelu', True, False, False, False)
+    >>> s, sk3, pk3 = bsike237.KeyGen()
+    >>> c, K = bsike237.Encaps(pk3)
+    >>> K_ = bsike237.Decaps((s, sk3, pk3), c)
+    >>> K == K_
+    True
+
+    >>> bsike257 = BSIKE('montgomery', 'p257', 'hvelu', True, False, False, False)
+    >>> s, sk3, pk3 = bsike257.KeyGen()
+    >>> c, K = bsike257.Encaps(pk3)
+    >>> K_ = bsike257.Decaps((s, sk3, pk3), c)
+    >>> K == K_
+    True
+
+    Other tests which were previously here are now in the test directory.
+
+    """
+
+    def __init__(
+            self,
+            curvemodel,
+            prime,
+            formula,
+            tuned,
+            multievaluation,
+            uninitialized,
+            verbose
+    ):
+        self.bsidh = BSIDH(curvemodel, prime, formula, tuned, multievaluation, uninitialized, verbose)
+        # Currently, BSIDH only has NIST LEVEL 1 of security
+        self.n = {'p253':128, 'p255':128, 'p247':128, 'p237':128, 'p257':128}[prime]
+        self.n_bytes = self.n // 8
+        self.k_bytes = self.n // 8
+
+    def bytes_xor(self, a, b):
+        c = b''
+        for i in range(0, self.n_bytes, 1):
+            c += (a[i] ^ b[i]).to_bytes(length=1, byteorder='little')
+        return c
+
+    def Gen(self):
+        return self.bsidh.keygen_b()
+
+    def Enc(self, pk3, m, r):
+        c0 = self.bsidh.public_key_a(r)
+        j = self.bsidh.derive_a(r, pk3)
+        h = shake_256(j).digest(self.n_bytes)
+        c1 = self.bytes_xor(h, m)
+        return c0, c1
+
+    def Dec(self, sk3, c):
+        (c0, c1) = c
+        j = self.bsidh.derive_b(sk3, c0)
+        h = shake_256(j).digest(self.n_bytes)
+        m = self.bytes_xor(h, c1)
+        return m
+
+    def KeyGen(self):
+        sk3, pk3 = self.Gen()
+        s = self.bsidh.strategy.random.randint(0, 2**self.n).to_bytes(length=self.n_bytes, byteorder='little')
+        return s, sk3, pk3
+
+    def Encaps(self, pk3):
+        m = self.bsidh.strategy.random.randint(0, 2**self.n).to_bytes(length=self.n_bytes, byteorder='little')
+        r = shake_256(m + pk3).digest(self.bsidh.p_bytes)
+        c0, c1 = self.Enc(pk3, m, r)
+        K = shake_256(m + c0 + c1).digest(self.k_bytes)
+        return (c0, c1), K
+
+    def Decaps(self, parameters, c):
+        (s, sk3, pk3) = parameters
+        (c0, c1) = c
+        m_ = self.Dec(sk3, c)
+        r_ = shake_256(m_ + pk3).digest(self.bsidh.p_bytes)
+        c0_ = self.bsidh.public_key_a(r_)
+        if c0_ == c0:
+            K = shake_256(m_ + c0 + c1).digest(self.k_bytes)
+        else:
+            K = shake_256(s + c0 + c1).digest(self.k_bytes)
+
+        return K
 
 if __name__ == "__main__":
     import doctest

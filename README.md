@@ -81,11 +81,12 @@ Usage: sibc [OPTIONS] COMMAND [ARGS]...
   =(  _____| (_________|
 
 Options:
-  -p, --prime [p253|p255|p247|p237|p257|p512|p1024|p1792]
+  -p, --prime [p434|p503|p610|p751|p253|p255|p247|p237|p257|p512|p1024|p1792|p2048|p4096|p5120|p6144|p8192|p9216]
                                   [default: p512]
   -f, --formula [tvelu|svelu|hvelu]
                                   [default: hvelu]
-  -a, --algorithm [csidh|bsidh]   [default: csidh]
+  -a, --algorithm [sidh|sike|csidh|bsidh|bsike]
+                                  [default: csidh]
   -s, --style [wd1|wd2|df]        [default: df]
   -e, --exponent [1|2|3|4|5|6|7|8|9|10]
                                   [default: 10]
@@ -97,7 +98,6 @@ Options:
   -u, --uninitialized             [default: False]
   -v, --verbose                   Not the kind of verbosity you might expect
                                   [default: False]
-
   --version                       Show the version and exit.
   --help                          Show this message and exit.
 
@@ -108,9 +108,7 @@ Commands:
   bsidh-test                   GF(p²)-operation cost of kps, xisog, and...
   csidh-bench                  Average GF(p)-operation cost of a GAE
   csidh-bounds                 Greedy-based search of optimal exponents
-  csidh-dh                     Derive shared secret key from CSIDH sk,
-                               CSIDH...
-
+  csidh-dh                     Derive shared secret key from CSIDH sk,...
   csidh-genkey                 Generate random CSIDH secret key
   csidh-header                 Optimal strategies as C-code headers files
   csidh-ijk                    Velusqrt parameters as C-code headers files
@@ -120,19 +118,60 @@ Commands:
   csidh-pubkey                 Derive CSIDH public key from CSIDH secret key
   csidh-sdacs                  SDACs as C-code headers files
   csidh-test                   GF(p)-operation cost of kps, xisog, and xeval
-  plot-strategy                draw strategy graphs as a subgraph Discrete...
+  decaps                       (B)SIKE decapsulation
+  encaps                       (B)SIKE encapsulation
+  keygen                       Generate random (B)SIKE secret and pubilc...
+  plot-strategy                draw strategy graphs as a subgraph...
   print-timing
+  sidh-precompute-strategy     Precomputation of optimal strategies
 ```
 
 ## SIDH cryptographic API
 
-CSIDH and BSIDH objects are available from the `sibc` package and module.
+`CSIDH`, `BSIDH`, `SIDH`, `SIKE`, and `BSIKE` objects are available from the `sibc` package and module.
 
 Automatically generated documentation is available with pydoc after `sibc` is
 installed:
 ```
 pydoc3 sibc.csidh
 pydoc3 sibc.bsidh
+pydoc3 sibc.sidh
+```
+
+### Command Line Interface: examples
+
+```bash
+# CSIDH
+sk_a="$(sibc csidh-genkey)"
+pk_a="$(echo "$sk_a"|sibc csidh-pubkey -)"
+sk_b="$(sibc csidh-genkey)"
+pk_b="$(echo "$sk_b"|sibc csidh-pubkey -)"
+ss_a="$(echo "$sk_a"|sibc csidh-dh - "$pk_b")"
+ss_b="$(echo "$sk_b"|sibc csidh-dh - "$pk_a")"
+echo $ss_a
+echo $ss_b
+
+# SIKE
+sk="$(sibc -a sidh -p p434 keygen)"
+pk3=`echo "${sk}" | tail -n1`
+ck="$(echo "$pk3"|sibc -a sidh -p p434 encaps -)"
+c0=`echo "${ck}" | head -1`
+c1=`echo "${ck}" | tail -2 | head -1`
+K=`echo "${ck}" | tail -n1`
+K_="$(echo "$sk"|sibc -a sidh -p p434 decaps - "$c0 $c1")"
+echo $K
+echo $K_
+
+# BSIKE
+sk="$(sibc -a bsidh -p p253 keygen)"
+pk3=`echo "${sk}" | tail -n1`
+ck="$(echo "$pk3"|sibc -a bsidh -p p253 encaps -)"
+c0=`echo "${ck}" | head -1`
+c1=`echo "${ck}" | tail -2 | head -1`
+K=`echo "${ck}" | tail -n1`
+K_="$(echo "$sk"|sibc -a bsidh -p p253 decaps - "$c0 $c1")"
+echo $K
+echo $K_
 ```
 
 ### Basic shared secret generation example with CSIDH
@@ -167,6 +206,22 @@ ss_a, ss_b = bsidh.derive_a(sk_a, pk_b), bsidh.derive_b(sk_b, pk_a)
 ss_a == ss_b
 ```
 
+### Basic example with BSIKE (BSIDH + key encapsulation)
+```python3
+from sibc.bsidh import BSIKE, default_parameters
+bsike = BSIKE(**default_parameters)
+s, sk3, pk3 = bsike.KeyGen()
+c, K = bsike.Encaps(pk3)
+K_ = bsike.Decaps((s, sk3, pk3), c)
+K == K_
+
+bsike255 = BSIKE('montgomery', 'p255', 'hvelu', True, False, False, False)
+s, sk3, pk3 = bsike255.KeyGen()
+c, K = bsike255.Encaps(pk3)
+K_ = bsike255.Decaps((s, sk3, pk3), c)
+K == K_
+```
+
 ### Basic shared secret generation example with SIDH
 ```python3
 from sibc.sidh import SIDH, default_parameters
@@ -177,7 +232,7 @@ ss_a, ss_b = sidh.dh_a(sk_a, pk_b), sidh.dh_b(sk_b, pk_a)
 ss_a == ss_b
 ```
 
-### Basic shared secret generation example with SIKE
+### Basic example with SIKE (SIDH + key encapsulation)
 ```python3
 from sibc.sidh import SIKE, default_parameters
 sike = SIKE(**default_parameters)
@@ -338,7 +393,7 @@ sibc -p p751 -a sidh -u sidh-precompute-strategy # Strategies
 ```
 
 Furthermore, you can create tests by running `bash misc/create-tests.sh` and `bash misc/test-cli.sh`
-(only csidh is handled by now).
+(only `CSIDH`, `BSIKE`, and `SIKE` are handled by now).
 
 If either a new prime instace or primitive is included, then you should add it to misc directory.
 New primitives require new bash scripts. SIDH instances are simple, only one configuration (for now),
