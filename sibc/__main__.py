@@ -168,7 +168,7 @@ def csidh_dh(ctx, secret_key, public_key):
 @main.command()
 @click.pass_context
 def keygen(ctx):
-    "Generate random (B)SIKE secret and pubilc keys"
+    "Generate random (B)SIKE secret and public keys"
     algo = ctx.meta['sibc.kwargs']['algo'].kem
     s, sk3, pk3 = algo.KeyGen()
     click.echo(b64encode(s))
