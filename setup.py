@@ -26,7 +26,7 @@ setuptools.setup(
     version=__version__,
     author="JJChiDguez",
     author_email="chidoys@gmail.com",
-    description=("Supersingular Isogeny-Based Cryptography constructions: currently, csidh and bsidh are implemented by using traditional and velusqrt formulae on Montgomery curve x-only projective coordinates"),
+    description=("Supersingular Isogeny-Based Cryptography constructions: currently, csidh, bsidh, sidh, and sike are implemented by using traditional and velusqrt formulae on Montgomery curve x-only projective coordinates"),
     long_description=long_description,
     long_description_content_type="text/markdown",
     license="GPLv3",
