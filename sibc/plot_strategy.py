@@ -3,6 +3,7 @@
 Strategies written as a graph (a triangle a la SIDH)
 -----------------------------------------------------------------------------
 """
+import sys
 import click
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -130,7 +131,7 @@ def plot_strategy(ctx):
             + algo.curve.model
         )
 
-    elif setting.algorithm == 'bsidh':
+    elif setting.algorithm == 'sidh':
         file_path = (
                 "data/strategies/"
                 + algo.curve.model
@@ -162,7 +163,7 @@ def plot_strategy(ctx):
 
     else:
         print("only csidh, bsidh, and sidh are implemented")
-        click.Exit(1)
+        sys.exit(1)
 
     # ----
     for idx in range(0, len(S_out), 1):
@@ -202,7 +203,7 @@ def plot_strategy(ctx):
             node_size=vertex_sizes,
             edge_color=edge_colors,
             width=weights,
-            edge_labels=True,
+            #edge_labels=True,
         )
 
         # Saving the graph as a .PNG figure
