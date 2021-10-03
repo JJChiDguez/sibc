@@ -449,7 +449,7 @@ All contributors are listed in the [CONTRIBUTORS](CONTRIBUTORS) file.
 
 ```latex
 @misc{sibc,
-  author = {{Gora Adj}, {Jes\'us-Javier Chi-Dom\'inguez}, {Francisco Rodr\'iguez-Henr\'iquez}},
+  author = {{Gora Adj} and {Jes\'us-Javier Chi-Dom\'inguez} and {Francisco Rodr\'iguez-Henr\'iquez}},
   title = {{SIBC} Python library},
   year = {2021},
   howpublished = {\url{https://github.com/JJChiDguez/sibc/}}
