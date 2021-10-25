@@ -50,13 +50,13 @@ def bsidh_test(ctx):
     print("Pr<x> := PolynomialRing(fp2);")
 
     # ---Generators in E[p + 1]
-    PA = list(algo.strategy.PA)
-    QA = list(algo.strategy.QA)
-    PQA = list(algo.strategy.PQA)
+    PA = list([algo.strategy.PA, field(1)])
+    QA = list([algo.strategy.QA, field(1)])
+    PQA = list([algo.strategy.PQA, field(1)])
     # ---Generators in E[p - 1]
-    PB = list(algo.strategy.PB)
-    QB = list(algo.strategy.QB)
-    PQB = list(algo.strategy.PQB)
+    PB = list([algo.strategy.PB, field(1)])
+    QB = list([algo.strategy.QB, field(1)])
+    PQB = list([algo.strategy.PQB, field(1)])
 
     print("E := EllipticCurve(x^3 + (%s) * x^2 + x);" % coeff(A))
 
