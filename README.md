@@ -1,6 +1,6 @@
 # **S**upersingular **I**sogeny-**B**ased **C**ryptographic constructions
 
-<img align="center" src="sibc-logo.png">
+<img align="center" src="https://github.com/JJChiDguez/sibc/blob/master/sibc-logo.png">
 
 This repository includes a python-code library named **sibc**, which allows a user-friendly
 interface to deal with some isogeny-based cryptographic primitive.
