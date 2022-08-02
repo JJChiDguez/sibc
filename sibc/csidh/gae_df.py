@@ -2,9 +2,16 @@ from random import SystemRandom
 import numpy
 from math import floor, ceil, sqrt, log
 
+import operator
+
 from sibc.math import isequal, bitlength, hamming_weight, cswap, sign
 from sibc.constants import parameters
 from sibc.common import geometric_serie, rounds
+
+class CachedIndexTuple(tuple):
+    def __init__(self, container):
+        self.cached_index = dict((b,a) for a,b in enumerate(container))
+        self.index = self.cached_index.__getitem__
 
 class Gae_df(object):
     def __init__(self, prime, tuned, curve, formula):
@@ -17,10 +24,11 @@ class Gae_df(object):
         self.curve = curve
         self.prime = prime
         self.formula = formula
+        self.formula.L = CachedIndexTuple(self.formula.L)
         self.formula_name = formula.name
         self.field = self.curve.field
         self.tuned = tuned
-        self.L = parameters['csidh'][prime]['L']
+        self.L = CachedIndexTuple(parameters['csidh'][prime]['L'])
         self.m = parameters['csidh'][prime]['df']['m']
         self.c_xmul = self.curve.c_xmul
         n = parameters['csidh'][prime]['n']
@@ -129,48 +137,61 @@ class Gae_df(object):
             for i in range(2, n + 1):
 
                 for Tuple in get_neighboring_sets(L, i):
-
+                    formula_L_indexes = [self.formula.L.index(t) for t in Tuple]
+                    formula_L_indexgetter = operator.itemgetter(*formula_L_indexes)
+                    len_Tuple = len(Tuple)
                     if self.C[i].get(Tuple) is None:
-
-                        alpha = [
+                        alpha = []
+                        # xevals = [
+                        #   self.formula.c_xeval[b]
+                        #   for b in [
+                        #     self.formula.L.index(t)
+                        #     for t in Tuple
+                        #   ]
+                        # ] equivalent to:
+                        xevals = formula_L_indexgetter(self.formula.c_xeval)
+                        xmuls = formula_L_indexgetter(self.c_xmul)
+                        xmul_sums_before_b = None
+                        xmul_sums_after_b = None
+                        xeval_sums_after_b = None
+                        for b in range(1, i - 1):
+                            if b == 1:
+                                xeval_sums_after_b = sum(xevals[b:])
+                                xmul_sums_after_b = sum(xmuls[b:])
+                                xmul_sums_before_b = sum(
+                                    [
+                                        xmuls[0]
+                                    ])
+                            else:
+                                xeval_sums_after_b = xeval_sums_after_b - xevals[b-1]
+                                xmul_sums_after_b = xmul_sums_after_b - xmuls[b-1]
+                                xmul_sums_before_b += sum(
+                                    [
+                                        xmuls[b-1]
+                                    ])
+                            Tuple_before_b = Tuple[:b]
+                            Tuple_after_b  = Tuple[b:]
+                            len_Tuple_until_b = min(len_Tuple, b) # len(Tuple[:b])
+                            len_Tuple_after_b = len_Tuple - len_Tuple_until_b # len(Tuple[b:])
+                            alpha += [
                             (
                                 b,
-                                self.C[len(Tuple[:b])][Tuple[:b]]
+                                self.C[len_Tuple_until_b][Tuple_before_b]
                                 + self.C[  # Subtriangle on the right side with b leaves
-                                    len(Tuple[b:])
+                                    len_Tuple_after_b
                                 ][
-                                    Tuple[b:]
+                                    Tuple_after_b
                                 ]
                                 + 2.0  # Subtriangle on the left side with (i - b) leaves
-                                * sum(
-                                    [
-                                        self.c_xmul[
-                                            self.formula.L.index(t)
-                                        ]
-                                        for t in Tuple[:b]
-                                    ]
-                                )
+                                * xmul_sums_before_b
                                 + 2.0  # Weights corresponding with vertical edges required for connecting the vertex (0,0) with the subtriangle with b leaves
-                                * sum(
-                                    [
-                                        self.formula.c_xeval[
-                                            self.formula.L.index(t)
-                                        ]
-                                        for t in Tuple[b:]
-                                    ]
-                                )
+                                * xeval_sums_after_b
                                 + 1.0  # Weights corresponding with horizontal edges required for connecting the vertex (0,0) with the subtriangle with (i - b) leaves
-                                * sum(
-                                    [
-                                        self.c_xmul[
-                                            self.formula.L.index(t)
-                                        ]
-                                        for t in Tuple[b:]
-                                    ]
-                                ),  # Weights corresponding with horizontal edges required for connecting the vertex (0,0) with the subtriangle with (i - b) leaves
+                                * xmul_sums_after_b,  # Weights corresponding with horizontal edges required for connecting the vertex (0,0) with the subtriangle with (i - b) leaves
                             )
-                            for b in range(1, i - 1)
-                        ] + [
+                            ]
+                        # end loop: for b in range(1, i - 1)
+                        alpha += [
                             (
                                 i - 1,
                                 self.C[i - 1][Tuple[: (i - 1)]]
@@ -181,21 +202,13 @@ class Gae_df(object):
                                 ]
                                 + 1.0  # Subtriangle on the left side with 1 leaf (only one vertex)
                                 * sum(
-                                    [
-                                        self.c_xmul[
-                                            self.formula.L.index(t)
-                                        ]
-                                        for t in Tuple[: (i - 1)]
-                                    ]
+                                    xmuls[: (i - 1)]
                                 )
                                 + 2.0  # Weights corresponding with vertical edges required for connecting the vertex (0,0) with the subtriangle with 1 leaf
-                                * self.formula.c_xeval[
-                                    self.formula.L.index(Tuple[i - 1])
-                                ]
+                                * xevals[i - 1]
                                 + 1.0  # Weights corresponding with horizontal edges required for connecting the vertex (0,0) with the subtriangle with (i - 1) leaves
-                                * self.c_xmul[
-                                    self.formula.L.index(Tuple[i - 1])
-                                ],  # Weights corresponding with horizontal edges required for connecting the vertex (0,0) with the subtriangle with (i - 1) leaves
+                                * xmuls[i - 1]
+                                ,  # Weights corresponding with horizontal edges required for connecting the vertex (0,0) with the subtriangle with (i - 1) leaves
                             )
                         ]
                         b, self.C[i][Tuple] = min(
@@ -625,7 +638,7 @@ class Gae_df(object):
 
                 E_k, m, e = self.evaluate_strategy(
                     E_k,
-                    list([list(T_m), list(T_p)]),
+                    [list(T_m), list(T_p)],
                     L[j],
                     St[j],
                     len(L[j]),
@@ -634,14 +647,13 @@ class Gae_df(object):
                 )
 
         # Multiplicative strategy on the set of unreached small odd prime numbers
-        unreached_sop = [
-            self.formula.L[i]
-            for i in range(len(self.formula.L))
-            if m[i] > 0
-        ]
-        remainder_sop = [
-            l for l in self.formula.L if l not in unreached_sop
-        ]
+        unreached_sop = []
+        remainder_sop = []
+        for i, Li in enumerate(self.formula.L):
+            if m[i] > 0:
+                unreached_sop.append(Li)
+            else:
+                remainder_sop.append(Li)
 
         while len(unreached_sop) > 0:
 
@@ -650,13 +662,14 @@ class Gae_df(object):
             T_m = self.curve.prac(self.curve.cofactor, T_m, E_k)
 
             for l in remainder_sop:
-                T_p = self.curve.xmul(T_p, E_k, self.formula.L.index(l))
-                T_m = self.curve.xmul(T_m, E_k, self.formula.L.index(l))
+                L_index_l = self.formula.L.index(l)
+                T_p = self.curve.xmul(T_p, E_k, L_index_l)
+                T_m = self.curve.xmul(T_m, E_k, L_index_l)
 
             current_n = len(unreached_sop)
             E_k, m, e = self.evaluate_strategy(
                 E_k,
-                list([list(T_m), list(T_p)]),
+                [list(T_m), list(T_p)],
                 unreached_sop,
                 list(range(current_n - 1, 0, -1)),
                 current_n,
@@ -665,20 +678,19 @@ class Gae_df(object):
             )
 
             # If the maximum of degree-(l_k) has been reached then the current batch (and its complement) must be updated
-            tmp_unreached = [
-                unreached_sop[k]
-                for k in range(current_n)
-                if m[self.formula.L.index(unreached_sop[k])] > 0
-            ]
-            tmp_remainder = [
-                unreached_sop[k]
-                for k in range(current_n)
-                if m[self.formula.L.index(unreached_sop[k])] == 0
-            ]
+            tmp_unreached = []
+            tmp_remainder = []
+            assert current_n == len(unreached_sop), "looks like this is always the case"
+            for unreached_sop__k in unreached_sop:
+                m_L_k = m[self.formula.L.index(unreached_sop__k)]
+                if m_L_k > 0:
+                    tmp_unreached.append(unreached_sop__k)
+                elif m_L_k == 0: # TODO can m have negative elements?
+                    tmp_remainder.append(unreached_sop__k)
+                else:
+                    assert False, "TODO can m have negative elements?"
 
-            unreached_sop = list(
-                tmp_unreached
-            )  # Removing elements from the batch
+            unreached_sop = tmp_unreached # Removing elements from the batch
             remainder_sop = (
                 remainder_sop + tmp_remainder
             )  # Adding elements to the complement of the batch

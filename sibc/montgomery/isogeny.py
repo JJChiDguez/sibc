@@ -142,11 +142,13 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
             t_1 = (P[1] ** 2)
             Z = (A[1] * t_0)
             X = (Z * t_1)
-            t_1 = (t_1 - t_0)
+            t_1 -= t_0
             t_0 = (A[0] * t_1)
-            Z = (Z + t_0)
-            Z = (Z * t_1)
-            return [(X - Z), (X + Z)]
+            Z += t_0
+            Z *= t_1
+            t_3 = X -Z # X - Z
+            X += Z # X +Z
+            return [t_3, X]
 
         def yadd(self, P, Q, PQ):
             '''
@@ -160,15 +162,17 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
             a = (P[1] * Q[0])
             b = (P[0] * Q[1])
             c = (a + b)
-            d = (a - b)
-            c = (c ** 2)
-            d = (d ** 2)
+            a -= b # d = (a - b)
+            c **= 2
+            a **= 2 # d = d ** 2
 
             xD = (PQ[1] + PQ[0])
             zD = (PQ[1] - PQ[0])
-            X = (zD * c)
-            Z = (xD * d)
-            return [(X - Z), (X + Z)]
+            c *= zD # X
+            Z = (xD * a) # xD * (a-b)**2
+            t_3 = c - Z # X -Z
+            c += Z # X + Z
+            return [t_3, c]
 
         def kps_t(self, P, A, i):
             '''
@@ -211,38 +215,40 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
             bits_of_l = bitlength(l)  # Number of bits of L[i]
             d = (l - 1) // 2  # Here, l = 2d + 1
 
-            By = self.K[0][0]
-            Bz = self.K[0][1]
+            # +0 to get a new FF allocation we can mutate inplace in
+            # the for-loop below:
+            By = self.K[0][0].copy()
+            Bz = self.K[0][1].copy()
             for j in range(1, d, 1):
 
-                By = (By * self.K[j][0])
-                Bz = (Bz * self.K[j][1])
+                By *= self.K[j][0] # By *= self.K[j][0]
+                Bz *= self.K[j][1] # Bz *= self.K[j][1]
 
             bits_of_l -= 1
             constant_d_edwards = (A[0] - A[1])  # 1a
 
-            tmp_a = A[0]
-            tmp_d = constant_d_edwards
+            tmp_a = A[0].copy()
+            tmp_d = constant_d_edwards.copy()
             # left-to-right method for computing a^l and d^l
             for j in range(1, bits_of_l + 1):
 
-                tmp_a = (tmp_a ** 2)
-                tmp_d = (tmp_d ** 2)
+                tmp_a **= 2
+                tmp_d **= 2
                 if ((l >> (bits_of_l - j)) & 1) != 0:
 
-                    tmp_a = (tmp_a * A[0])
-                    tmp_d = (tmp_d * constant_d_edwards)
+                    tmp_a *= A[0]
+                    tmp_d *= constant_d_edwards
 
             for j in range(3):
 
-                By = (By ** 2)
-                Bz = (Bz ** 2)
+                By **= 2
+                Bz **= 2
 
-            C0 = (tmp_a * Bz)
-            C1 = (tmp_d * By)
-            C1 = (C0 - C1)
+            tmp_a *= Bz # C0 = (tmp_a * Bz)
+            tmp_d *= By # C1
+            C1 = (tmp_a - tmp_d) # C1 = C0 - C1
 
-            return [C0, C1]  # (l - 1 + 2*HW(l) - 2)M + 2(|l|_2 + 1)S + 2a
+            return [tmp_a, C1]  # (l - 1 + 2*HW(l) - 2)M + 2(|l|_2 + 1)S + 2a
 
         def xeval_t(self, P, i):
             '''
@@ -264,15 +270,15 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
             for j in range(1, d, 1):
 
                 T0, T1 = self.curve.crisscross(self.K[j][1], self.K[j][0], Q0, Q1)
-                R0 = (T0 * R0)
-                R1 = (T1 * R1)
+                R0 *= T0
+                R1 *= T1
 
-            R0 = (R0 ** 2)
-            R1 = (R1 ** 2)
-            X = (P[0] * R0)
-            Z = (P[1] * R1)
+            R0 **= 2
+            R1 **= 2
+            R0 *= P[0] # X
+            R1 *= P[1] # Z
 
-            return [X, Z]  # 2(l - 1)M + 2S + (l + 1)a
+            return [R0, R1]  # 2(l - 1)M + 2S + (l + 1)a
 
         # Next functions is used for setting the cardinalities sI, sJ, and sK
         def set_parameters_velu(self, b, c, i):
@@ -367,12 +373,12 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
                 self.SUB_SQUARED = [
                     self.J[0][0] - self.J[0][1]
                 ]  # (Xj - Zj)
-                self.SUB_SQUARED[0] = (self.SUB_SQUARED[0] ** 2)  # (Xj - Zj)^2
+                self.SUB_SQUARED[0] **= 2  # (Xj - Zj)^2
 
                 self.ADD_SQUARED = [
                     self.J[0][0] + self.J[0][1]
                 ]  # (Xj + Zj)
-                self.ADD_SQUARED[0] = (self.ADD_SQUARED[0] ** 2)  # (Xj + Zj)^2
+                self.ADD_SQUARED[0] **= 2  # (Xj + Zj)^2
 
                 self.XZJ4 = [
                     self.SUB_SQUARED[0] - self.ADD_SQUARED[0]
@@ -436,12 +442,12 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
                 self.SUB_SQUARED = [
                     self.J[0][0] - self.J[0][1]
                 ]  # (Xj - Zj)
-                self.SUB_SQUARED[0] = (self.SUB_SQUARED[0] ** 2)  # (Xj - Zj)^2
+                self.SUB_SQUARED[0] **= 2  # (Xj - Zj)^2
 
                 self.ADD_SQUARED = [
                     self.J[0][0] + self.J[0][1]
                 ]  # (Xj + Zj)
-                self.ADD_SQUARED[0] = (self.ADD_SQUARED[0] ** 2)  # (Xj + Zj)^2
+                self.ADD_SQUARED[0] **= 2  # (Xj + Zj)^2
 
                 self.XZJ4 = [
                     self.SUB_SQUARED[0] - self.ADD_SQUARED[0]
@@ -572,12 +578,12 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
                 self.SUB_SQUARED[j] = (
                     self.J[j][0] - self.J[j][1]
                 )  # (Xj - Zj)
-                self.SUB_SQUARED[j] = (self.SUB_SQUARED[j] ** 2)  # (Xj - Zj)^2
+                self.SUB_SQUARED[j] **= 2  # (Xj - Zj)^2
 
                 self.ADD_SQUARED[j] = (
                     self.J[j][0] + self.J[j][1]
                 )  # (Xj + Zj)
-                self.ADD_SQUARED[j] = (self.ADD_SQUARED[j] ** 2)  # (Xj + Zj)^2
+                self.ADD_SQUARED[j] **= 2  # (Xj + Zj)^2
 
                 self.XZJ4[j] = (
                     self.SUB_SQUARED[j] - self.ADD_SQUARED[j]
@@ -595,8 +601,8 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
         def xisog_s(self, A, i):
 
             AA = (A[0] + A[0])  # 2A' + 4C
-            AA = (AA - A[1])  # 2A'
-            AA = (AA + AA)  # 4A'
+            AA -= A[1]  # 2A'
+            AA += AA  # 4A'
 
             # --------------------------------------------------------------------------------------------------
             #                   ~~~~~~~~
@@ -719,24 +725,24 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
             A24m = (A[0] - A[1])  # A' - 2C
 
             A24 = (A[0] ** self.L[i])  # (A' + 2C)^l
-            A24m = (A24m ** self.L[i])  # (A' - 2C)^l
+            A24m **= self.L[i]  # (A' - 2C)^l
 
             t24m = (
-                hK_1 * r1
+                r1 * hK_1
             )  # output of algorithm 2 with alpha =-1 and without the demoninator
-            t24m = (t24m ** 2)  # raised at 2
-            t24m = (t24m ** 2)  # raised at 4
-            t24m = (t24m ** 2)  # raised at 8
+            t24m **= 2  # raised at 2
+            t24m **= 2  # raised at 4
+            t24m **= 2  # raised at 8
 
             t24 = (
-                hK_0 * r0
+                r0 * hK_0
             )  # output of algorithm 2 with alpha = 1 and without the demoninator
-            t24 = (t24 ** 2)  # raised at 2
-            t24 = (t24 ** 2)  # raised at 4
-            t24 = (t24 ** 2)  # raised at 8
+            t24 **= 2  # raised at 2
+            t24 **= 2  # raised at 4
+            t24 **= 2  # raised at 8
 
-            A24 = (A24 * t24m)
-            A24m = (A24m * t24)
+            A24 *= t24m
+            A24m *= t24
 
             # Now, we have d = (A24m / A24) where the image Montgomery cuve coefficient is
             #      B'   2*(1 + d)   2*(A24 + A24m)
@@ -745,11 +751,11 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
             # However, we required B' + 2C = 4*A24 and 4C = 4 * (A24 - A24m)
 
             t24m = (A24 - A24m)  #   (A24 - A24m)
-            t24m = (t24m + t24m)  # 2*(A24 - A24m)
-            t24m = (t24m + t24m)  # 4*(A24 - A24m)
+            t24m += t24m  # 2*(A24 - A24m)
+            t24m += t24m  # 4*(A24 - A24m)
 
             t24 = (A24 + A24)  # 2 * A24
-            t24 = (t24 + t24)  # 4 * A24
+            t24 += t24  # 4 * A24
 
             # return [t24, t24m], ptree_hI, XZJ4
             return [t24, t24m]
@@ -757,8 +763,8 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
         def xeval_s(self, P, A):
 
             AA = (A[0] + A[0])  # 2A' + 4C
-            AA = (AA - A[1])  # 2A'
-            AA = (AA + AA)  # 4A'
+            AA -= A[1]  # 2A'
+            AA += AA  # 4A'
 
             # --------------------------------------------------------------------------------------------------
             #                   ~~~~~~~~
@@ -780,11 +786,11 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
             t2 = (P[1] ** 2)  # Z^2
 
             CX2Z2 = (t1 + t2)  #      X^2 + Z^2
-            CX2Z2 = (CX2Z2 * A[1])  # C * (X^2 + Z^2)
+            CX2Z2 *= A[1]  # C * (X^2 + Z^2)
 
-            AXZ2 = (AXZ2 + AXZ2)  #       2 * (X * Z)
+            AXZ2 += AXZ2  #       2 * (X * Z)
             CXZ2 = (AXZ2 * A[1])  # C  * [2 * (X * Z)]
-            AXZ2 = (AXZ2 * AA)  # A' * [2 * (X * Z)]
+            AXZ2 *= AA  # A' * [2 * (X * Z)]
 
             for j in range(0, self.sJ, 1):
 
@@ -796,32 +802,25 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
 
                 # Computing the quadratic coefficient
                 quadratic = (t1 - t2)  #   2 * [(X*Zj) - (Z*Xj)]
-                quadratic = (
-                    quadratic ** 2
-                )  # ( 2 * [(X*Zj) - (Z*Xj)] )^2
-                quadratic = (
-                    A[1] * quadratic
-                )  # C * ( 2 * [(X*Zj) - (Z*Xj)] )^2
+                quadratic **= 2 # ( 2 * [(X*Zj) - (Z*Xj)] )^2
+                quadratic *= A[1] # C * ( 2 * [(X*Zj) - (Z*Xj)] )^2
 
                 # Computing the constant coefficient
-                constant = (t1 + t2)  #   2 * [(X*Xj) - (Z*Zj)]
-                constant = (constant ** 2)  # ( 2 * [(X*Xj) - (Z*Zj)] )^2
-                constant = (
-                    A[1] * constant
-                )  # C * ( 2 * [(X*Xj) - (Z*Zj)] )^2
+                constant = t1 # safe because we reassign t1 in the next section
+                constant += t2  #   2 * [(X*Xj) - (Z*Zj)]
+                constant **= 2  # ( 2 * [(X*Xj) - (Z*Zj)] )^2
+                constant *= A[1] # C * ( 2 * [(X*Xj) - (Z*Zj)] )^2
 
                 # Computing the linear coefficient
                 # ----------------------------------------------------------------------------------------------------------
                 # C * [ (-2*Xj*Zj)*(alpha^2 + 1) + (-2*alpha)*(Xj^2 + Zj^2)] + [A' * (-2*Xj*Zj) * (2*X*Z)] where alpha = X/Z
                 t1 = (self.J[j][0] + self.J[j][1])  #     (Xj + Zj)
-                t1 = (t1 ** 2)  #     (Xj + Zj)^2
-                t1 = (t1 + t1)  # 2 * (Xj + Zj)^2
-                t1 = (
-                    t1 + self.XZJ4[j]
-                )  # 2 * (Xj + Zj)^2 - (4*Xj*Zj) := 2 * (Xj^2 + Zj^2)
-                t1 = (
-                    t1 * CXZ2
-                )  # [2 * (Xj^2 + Zj^2)] * (2 * [ C * (X * Z)])
+                t1 **= 2  #     (Xj + Zj)^2
+                t1 += t1  # 2 * (Xj + Zj)^2
+                t1 += (self.XZJ4[j]
+                       ) # 2 * (Xj + Zj)^2 - (4*Xj*Zj) := 2 * (Xj^2 + Zj^2)
+                t1 *= (CXZ2
+                       ) # [2 * (Xj^2 + Zj^2)] * (2 * [ C * (X * Z)])
 
                 t2 = (
                     CX2Z2 * self.XZJ4[j]
@@ -836,9 +835,8 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
                 linear = (
                     t1 + t2
                 )  # This is our desired equation but multiplied by 2
-                linear = (
-                    linear + linear
-                )  # This is our desired equation but multiplied by 4
+                linear += linear
+                # This is our desired equation but multiplied by 4
                 # ----------------------------------------------------------------------------------------------------------
 
                 # Case alpha = X / Z
@@ -910,16 +908,17 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
             hK_1 = [[0]] * self.sK
             for k in range(0, self.sK, 1):
 
-                XZk_add = (self.K[k][0] + self.K[k][1])  # Xk + Zk
-                XZk_sub = (self.K[k][0] - self.K[k][1])  # Xk - Zk
-                t1 = (XZ_sub * XZk_add)  # (X - Z) * (Xk + Zk)
-                t2 = (XZ_add * XZk_sub)  # (X + Z) * (Xk - Zk)
+                t1 = (self.K[k][0] + self.K[k][1])  # Xk + Zk
+                t2 = (self.K[k][0] - self.K[k][1])  # Xk - Zk
+                t1 *= XZ_sub  # (X - Z) * (Xk + Zk)
+                t2 *= XZ_add  # (X + Z) * (Xk - Zk)
 
                 # Case alpha = X/Z
                 hK_0[k] = [(t1 - t2)]  # 2 * [(X*Zk) - (Z*Xk)]
 
                 # Case 1/alpha = Z/X
-                hK_1[k] = [(t1 + t2)]  # 2 * [(X*Xk) - (Z*Zk)]
+                t1 += t2 # hK_1[k] = [t1 + t2]
+                hK_1[k] = [t1]  # 2 * [(X*Xk) - (Z*Zk)]
 
             hK_0 = self.poly_mul.product(
                 hK_0, self.sK
@@ -931,16 +930,16 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
             # ---------------------------------------------------------------------------------
             # Now, unifying all the computations
             XX = (
-                hK_1 * r1
+                r1 * hK_1
             )  # output of algorithm 2 with 1/alpha = Z/X and without the demoninator
-            XX = (XX ** 2)
-            XX = (XX * P[0])
+            XX **= 2
+            XX *= P[0]
 
             ZZ = (
-                hK_0 * r0
+                r0 * hK_0
             )  # output of algorithm 2 with alpha = X/Z and without the demoninator
-            ZZ = (ZZ ** 2)
-            ZZ = (ZZ * P[1])
+            ZZ **= 2
+            ZZ *= P[1]
 
             return [XX, ZZ]
 
@@ -989,8 +988,8 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
 
             C24 = (self.K[3] ** 2)
             A24 = (P[0] ** 2)
-            A24 = (A24 + A24)
-            A24 = (A24 ** 2)
+            A24 += A24
+            A24 **= 2
             return [A24, C24]
 
 
@@ -1001,16 +1000,16 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
             t1 = (Q[0] - Q[1])
             XQ = (t0 * self.K[1])
             ZQ = (t1 * self.K[2])
-            t0 = (t0 * t1)
-            t0 = (t0 * self.K[0])
+            t0 *= t1
+            t0 *= self.K[0]
             t1 = (XQ + ZQ)
             ZQ = (XQ - ZQ)
-            t1 = (t1 ** 2)
-            ZQ = (ZQ ** 2)
+            t1 **= 2
+            ZQ **= 2
             XQ = (t0 + t1)
             t0 = (ZQ - t0)
-            XQ = (XQ * t1)
-            ZQ = (ZQ * t0)
+            XQ *= t1
+            ZQ *= t0
             return [XQ, ZQ]
 
         # Kernel computation for xeval_3 and xisog_3
@@ -1031,16 +1030,16 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
             #assert((self.K[0] + self.K[1]) == (P[0] + P[0]))
             t3 = (self.K[0] + self.K[1])
             #t3 = (P[0] + P[0])
-            t3 = (t3 ** 2)
-            t3 = (t3 - t2)
+            t3 **= 2
+            t3 -= t2
             t2 = (t1 + t3)
-            t3 = (t3 + t0)
+            t3 += t0
             t4 = (t3 + t0)
-            t4 = (t4 + t4)
+            t4 += t4
             t4 = (t1 + t4)
             A24m = (t2 * t4)
             t4 = (t1 + t2)
-            t4 = (t4 + t4)
+            t4 += t4
             t4 = (t0 + t4)
             A24p = (t3 * t4)
             return [A24p, A24m]
@@ -1050,12 +1049,12 @@ def MontgomeryIsogeny(name : str, uninitialized = False):
 
             t0 = (Q[0] + Q[1])
             t1 = (Q[0] - Q[1])
-            t0 = (self.K[0] * t0)
-            t1 = (self.K[1] * t1)
+            t0 *= self.K[0]
+            t1 *= self.K[1]
             t2 = (t1 + t0)
             t0 = (t1 - t0)
-            t2 = (t2 ** 2)
-            t0 = (t0 ** 2)
+            t2 **= 2
+            t0 **= 2
             XQ = (Q[0] * t2)
             ZQ = (Q[1] * t0)
             return [XQ, ZQ]

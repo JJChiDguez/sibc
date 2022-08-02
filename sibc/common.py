@@ -1,18 +1,9 @@
 from functools import wraps
 from math import floor
 
+# Dictionary which provides attribute access to its keys.
 class attrdict(dict):
-    """
-    Dictionary which provides attribute access to its keys.
-    """
-
-    def __getattr__(self, key):
-        if key in self:
-            return self[key]
-        else:
-            raise AttributeError(
-                "%r object has no attribute %r" % (type(self).__name__, key)
-            )
+    __getattr__ = dict.__getitem__
 
 def strategy_evaluation(strategy, n):
 
@@ -79,10 +70,10 @@ def strategy_evaluation(strategy, n):
 def check(func):
     @wraps(func)
     def method(self, other):
-        if type(self) is not type(other):
+        if self.__class__ is not other.__class__:
             other = self.__class__(other)
         else:
-            if self.field.p != other.field.p:
+            if self.__class__.p != other.__class__.p:
                 raise ValueError
         return func(self, other)
 

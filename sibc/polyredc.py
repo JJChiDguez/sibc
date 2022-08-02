@@ -24,6 +24,7 @@ def PolyRedc(polymul):
         elif n == 2:
 
             # Base case when (1/f) = f_0 - f_1*x
+            # XXX is (-f[1]) == (0 - f[1]) ?
             return [f[0], (0 - f[1])], (f[0] ** 2)
 
         elif n == 3:
@@ -33,7 +34,7 @@ def PolyRedc(polymul):
             t0 = (f[1] ** 2)
             t1 = (f[0] * f[2])
             t2 = (t1 - t0)
-            t2 = (t2 * f[0])
+            t2 *= f[0]
             return (
                 [(g[0] * a), (g[1] * a), (0 - t2)],
                 (a ** 2),
@@ -52,7 +53,7 @@ def PolyRedc(polymul):
             t2 = (t0 * g[0])
             t3 = (t0 * g[1])
             t4 = (t1 * g[0])
-            t3 = (t3 + t4)
+            t3 += t4
             return (
                 [
                     (g[0] * a),
@@ -110,8 +111,8 @@ def PolyRedc(polymul):
         elif flen == 2 and hlen == 2:
 
             t0 = (h[0] * f['poly'][1])  # h0 * f1
-            t1 = (h[1] * f['poly'][0])  # h1 * f0
-            return [(t0 - t1)]  # f1 * (h0 + h1*x) mod (f0 + f1*x)
+            t0 -= (h[1] * f['poly'][0]) # t0 = t0 - (t1 == (h1 * f0))
+            return [t0]  # f1 * (h0 + h1*x) mod (f0 + f1*x)
 
         elif flen == 2 and hlen == 3:
 
@@ -119,21 +120,20 @@ def PolyRedc(polymul):
             f1_squared = (f['poly'][1] ** 2)  # f1^2
             t = (f['poly'][0] - f['poly'][1])  # f0 - f1
 
-            t = (t ** 2)  # (f0 - f1)^2
-            t = (t - f0_squared)  # (f0 - f1)^2 - f0^2
-            t = (
-                t - f1_squared
-            )  # (f0 - f1)^2 - f0^2 - f1^2 = -2*f0*f1
+            t **= 2  # (f0 - f1)^2
+            t -= f0_squared  # (f0 - f1)^2 - f0^2
+            t -= f1_squared # (f0 - f1)^2 - f0^2 - f1^2 = -2*f0*f1
 
-            f0_squared = (f0_squared + f0_squared)  # 2*(f0^2)
-            f1_squared = (f1_squared + f1_squared)  # 2*(f1^2)
+            t *= h[1] # [-2*f0*f1] * h1
+            f0_squared += f0_squared  # 2*(f0^2)
+            f0_squared *= h[2] # [2*(f0^2)] * h2
+            f1_squared += f1_squared  # 2*(f1^2)
+            f1_squared *= h[0] # [2*(f1^2)] * h0
 
-            t0 = (f0_squared * h[2])  # [2*(f0^2)] * h2
-            t1 = (f1_squared * h[0])  # [2*(f1^2)] * h0
-            t2 = (t * h[1])  # [-2*f0*f1] * h1
-            return [
-                (t0 + (t1 + t2))
-            ]  # [2 * (f1^2)] * (h0 + h1*x + h2*x^2) mod (f0 + f1*x)
+            t += f0_squared
+            t += f1_squared
+            # [2 * (f1^2)] * (h0 + h1*x + h2*x^2) mod (f0 + f1*x)
+            return [ t ]
 
         elif flen == 3 and hlen == 3:
 
@@ -141,7 +141,10 @@ def PolyRedc(polymul):
             f2h0 = (f['poly'][2] * h[0])
             f1h2 = (f['poly'][1] * h[2])
             f0h2 = (f['poly'][0] * h[2])
-            return [(f2h0 - f0h2), (f2h1 - f1h2)]
+            #return [(f2h0 - f0h2), (f2h1 - f1h2)]
+            f2h0 -= f0h2
+            f2h1 -= f1h2
+            return [f2h0, f2h1]
             """
         elif flen == hlen:
 
@@ -152,12 +155,12 @@ def PolyRedc(polymul):
         else:
 
             H = [h[i] for i in range(hlen - 1, -1, -1)]  # x^deg(h) * h(x^-1)
-            Q = list(f['reciprocal'])  # (1/F) mod x^(deg(f) - deg(h))
+            #Q = list(f['reciprocal'])  # (1/F) mod x^(deg(f) - deg(h))
 
             # (H/F) mod x^(deg(f) - deg(h))
             Q = poly_mul_modxn(
                 hlen - flen + 1,
-                Q[: (hlen - flen + 1)],
+                f['reciprocal'][: (hlen - flen + 1)],
                 hlen - flen + 1,
                 H[: (hlen - flen + 1)],
                 hlen - flen + 1,
@@ -171,10 +174,16 @@ def PolyRedc(polymul):
             )  # (q * f) (x) has degree equals deg(h)
 
             # a*h(x) - (q * f)(x) will gives a polynomial of degree (deg(f) - 1)
-            return [
-                ((f['a'] * h[i]) - qf[i])
-                for i in range(0, flen - 1, 1)
-            ]
+            #return [
+            #    ((f['a'] * h[i]) - qf[i])
+            #    for i in range(0, flen - 1, 1)
+            #] XXX
+            res = []
+            for i in range(0, flen - 1, 1):
+                tmp = f['a'] * h[i]
+                tmp -= qf[i]
+                res.append(tmp)
+            return res
 
     def reciprocal_tree(r, glen, ptree_f, n):
         """

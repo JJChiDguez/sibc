@@ -6,6 +6,11 @@ from sibc.math import isequal, bitlength, hamming_weight, cswap, sign
 from sibc.constants import parameters
 from sibc.common import geometric_serie, rounds
 
+class CachedIndexTuple(tuple):
+    def __init__(self, container):
+        self.cached_index = dict((b,a) for a,b in enumerate(container))
+        self.index = self.cached_index.__getitem__
+
 class Gae_wd1(object):
     def __init__(self, prime, tuned, curve, formula):
         self.random = SystemRandom()
@@ -17,10 +22,11 @@ class Gae_wd1(object):
         self.curve = curve
         self.prime = prime
         self.formula = formula
+        self.formula.L = CachedIndexTuple(self.formula.L)
         self.formula_name = formula.name
         self.field = self.curve.field
         self.tuned = tuned
-        self.L = parameters['csidh'][prime]['L']
+        self.L = CachedIndexTuple(parameters['csidh'][prime]['L'])
         self.m = parameters['csidh'][prime]['wd1']['m']
         self.c_xmul = self.curve.c_xmul
         n = parameters['csidh'][prime]['n']
@@ -130,6 +136,7 @@ class Gae_wd1(object):
             # (l_2, l_3, ..., l_{k+1)), ..., (l_{n-k}, l_{n-k+1, ..., l_{n)).
             for i in range(2, n + 1):
 
+                # TODOXXX see the loop unrolling in gae_df.py
                 for Tuple in get_neighboring_sets(L, i):
 
                     if self.C[i].get(Tuple) is None:

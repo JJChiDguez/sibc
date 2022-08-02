@@ -4,10 +4,17 @@ from math import floor, sqrt, log
 
 from sibc.common import attrdict
 from functools import reduce
+from copy import copy as pythoncopy
 
 def PolyMul(field, maxdeg = None, mindeg = 64):
 
     # ----------------------------------------------------------------------------------
+
+    try:
+        copy = field.copy
+    except:
+        copy = pythoncopy
+
     # Table of 2 raised to a negative power
     if maxdeg != None:
         inverse_of_two = (field(2) ** -1)
@@ -47,24 +54,24 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
             return []
 
         if glen == 1:
-
+            # XXX 54k
             # Multipication by a constant
             return [(f[i] * g[0]) for i in range(0, flen, 1)]
 
         # At this step, we ensure flen >= glen >= 2
         if flen == 2:
-
+            # XXX 57k
             # Multiplication of linear polynomials over fp
             # Thus c(x) = (a * b)(x) is a quadratic polynomial
-            c = list([0, 0, 0])
+            c = [0, 0, 0]
 
             c[0] = (f[0] * g[0])  # coeff of x^0
             c[2] = (f[1] * g[1])  # coeff of x^2
             f01 = (f[0] + f[1])
             g01 = (g[0] + g[1])
             c[1] = (f01 * g01)
-            c[1] = (c[1] - c[0])
-            c[1] = (c[1] - c[2])  # coeff of x^1
+            c[1] -= c[0]
+            c[1] -= c[2]  # coeff of x^1
             return c
 
         if flen == 3:
@@ -82,15 +89,15 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
                 f01 = (f[0] + f[1])
                 g01 = (g[0] + g[1])
                 c[1] = (f01 * g01)
-                c[1] = (c[1] - c[0])
-                c[1] = (c[1] - c[2])  # coeff of x^1
+                c[1] -= c[0]
+                c[1] -= c[2]  # coeff of x^1
                 c[3] = (f[2] * g[1])  # coeff of x^3
                 f2g0 = (f[2] * g[0])
-                c[2] = (c[2] + f2g0)  # coeff of x^2
+                c[2] += f2g0  # coeff of x^2
                 return c
 
             if glen == 3:
-
+                # XXX 24k but recursion
                 # g(x) is a a quadratic polynomial
 
                 karatsuba_0 = karatsuba_mul(
@@ -106,19 +113,19 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
                 g_01 = (g[0] + g[1])
                 g_02 = (g[0] + g[2])
 
-                t_01 = (f_01 * g_01)
-                t_02 = (f_02 * g_02)
+                f_01 *= g_01 # t_01
+                f_02 *= g_02 # t_02
 
-                l_coeff = (t_01 - karatsuba_0[0])
-                l_coeff = (l_coeff - karatsuba_1[0])
-                q_coeff = (t_02 - karatsuba_0[0])
-                q_coeff = (q_coeff - karatsuba_1[2])
-                q_coeff = (q_coeff + karatsuba_1[0])
+                f_01 -= karatsuba_0[0] # t_01 - karat # l_coeff
+                f_01 -= karatsuba_1[0] # l_coeff
+                f_02 -= karatsuba_0[0] # t_02 - # q_coeff
+                f_02 -= karatsuba_1[2]
+                f_02 += karatsuba_1[0] # we don't use karatsuba_1[0] XXX
 
-                return list(karatsuba_0 + [l_coeff, q_coeff] + karatsuba_1[1:])
+                return list(karatsuba_0 + [f_01, f_02] + karatsuba_1[1:])
 
         else:
-
+            # XXX 20k but worth looking at
             # Multiplication of polynomials of degree >= 3 over fp
             nf = flen // 2
             mf = flen - nf
@@ -126,7 +133,7 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
             f_high = f[nf:flen]
 
             if glen <= nf:
-
+                # XXX 700 neglible
                 c0 = karatsuba_mul(f_low, nf, g[:glen], glen)
                 c1 = karatsuba_mul(f_high, mf, g[:glen], glen)
                 return (
@@ -163,28 +170,23 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
                 ] + g_high[nf:]
                 fg_mid = poly_mul(f_mid, mf, g_mid, mg)
 
-            fg_mid = [
-                (fg_mid[i] - fg_high[i])
-                for i in range(0, mf + mg - 1, 1)
-            ] + fg_mid[(mf + mg - 1) :]
-            fg_mid = [
-                (fg_mid[i] - fg_low[i])
-                for i in range(0, 2 * nf - 1, 1)
-            ] + fg_mid[(2 * nf - 1) :]
+            for i in range(0, mf + mg - 1, 1):
+                fg_mid[i] -= fg_high[i]
+            for i in range(0, 2 * nf - 1, 1):
+                fg_mid[i] -= fg_low[i]
 
-            return (
-                fg_low[:nf]
-                + [
-                    (fg_low[nf + i] + fg_mid[i])
-                    for i in range(0, nf - 1, 1)
-                ]
-                + [fg_mid[nf - 1]]
-                + [
-                    (fg_mid[nf + i] + fg_high[i])
-                    for i in range(0, mf - 1)
-                ]
-                + fg_high[(mf - 1) :]
-            )
+            ret = []
+            ret += fg_low[:nf]
+            for i in range(0, nf - 1, 1):
+                fg_low[nf + i] += fg_mid[i]
+                ret.append(fg_low[nf + i])
+            ret.append(fg_mid[nf - 1])
+            for i in range(0, mf - 1):
+                fg_mid[nf + i] += fg_high[i]
+                ret.append(fg_mid[nf + i])
+            ret += fg_high[(mf - 1) :]
+
+            return ret
 
     def qring_mul(f, g, e):
 
@@ -199,7 +201,7 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
             # Next, we reduce h modulo (x^m + 1)
             h_0 = h[:m]
             h_1 = h[m:]
-            h_1 = h_1 + [0] * (len(h_0) - len(h_1))
+            h_1 += [0] * (len(h_0) - len(h_1))
 
             return [[(h_0[i] - h_1[i]) for i in range(0, m, 1)]]
 
@@ -261,7 +263,7 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
                     h[r] = func[q % 2](h[r], hr)
                     deg += 1
 
-                degy += hm2
+                degy = degy + hm2
 
             return [
                 [
@@ -348,7 +350,7 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
                 # This branch is only for checking if karatsuba is better(?)
                 return karatsuba_mul(f, flen, g, glen)
     else:
-        def poly_mul(f, flen, g, glen): return karatsuba_mul(f, flen, g, glen)
+        poly_mul = karatsuba_mul # def poly_mul(f, flen, g, glen): return karatsuba_mul(f, flen, g, glen)
 
     def poly_mul_modxn(n, f, flen, g, glen):
         """
@@ -399,8 +401,10 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
             # And thus, the cuadratic coefficient is not required
             f0g0 = (f[0] * g[0])
             f0g1 = (f[0] * g[1])
-            f1g0 = (f[1] * g[0])
-            return [f0g0, (f0g1 + f1g0)]
+            #f1g0 = (f[1] * g[0])
+            #return [f0g0, (f0g1 + f1g0)]
+            f0g1 += (f[1] * g[0]) # f0g0+f1g0
+            return [f0g0, f0g1]
 
         if n == 3:
 
@@ -410,40 +414,44 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
                 f0g0 = (f[0] * g[0])
                 f1g1 = (f[1] * g[1])
 
-                f01 = (f[0] + f[1])
-                g01 = (g[0] + g[1])
-                t01 = (f01 * g01)
-                t01 = (t01 - f0g0)
-                t01 = (t01 - f1g1)
-
-                f2g0 = (f[2] * g[0])
-                return [f0g0, t01, (f1g1 + f2g0)]
+                t01 = (f[0] + f[1])
+                t01 *= (g[0] + g[1])
+                t01 -= f0g0
+                t01 -= f1g1
+                #f2g0 = (f[2] * g[0])
+                #return [f0g0, t01, (f1g1 + f2g0)]
+                f1g1 += (f[2] * g[0]) # f1g1 + f2g0
+                return [f0g0, t01, f1g1]
 
             if glen == 3:
                 c00 = (f[0] * g[0])  # coeff of x^0
 
                 c11 = (f[1] * g[1])
-                f01 = (f[0] + f[1])
-                g01 = (g[0] + g[1])
-                c01 = (f01 * g01)
-                c01 = (c01 - c00)
-                c01 = (c01 - c11)
+                c01 = (f[0] + f[1]) # f01
+                c01 *= (g[0] + g[1]) # f01*g01
+                c01 -= c00
+                c01 -= c11
 
-                f02 = (f[0] + f[2])
+                c02 = (f[0] + f[2]) # f02
                 g02 = (g[0] + g[2])
-                c02 = (f02 * g02)
-                c22 = (f[2] * g[2])
-                c02 = (c02 - c00)
-                c02 = (c02 - c22)
-                c02 = (c02 + c11)
+                c02 *= g02 # f02 * g02
+                c02 -= c00
+                c02 -= (f[2] * g[2])
+                c02 += c11
                 return [c00, c01, c02]
 
         if n == 4 and glen == 4:
 
             # This special case can be used as the general case it is expensive. Maybe with anoth bound for n should fine
-            S = n
-            for i in range(0, n // 2, 1):
-                S = S + n - 1 - 2 * i
+            #S = n
+            #for i in range(0, n // 2, 1):
+            #    S = S + n - 1 - 2 * i
+            # XXX: since n == 4 here, we can precompute this, but with
+            # variable n we should use Gauss summation for closed-form.
+            # n + sum([n -1 -2*i for i in range(0, n // 2, 1)])
+            # 4 + sum([4 -1 -2*i for i in range(0, 4 // 2, 1)])
+            # 4 + sum([3,1]) === 8
+            S = 8
 
             c = list([0] * S)
             nf = n // 2  # floor of n/2
@@ -454,22 +462,18 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
             k = n
             for i in range(0, nf, 1):
                 for j in range(0, n - 2 * i - 1, 1):
-                    c[k] = (
-                        (f[i] + f[i + j + 1]) *
-                        (g[i] + g[i + j + 1])
-                    )
-                    c[k] = (c[k] - (c[i] + c[i + j + 1]))
-                    k = k + 1
+                    c[k] = (f[i] + f[i + j + 1])  # these overlap and
+                    c[k] *= (g[i] + g[i + j + 1]) # could be cached XXX
+                    c[k] -= (c[i] + c[i + j + 1])
+                    k += 1
 
-            c[n - 1] = c[0]
+            c[n - 1] = copy(c[0]) # XXX
             for i in range(1, nf, 1):
                 for j in range(1, n - 2 * i, 1):
-                    c[n + 2 * i - 1 + j] = (
-                        c[n + 2 * i - 1 + j] + c[(1 + i) * n - i ** 2 - 1 + j]
-                    )
+                    c[n + 2 * i - 1 + j] += c[(1 + i) * n - i ** 2 - 1 + j]
 
             for i in range(1, nc, 1):
-                c[n + 2 * i - 1] = (c[n + 2 * i - 1] + c[i])
+                c[n + 2 * i - 1] += c[i]
 
             delta = n - 1
             return c[delta : (n + delta)]
@@ -488,8 +492,9 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
         # We proceed by spliting g(x) as g0(x^2) + x * g1(x^2)
         g1len = glen // 2  # floor(glen / 2)
         g0len = glen - g1len  # ceil( geln / 2)
-        g0 = [g[2 * i + 0] for i in range(0, g0len, 1)]
+        g0 = g[ : 2*g0len :2 ] # [g[2 * i + 0] for i in range(0, g0len, 1)]
         g1 = [g[2 * i + 1] for i in range(0, g1len, 1)]
+        # TODO check which of these is faster --^
 
         # Middle part like karatsuba
         f01 = [(f0[i] + f1[i]) for i in range(0, f1len, 1)] + f0[
@@ -518,26 +523,22 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
         fg_1 = poly_mul_modxn(n1, f1, f1len, g1, g1len)
 
         # Computing the middle part
-        fg_01 = [
-            (fg_01[i] - fg_0[i]) for i in range(0, n01, 1)
-        ] + fg_01[n01:]
-        fg_01 = [
-            (fg_01[i] - fg_1[i]) for i in range(0, n1, 1)
-        ] + fg_01[n1:]
+        for i in range(n01):
+            fg_01[i] -= fg_0[i]
+        for i in range(n1):
+            fg_01[i] -= fg_1[i]
 
         # Unifying the computations
-        fg = [0] * n
-        for i in range(0, n0, 1):
-            fg[2 * i] = fg_0[i]
-
-        for i in range(0, n01, 1):
-            fg[2 * i + 1] = fg_01[i]
+        fg = [0]*n
+        # fgs are interleaved: [fg0.0, fg01.0, fg0.1, fg01.1]
+        fg[:2*n0:2] = fg_0[:n0]
+        fg[1:2*n01:2] = fg_01[:n01]
 
         for i in range(0, n1 - 1, 1):
-            fg[2 * i + 2] = (fg[2 * i + 2] + fg_1[i])
+            fg[2 * i + 2] += fg_1[i]
 
         if 2 * n1 < n:
-            fg[2 * n1] = (fg[2 * n1] + fg_1[n1 - 1])
+            fg[2 * n1] += fg_1[n1 - 1]
 
         return fg
 
@@ -670,12 +671,11 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
             h = [0] * 5
             h[0] = (g[0] * f[0])
             h[2] = (g[1] * f[1])
-            g01 = (g[0] + g[1])
-            f01 = (f[0] + f[1])
-            h[1] = (g01 * f01)
-            h[2] = (h[2] + h[0])
-            h[1] = (h[1] - h[2])
-            h[2] = (h[2] + h[0])
+            h[1] = (g[0] + g[1]) # g01
+            h[1] *=(f[0] + f[1]) # g01f01
+            h[2] += h[0]
+            h[1] -= h[2]
+            h[2] += h[0]
             h[3] = h[1]
             h[4] = h[0]
             return h
@@ -685,20 +685,19 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
             h = [0] * 7
             h[0] = (g[0] * f[0])
             h[3] = (g[1] * f[1])
-            g01 = (g[0] + g[1])
-            f01 = (f[0] + f[1])
-            h[2] = (g01 * f01)
-            h[2] = (h[2] - h[0])
+            h[2] = g[0] + g[1]
+            h[2] *= f[0] + f[1]
+            h[2] -= h[0]
             h[1] = (h[2] - h[3])
-            h[3] = (h[3] + h[0])
-            h[3] = (h[3] + h[3])
+            h[3] += h[0]
+            h[3] += h[3]
             h[4] = h[2]
             h[5] = h[1]
             h[6] = h[0]
             return h
 
         if glen == 5 and flen == 5:
-
+            # XXX 4k, not an issue.
             h = [0] * 9
             g10 = (g[1] - g[0])
             f01 = (f[0] - f[1])
@@ -715,20 +714,22 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
             g2f2 = (g[2] * f[2])
 
             t = (g1f1 + h[0])
-            h[1] = (h[1] + t)
-            h[3] = (h[3] + h[1])
+            h[1] += t
+            h[3] += h[1]
             h[4] = (t + g2f2)
-            h[4] = (h[4] + t)
-            h[2] = (h[2] + t)
-            h[2] = (h[2] + g2f2)
-            h[3] = (h[3] + g1f1)
-            h[3] = (h[3] + g2f2)
+            h[4] += t
+            h[2] += t
+            h[2] += g2f2
+            h[3] += g1f1
+            h[3] += g2f2
 
             h[5] = h[3]
             h[6] = h[2]
             h[7] = h[1]
             h[8] = h[0]
             return h
+
+        copy=g[0].__class__ # caching the class constructor seems to be the most efficient way to copy these.
 
         if glen == flen and (glen % 2) == 1:
 
@@ -744,44 +745,44 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
             # We proceed by applying the same idea as in poly_mul_modxn
             # ---
             for i in range(0, len0, 1):
-                g0[i] = g[2 * i]
-                f0[i] = f[2 * i]
+                g0[i] = copy(g[2 * i])
+                f0[i] = copy(f[2 * i])
 
             h0 = poly_mul_selfreciprocal(g0, len0, f0, len0)
 
             # ---
             for i in range(0, len1, 1):
-                g1[i] = g[2 * i + 1]
-                f1[i] = f[2 * i + 1]
+                g1[i] = copy(g[2 * i + 1])
+                f1[i] = copy(f[2 * i + 1])
 
             h1 = poly_mul_selfreciprocal(g1, len1, f1, len1)
 
             # ---
             for i in range(0, len1, 1):
-                g0[i] = (g0[i] + g1[i])
-                f0[i] = (f0[i] + f1[i])
+                g0[i] += g1[i]
+                f0[i] += f1[i]
 
             for i in range(0, len1, 1):
-                g0[i + 1] = (g0[i + 1] + g1[i])
-                f0[i + 1] = (f0[i + 1] + f1[i])
+                g0[i + 1] += g1[i]
+                f0[i + 1] += f1[i]
 
             h01 = poly_mul_selfreciprocal(g0, len0, f0, len0)
 
             # Mixing the computations
             for i in range(0, 2 * len0 - 1, 1):
-                h01[i] = (h01[i] - h0[i])
+                h01[i] = h01[i] - h0[i] # h01[i] -= h0[i]
 
             for i in range(0, 2 * len1 - 1, 1):
-                h01[i] = (h01[i] - h1[i])
+                h01[i] = h01[i] - h1[i] # h01[i] -= h1[i]
 
             for i in range(0, 2 * len1 - 1, 1):
-                h01[i + 1] = (h01[i + 1] - h1[i])
+                h01[i + 1] -= h1[i]
 
             for i in range(0, 2 * len1 - 1, 1):
-                h01[i + 1] = (h01[i + 1] - h1[i])
+                h01[i + 1] -= h1[i]
 
             for i in range(0, 2 * len1 - 1, 1):
-                h01[i + 2] = (h01[i + 2] - h1[i])
+                h01[i + 2] -= h1[i]
 
             for i in range(1, 2 * len0 - 1, 1):
                 h01[i] = (h01[i] - h01[i - 1])
@@ -791,13 +792,13 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
             h = [0] * hlen
 
             for i in range(0, 2 * len0 - 1, 1):
-                h[2 * i] = h0[i]
+                h[2 * i] = copy(h0[i])
 
             for i in range(0, 2 * len0 - 2, 1):
-                h[2 * i + 1] = h01[i]
+                h[2 * i + 1] = copy(h01[i])
 
             for i in range(0, 2 * len1 - 1, 1):
-                h[2 * i + 2] = (h[2 * i + 2] + h1[i])
+                h[2 * i + 2] += h1[i]
 
             return h
 
@@ -811,18 +812,16 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
 
             h = [0] * (2 * glen - 1)
             for i in range(0, glen - 1, 1):
-                h[i] = (h[i] + h0[i])
+                h[i] += h0[i]
 
             for i in range(0, glen - 1, 1):
-                h[2 * glen - 2 - i] = (h[2 * glen - 2 - i] + h0[i])
+                h[2 * glen - 2 - i] += h0[i]
 
             for i in range(0, glen - 1, 1):
-                h[half + i] = (h[half + i] + h1[i])
+                h[half + i] += h1[i]
 
             for i in range(0, glen - 1, 1):
-                h[glen + half - 2 - i] = (
-                    h[glen + half - 2 - i] + h1[i]
-                )
+                h[glen + half - 2 - i] += h1[i]
 
             return h
 
@@ -830,7 +829,7 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
         hlen = glen + flen - 1
         m = (hlen + 1) // 2
         h = poly_mul_modxn(m, g, glen, f, flen)
-        h = h + [0] * (hlen - m)
+        h += [0] * (hlen - m)
         for i in range(m, hlen, 1):
             h[i] = h[hlen - 1 - i]
 
@@ -916,10 +915,10 @@ def PolyMul(field, maxdeg = None, mindeg = 64):
 
         assert len(list_g_mod_f) == n
 
-        out = list_g_mod_f[0][0]
+        out = copy(list_g_mod_f[0][0])
         for j in range(1, n, 1):
 
-            out = (out * list_g_mod_f[j][0])
+            out *= list_g_mod_f[j][0]
 
         return out
 
