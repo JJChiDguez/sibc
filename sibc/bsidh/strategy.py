@@ -183,20 +183,20 @@ class Strategy(object):
         )
         # --- from proj to affine
         inv = (P[1] * Q[1])
-        inv = (inv * PQ[1])
-        inv = (inv ** -1)
+        inv *= PQ[1]
+        inv **= -1
         # --- P
         PB_a = (Q[1] * PQ[1])
-        PB_a = (PB_a * inv)
-        PB_a = (PB_a * P[0])
+        PB_a *= inv
+        PB_a *= P[0]
         # --- Q
         QB_a = (P[1] * PQ[1])
-        QB_a = (QB_a * inv)
-        QB_a = (QB_a * Q[0])
+        QB_a *= inv
+        QB_a *= Q[0]
         # --- PQ
         PQB_a = (P[1] * Q[1])
-        PQB_a = (PQB_a * inv)
-        PQB_a = (PQB_a * PQ[0])
+        PQB_a *= inv
+        PQB_a *= PQ[0]
         return (PB_a, QB_a, PQB_a)
 
     def strategy_at_6_B(self, sk_b):
@@ -221,20 +221,20 @@ class Strategy(object):
         )
         # --- from proj to affine
         inv = (P[1] * Q[1])
-        inv = (inv * PQ[1])
-        inv = (inv ** -1)
+        inv *= PQ[1]
+        inv **= -1
         # --- P
         PA_b = (Q[1] * PQ[1])
-        PA_b = (PA_b * inv)
-        PA_b = (PA_b * P[0])
+        PA_b *= inv
+        PA_b *= P[0]
         # --- Q
         QA_b = (P[1] * PQ[1])
-        QA_b = (QA_b * inv)
-        QA_b = (QA_b * Q[0])
+        QA_b *= inv
+        QA_b *= Q[0]
         # --- PQ
         PQA_b = (P[1] * Q[1])
-        PQA_b = (PQA_b * inv)
-        PQA_b = (PQA_b * PQ[0])
+        PQA_b *= inv
+        PQA_b *= PQ[0]
         return (PA_b, QA_b, PQA_b)
 
     def strategy_A(self, sk_a, pk_b):
@@ -246,7 +246,7 @@ class Strategy(object):
         )
         #assert self.curve.issupersingular(A), "non-supersingular input curve"
         a24 = A[1] ** -1
-        a24 = a24 * A[0]
+        a24 *= A[0]
         RB_a = self.curve.Ladder3pt(
             sk_a,
             [PA_b, self.field(1)],
@@ -276,7 +276,7 @@ class Strategy(object):
         )
         #assert self.curve.issupersingular(A), "non-supersingular input curve"
         a24 = A[1] ** -1
-        a24 = a24 * A[0]
+        a24 *= A[0]
         RA_b = self.curve.Ladder3pt(
             sk_b,
             [PB_a, self.field(1)],

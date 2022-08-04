@@ -1,8 +1,11 @@
 from random import SystemRandom
 #from progress.bar import Bar
 
-bitlength = lambda x: len(bin(x)[2:])  # number of bits
-hamming_weight = lambda x: bin(x).count("1")
+# number of bits, use builtin int.bit_length if present:
+bitlength = getattr(int, 'bit_length', lambda x: len(bin(x)[2:]))
+
+# python3.10 has builtin popcount aka hamming weight aka int.bit_count:
+hamming_weight = getattr(int, 'bit_count', lambda x: bin(x).count(r'1'))
 # hamming weight: number of bits equal 1
 
 sign = lambda x: (1, -1)[x < 0]  # Sign of an integer
@@ -122,7 +125,7 @@ def Brent_Cycle_finding_method(N : int):
                 y = ((y * y) % N + c) % N
                 q = q * (abs(x - y)) % N
             g = gcd(q, N)
-            k = k + m
+            k += m
         r *= 2
     if g == N:
         while True:

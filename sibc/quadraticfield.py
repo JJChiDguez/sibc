@@ -44,34 +44,42 @@ def QuadraticField(p : int):
 
 	basefield = PrimeField(p)
 	NAME = 'Quadratic Field GF(p²) := GF(p)[u]/(u²+1) of characteristic p = 0x%X' % (p)
-	@doc(NAME)
+	#@doc(NAME)
 	class FiniteField():
+		__slots__ = (r're', r'im')
+
+		def copy(self):
+			ret = object.__new__(FiniteField)
+			ret.re = self.re.copy()
+			ret.im = self.im.copy()
+			return ret
 
 		def __init__(self, x):
-			self.basefield = basefield
-			if isinstance(x, int):
+			if x.__class__ is int:
 				self.re = basefield(x)
 				self.im = basefield(0)
-			elif isinstance(x, list):
+			elif x.__class__ is tuple:
+				self.re = basefield(x[0])
+				self.im = basefield(x[1])
+			elif x.__class__ is list:
 				self.re = basefield(x[0])
 				self.im = basefield(x[1])
 			else:
 				self.re = x.re
 				self.im = x.im
-			self.field = FiniteField
 
 		def __invert__(self): return self.inverse()
 		@check
-		def __add__(self, other): self.field.fp2add += 1; return FiniteField([self.re + other.re, self.im + other.im])
+		def __add__(self, other): FiniteField.fp2add += 1; return FiniteField([self.re + other.re, self.im + other.im])
 		@check
 		def __radd__(self, other): return self + other
 		@check
-		def __sub__(self, other): self.field.fp2add += 1; return FiniteField([self.re - other.re, self.im - other.im])
+		def __sub__(self, other): FiniteField.fp2add += 1; return FiniteField([self.re - other.re, self.im - other.im])
 		@check
 		def __rsub__(self, other): return -self + other
 		@check
 		def __mul__(self, other):
-			self.field.fp2mul += 1;
+			FiniteField.fp2mul += 1;
 			# --- additions
 			z0 = (self.re + self.im)
 			z1 = (other.re + other.im)
@@ -82,7 +90,7 @@ def QuadraticField(p : int):
 			# --- additions
 			c_re = (z2 - z3)
 			c_im = (t - z2)
-			c_im = (c_im - z3)
+			c_im -= z3
 			return FiniteField([c_re, c_im])
 		@check
 		def __rmul__(self, other): return self * other
@@ -156,7 +164,7 @@ def QuadraticField(p : int):
 				return self.inverse() ** (-e)
 
 			elif e == 2:
-				self.field.fp2sqr += 1
+				FiniteField.fp2sqr += 1
 				# --- additions
 				z0 = (self.re + self.re)
 				z1 = (self.re + self.im)
@@ -172,9 +180,9 @@ def QuadraticField(p : int):
 				tmp_a = FiniteField(self)
 				# left-to-right method for computing a^e
 				for j in range(1, bits_of_e + 1):
-					tmp_a = (tmp_a ** 2)
+					tmp_a **= 2
 					if ((e >> (bits_of_e - j)) & 1) != 0:
-						tmp_a = (tmp_a * self)
+						tmp_a *= self
 
 				return tmp_a
 
@@ -197,9 +205,9 @@ def QuadraticField(p : int):
 				- This is a constant-time implementation by rasing to (p - 1) / 2
 				- In other words, this function determines if the input has square-root in the Prime Field
 			"""
-			a1 = (self ** ((self.field.p - 3) // 4))
+			a1 = (self ** ((FiniteField.p - 3) // 4))
 			alpha = (a1 ** 2)
-			alpha = (alpha * self)
+			alpha *= self
 			# ---
 			alpha_conjugated = FiniteField(alpha)
 			alpha_conjugated.im = (0 - alpha_conjugated.im)
@@ -233,7 +241,7 @@ def QuadraticField(p : int):
 			# --- additions
 			S1 = (N0 + N1)
 			# --- inversions
-			S1 = (S1 ** -1)
+			S1 **= -1
 			# --- additions
 			S2 = (0 - self.im)
 			b_re = (S1 * self.re)
@@ -259,9 +267,9 @@ def QuadraticField(p : int):
 				- This is a non-constant-time implementation but it is only used on public data
 			"""
 			
-			a1 = (self ** ((self.field.p - 3) // 4))
+			a1 = (self ** ((FiniteField.p - 3) // 4))
 			alpha = (a1 ** 2)
-			alpha = (alpha * self)
+			alpha *= self
 
 			alpha_conjugated = FiniteField(alpha)
 			alpha_conjugated.im = (0 - alpha_conjugated.im)
@@ -275,9 +283,9 @@ def QuadraticField(p : int):
 				return FiniteField([-x0.im, x0.re])
 
 			else:
-				alpha.re = (alpha.re + 1)
-				b = (alpha ** ((self.field.p - 1) // 2))
-				b = (b * x0)
+				alpha.re += 1
+				b = (alpha ** ((FiniteField.p - 1) // 2))
+				b *= x0
 				return b
  
 	FiniteField.fp2add = 0  # Number of field additions performed

@@ -9,6 +9,7 @@ from sibc.primefield import PrimeField
 from sibc.quadraticfield import QuadraticField
 
 from functools import reduce
+from copy import copy
 
 from sibc.constants import bitlength, parameters
 from sibc.common import attrdict
@@ -34,6 +35,7 @@ def MontgomeryCurve(prime):
         # CSIDH only requires the factorization of p + 1
         L = parameters['csidh'][prime]['L']
         n = parameters['csidh'][prime]['n']
+        montgomery_n = n
         cofactor = parameters['csidh'][prime]['cofactor']
         p = parameters['csidh'][prime]['p']
         p_minus_one_halves = parameters['csidh'][prime]['p_minus_one_halves']
@@ -51,6 +53,7 @@ def MontgomeryCurve(prime):
         Em = parameters['bsidh'][prime]['Em']
         L = list(Lp + Lm)
         n = len(L)
+        montgomery_n = n
         p = parameters['bsidh'][prime]['p']
         cofactor_p = (p + 1) // reduce(lambda x, y: (x * y), Lp)
         cofactor_m = (p - 1) // reduce(lambda x, y: (x * y), Lm)
@@ -72,6 +75,7 @@ def MontgomeryCurve(prime):
         # but it is not required in sidh configuration
         L = [3,4]
         n = 2
+        montgomery_n = n
         path = resource_filename('sibc', "data/sdacs/sidh")
 
     else:
@@ -81,6 +85,7 @@ def MontgomeryCurve(prime):
     SDACS = filename_to_list_of_lists_of_ints(path)
     assert len(SDACS) > 0, f'Not precomputed sdacs for {prime} prime'
     SDACS_LENGTH = list(map(len, SDACS))
+    SDACS_REVERSED = list(map(lambda x:x[::-1], SDACS))
 
     cmul = lambda l: numpy.array(
         [
@@ -115,8 +120,8 @@ def MontgomeryCurve(prime):
         -------------------------------------------------------------------------
         """
         A4_squared = (A[0] + A[0])              # (2 * A24)
-        A4_squared = (A4_squared - A[1])        # (2 * A24) - C24
-        A4_squared = (A4_squared + A4_squared)  # 4*A = 2[(2 * A24) - C24]
+        A4_squared -= A[1]        # (2 * A24) - C24
+        A4_squared += A4_squared  # 4*A = 2[(2 * A24) - C24]
 
         # Now, we have A = A' / C' := A4 / A[1] = (4*A) / (4*C)
         A4_squared = (A4_squared ** 2)  # (A')^2
@@ -126,32 +131,33 @@ def MontgomeryCurve(prime):
         num = (C4_squared + t)      # 3 * [(C')^2]
         num = (A4_squared - num)    # (A')^2 - 3 * [(C')^2]
         s = (num ** 2)              # { (A')^2 - 3 * [(C')^2] }^2
-        num = (num * s)             # { (A')^2 - 3 * [(C')^2] }^3
+        num *= s             # { (A')^2 - 3 * [(C')^2] }^3
 
         C4_squared = (C4_squared ** 2)  # (C')^4
         den = (t + t)                   # 4 * [(C')^2]
         den = (A4_squared - den)        # (A')^2 - 4 * [(C')^2]
-        den = (den * C4_squared)        # {(A')^2 - 4 * [(C')^2] } * [(C')^4]
-        den = (den ** -1)               # 1 / {(A')^2 - 4 * [(C')^2] } * [(C')^4]
+        den *= C4_squared        # {(A')^2 - 4 * [(C')^2] } * [(C')^4]
+        den **= -1               # 1 / {(A')^2 - 4 * [(C')^2] } * [(C')^4]
 
-        num = (num * den)  # j := { (A')^2 - 3 * [(C')^2] }^3 / {(A')^2 - 4 * [(C')^2] } * [(C')^4]
-        num = (num + num)  #   2*j
-        num = (num + num)  #   4*j
-        num = (num + num)  #   8*j
-        num = (num + num)  #  16*j
-        num = (num + num)  #  32*j
-        num = (num + num)  #  64*j
-        num = (num + num)  # 128*j
-        num = (num + num)  # 256*j
+        num *= den  # j := { (A')^2 - 3 * [(C')^2] }^3 / {(A')^2 - 4 * [(C')^2] } * [(C')^4]
+        num += num  #   2*j
+        num += num  #   4*j
+        num += num  #   8*j
+        num += num  #  16*j
+        num += num  #  32*j
+        num += num  #  64*j
+        num += num  # 128*j
+        num += num  # 256*j
         return num
 
     def elligator(A):
         """ elligator() samples two points on E[pi + 1] or E[pi - 1] """
         Ap = (A[0] + A[0])
-        Ap = (Ap - A[1])
-        Ap = (Ap + Ap)
+        Ap -= A[1]
+        Ap += Ap
         Cp = A[1]
 
+        # TODO random.randint is no good entropy source here
         u = field(random.randint(2, p_minus_one_halves))
         u_squared = (u ** 2)
 
@@ -162,22 +168,22 @@ def MontgomeryCurve(prime):
         AC_times_u_squared_minus_one = (Ap * C_times_u_squared_minus_one)
 
         tmp = (Ap ** 2)
-        tmp = (tmp * u_squared)
+        tmp *= u_squared
         aux = (C_times_u_squared_minus_one ** 2)
-        tmp = (tmp + aux)
-        tmp = (AC_times_u_squared_minus_one * tmp)
+        tmp += aux
+        tmp *= AC_times_u_squared_minus_one
 
-        alpha, beta = 0, u
+        alpha, beta = field(0), u
         alpha, beta = cswap(alpha, beta, tmp == 0)
-        u_squared_plus_one = (alpha * u_squared_plus_one)
-        alpha = (alpha * C_times_u_squared_minus_one)
+        u_squared_plus_one *= alpha
+        alpha *= C_times_u_squared_minus_one
 
         Tp_X = (Ap + alpha)
         Tm_X = (Ap * u_squared)
-        Tm_X = (Tm_X + alpha)
-        Tm_X = (0 - Tm_X)
+        Tm_X += alpha
+        Tm_X = (-Tm_X)
 
-        tmp = (tmp + u_squared_plus_one)
+        tmp += u_squared_plus_one
         Tp_X, Tm_X = cswap(Tp_X, Tm_X, not tmp.issquare())
 
         return (
@@ -204,10 +210,10 @@ def MontgomeryCurve(prime):
         ----------------------------------------------------------------------
         """
         output = (A[0] + A[0])         # (2 * A24)
-        output = (output - A[1])       # (2 * A24) - C24
+        output -= A[1]                 # (2 * A24) - C24
         C24_inv = (A[1] ** -1)         # 1 / (C24)
-        output = (output + output)     # 4*A = 2[(2 * A24) - C24]
-        output = (output * C24_inv)    # A/C = 2[(2 * A24) - C24] / C24
+        output += output               # 4*A = 2[(2 * A24) - C24]
+        output *= C24_inv              # A/C = 2[(2 * A24) - C24] / C24
 
         return output
 
@@ -228,22 +234,22 @@ def MontgomeryCurve(prime):
         XPXQ = (P[0] * Q[0]) # XP * XQ
         ZPZQ = (P[1] * Q[1]) # ZP * ZQ
 
-        t = (t - XPXQ)
-        t = (t - ZPZQ)      # XPZQ + ZPXQ
+        t -= XPXQ
+        t -= ZPZQ           # XPZQ + ZPXQ
         s = (XPXQ - ZPZQ)   # XPXQ - ZPZQ
 
         t0 = (t *  PQ[0])   # (XPZQ + ZPXQ) * XPQ
         t1 = (s *  PQ[1])   # (XPXQ - ZPZQ) * ZPQ
-        t0 = (t0 + t1)      # (XPZQ + ZPXQ) * XPQ + (XPXQ - ZPZQ) * ZPQ
-        t0 = (t0 ** 2)      # [(XPZQ + ZPXQ) * XPQ + (XPXQ - ZPZQ) * ZPQ] ^ 2
+        t0 += t1            # (XPZQ + ZPXQ) * XPQ + (XPXQ - ZPZQ) * ZPQ
+        t0 **= 2            # [(XPZQ + ZPXQ) * XPQ + (XPXQ - ZPZQ) * ZPQ] ^ 2
 
         t1 = (t * PQ[1])    # (XPZQ + ZPXQ) * ZPQ
         s = (ZPZQ * PQ[0])  # ZPZQ * XPQ
-        t1 = (t1 + s)       # (XPZQ + ZPXQ) * ZPQ + ZPZQ * XPQ
+        t1 += s             # (XPZQ + ZPXQ) * ZPQ + ZPZQ * XPQ
         s = (XPXQ * PQ[0])  # (XPXQ) * XPQ
-        s = (s + s)         # 2 * [(XPXQ) * XPQ]
-        s = (s + s)         # 4 * [(XPXQ) * XPQ]
-        t1 = (t1 * s)       # [(XPZQ + ZPXQ) * ZPQ + ZPZQ * XPQ] * (4 * [(XPXQ) * XPQ])
+        s += s              # 2 * [(XPXQ) * XPQ]
+        s += s              # 4 * [(XPXQ) * XPQ]
+        t1 *= s             # [(XPZQ + ZPXQ) * ZPQ + ZPZQ * XPQ] * (4 * [(XPXQ) * XPQ])
 
         t = (ZPZQ * PQ[1])  # ZPZQ * ZPQ
 
@@ -253,7 +259,7 @@ def MontgomeryCurve(prime):
         # ---
         B1 = (ZPZQ + ZPZQ)  # 2C
         B0 = (XPXQ + B1)    # A + 2C
-        B1 = (B1 + B1)      # 4C
+        B1 += B1      # 4C
         return [B0, B1]
 
     def isinfinity(P):
@@ -275,17 +281,19 @@ def MontgomeryCurve(prime):
         ----------------------------------------------------------------------
         """
         t_0 = (P[0] - P[1])
-        t_1 = (P[0] + P[1])
-        t_0 = (t_0 ** 2)
-        t_1 = (t_1 ** 2)
+        t_0 **= 2
         Z = (A[1] * t_0)
+        t_1 = (P[0] + P[1])
+        t_1 **= 2
         X = (Z * t_1)
-        t_1 = (t_1 - t_0)
-        t_0 = (A[0] * t_1)
-        Z = (Z + t_0)
-        Z = (Z * t_1)
+        t_1 -= t_0
+        Z += (A[0] * t_1)
+        Z *= t_1
 
         return [X, Z]
+    try: # use specialized xdbl from field if available
+        xdbl = field.xdbl
+    except: pass
 
     def xadd(P, Q, PQ):
         """
@@ -298,17 +306,18 @@ def MontgomeryCurve(prime):
         """
         a = (P[0] + P[1])
         b = (P[0] - P[1])
-        c = (Q[0] + Q[1])
-        d = (Q[0] - Q[1])
-        a = (a * d)
-        b = (b * c)
+        b *= (Q[0] + Q[1]) # c = (Q[0] + Q[1])
+        a *= (Q[0] - Q[1]) # d = (Q[0] - Q[1])
         c = (a + b)
-        d = (a - b)
-        c = (c ** 2)
-        d = (d ** 2)
-        X = (PQ[1] * c)
-        Z = (PQ[0] * d)
-        return [X, Z]
+        a -= b # a = d
+        c **= 2
+        c *= PQ[1] # X = c
+        a **= 2
+        a *= PQ[0] # Z = d
+        return [c, a]
+    try: # use specialized xadd from the field if available
+        xadd = field.xadd
+    except: pass
 
     def xdbladd(P, Q, PQ, A):
         """
@@ -325,22 +334,22 @@ def MontgomeryCurve(prime):
         X2 = (t0 ** 2)
         t2 = (Q[0] - Q[1])
         X3 = (Q[0] + Q[1])
-        t0 = (t0 * t2)
+        t0 *= t2
         Z2 = (t1 ** 2)
         # ---
-        t1 = (t1 * X3)
+        t1 *= X3
         t2 = (X2 - Z2)
-        X2 = (X2 * Z2)
+        X2 *= Z2
         X3 = (A * t2)
         Z3 = (t0 - t1)
-        Z2 = (X3 + Z2)
+        Z2 += X3
         X3 = (t0 + t1)
         # ---
-        Z2 = (Z2 * t2)
-        Z3 = (Z3 ** 2)
-        X3 = (X3 ** 2)
-        Z3 = (PQ[0] * Z3)
-        X3 = (PQ[1] * X3)
+        Z2 *= t2
+        Z3 **= 2
+        X3 **= 2
+        Z3 *= PQ[0]
+        X3 *= PQ[1]
         return [X2, Z2], [X3, Z3]
 
     def xtpl(P, A):
@@ -357,29 +366,29 @@ def MontgomeryCurve(prime):
         t0 = (P[0] - P[1])
         t2 = (t0 ** 2)
         t1 = (P[0] + P[1])
-        t3 = (t1 ** 2)
-        t4 = (t1 + t0)
-        t0 = (t1 - t0)
+        t3 = (t1 ** 2) # (P0*P1)^2
+        t4 = (t1 + t0) # P0*P1 + (P0-P1)^2
+        t7 = (t1 - t0) # P0*P1 - (P0-P1)^2
         # ---
-        t1 = (t4 ** 2)
-        t1 = (t1 - t3)
-        t1 = (t1 - t2)
+        t11 = (t4 ** 2) # (P0*P1 + (P0-P1)^2)^
+        t11 -= t3
+        t11 -= t2
         t5 = (t3 * A[0])
-        t3 = (t5 * t3)
+        t3 *= t5
         t6 = (t2 * A[1])
         # ---
-        t2 = (t2 * t6)
-        t3 = (t2 - t3)
-        t2 = (t5 - t6)
-        t1 = (t2 * t1)
-        t2 = (t3 + t1)
-        t2 = (t2 ** 2)
+        t2 *= t6
+        t8 = (t2 - t3)
+        t5 -= t6
+        t11 *= t5
+        t10 = (t8 + t11)
+        t10 **= 2
         # ---
-        X = (t2 * t4)
-        t1 = (t3 - t1)
-        t1 = (t1 ** 2)
-        Z = (t1 * t0)
-        return [X,Z]
+        t10 *= t4 # X = t10 * (P0*P1 + (P0-P1)^2)
+        t8 -= t11 # Z
+        t8 **= 2
+        t8 *= t7 # Z
+        return [t10,t8] # X, Z
 
     def xdbl_twice(P, A):
         """
@@ -404,17 +413,19 @@ def MontgomeryCurve(prime):
         """
         P2 = xdbl(P, A)
         R = [P, P2, xadd(P2, P, P)]
+        try: # fast-track for PrimeField
+            P[0].x
+            def isinf(POINT): return POINT[1].x == 0
+        except:
+            isinf = isinfinity
 
-        for i in range(SDACS_LENGTH[j] - 1, -1, -1):
+        for sdac in SDACS_REVERSED[j]:
 
-            if isinfinity(R[SDACS[j][i]]):
-                T = xdbl(R[2], A)
+            #XXXX isinfinity inlined for speed here:
+            if isinf(R[sdac]): # if isinfinity(R[sdac]):
+                R[:] = R[sdac ^ 1], R[2], xdbl(R[2], A)
             else:
-                T = xadd(R[2], R[SDACS[j][i] ^ 1], R[SDACS[j][i]])
-
-            R[0] = list(R[SDACS[j][i] ^ 1])
-            R[1] = list(R[2])
-            R[2] = list(T)
+                R[:] = R[sdac ^ 1], R[2], xadd(R[2], R[sdac ^ 1], R[sdac])
 
         return R[2]
 
@@ -446,7 +457,7 @@ def MontgomeryCurve(prime):
     def euclid2d(m, n, P, Q, PQ, A):
         """ The 2-dimensional scalar pseudomultiplication: x([r]P + [s - r]P) with r = s / {Golden Ratio}') """
 
-        s0, s1 = m, n
+        s0, s1 = m+0, n+0
         x0  = list(P)
         x1  = list(Q)
         diff= list(PQ)
@@ -464,7 +475,8 @@ def MontgomeryCurve(prime):
             elif (s0 % 2) == (s1 % 2):
                 x0 = xadd(x1, x0, diff)
                 x1 = xdbl(x1, A)
-                s1 = (s1 - s0) // 2
+                s1 -= s0
+                s1 //= 2
             elif (s1 % 2) == 0:
                 diff=xadd(x1, diff, x0)
                 x1  =xdbl(x1, A)
@@ -504,7 +516,7 @@ def MontgomeryCurve(prime):
 
         # Reducing the problem from k = 2^i x s to s
         x = list(P)
-        while s % 2 == 0:
+        while s & 1 == 0: # % 2
             x = xdbl(x, A)
             s //= 2
 
@@ -581,17 +593,24 @@ def MontgomeryCurve(prime):
         """ crisscross() computes a*c + b*d, and a*c - b*d """
         t_1 = (alpha * delta)
         t_2 = (beta * gamma)
-        return (t_1 + t_2), (t_1 - t_2)
+        #return (t_1 + t_2), (t_1 - t_2)
+        # shave off a FF allocation: ##
+        t_3 = t_1.copy() # object.__new__(t_1.__class__); t_3.x = t_1.x #      ## copy(t_1)
+        t_1 += t_2                    ##
+        t_3 -= t_2                   ##
+        return t_1, t_3 # (t_1 + t_2), (t_1 - t_2)
 
     if prime in parameters['csidh'].keys():
         def issupersingular(A):
             """ issupersingular() verifies supersingularity """
             T_p, _ = elligator(A) # T_p is always in GF(p), and thus has torsion (p+1)
             T_p = prac(cofactor, T_p, A)
-            P = cofactor_multiples(T_p, A, range(0, n, 1))
+            assert n == montgomery_n
+            P = cofactor_multiples(T_p, A, range(0, montgomery_n, 1))
 
+            assert n == montgomery_n
             bits_of_the_order = 0
-            for i in range(0, n, 1):
+            for i in range(0, montgomery_n, 1):
 
                 if isinfinity(P[i]) == False:
 
@@ -615,6 +634,7 @@ def MontgomeryCurve(prime):
             Tp = [xmul(Tp[i], A, i) for i in range(0, np, 1)]
             Tp = [isinfinity(Tp_i) for Tp_i in Tp]
 
+            assert n == montgomery_n
             # Is P a torsion-(p - 1)?
             T_m = prac(cofactor_m, P, A)
             Tm = cofactor_multiples(T_m, A, range(np, n, 1))
