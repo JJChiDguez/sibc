@@ -1,4 +1,40 @@
 
+<a name="v1.0.4"></a>
+## [v1.0.4](https://github.com/JJChiDguez/sibc/compare/v1.0.3...v1.0.4)
+
+> 2022-08-05
+
+### Docs
+
+* update README.md
+
+### Pull request
+
+* optimize csidh 
+
+### Fix
+
+* correct bounds concerning CSIDH-512 for wd1, wd2, and df; files modified               sibc/data/exponents/mitm/128/df/e10               sibc/data/exponents/mitm/128/wd1/e10               sibc/data/exponents/mitm/128/wd2/e5
+
+
+<a name="v1.0.3"></a>
+## [v1.0.3](https://github.com/JJChiDguez/sibc/compare/v1.0.1...v1.0.3)
+
+> 2021-11-09
+
+### Docs
+
+* small tweaks in the README.md and setup.py files
+* fix citation (now using and instead of commas)
+* updated setup.py description
+* updated CHANGELOG.md and TODOLIST.md
+
+### Fix
+
+* update bsidh-test to last public parameter representation
+* strategy plotting is working on macOS
+
+
 <a name="v1.0.1"></a>
 ## [v1.0.1](https://github.com/JJChiDguez/sibc/compare/v0.0.1...v1.0.1)
 
@@ -44,11 +80,6 @@
 
 * now csidh allows any kind of prime name. FOR EXAMPLE, including a new prime named as p1024k74 is possible
 * bsidh handles FIRST strategy evaluation by using get_A() instead of xisog(). Best perfomance by using projective get_A()
-
-### Pull Requests
-
-* Merge pull request [#7](https://github.com/JJChiDguez/sibc/issues/7) from thomwiggers/patch-2
-* Merge pull request [#6](https://github.com/JJChiDguez/sibc/issues/6) from thomwiggers/patch-1
 
 
 <a name="v0.0.1"></a>
