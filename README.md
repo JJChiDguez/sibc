@@ -5,7 +5,7 @@
 This repository includes a python-code library named **sibc**, which allows a user-friendly
 interface to deal with some isogeny-based cryptographic primitive.
 
-The current version of the **sibc** library has integrated CSIDH and B-SIDH schemes using traditional
+The current version of the **sibc** library has integrated SIDH, CSIDH, and B-SIDH schemes using traditional
 and velusqrt formulae on Montgomery curve x-only projective coordinates; in particular, **sibc** allows
 working with prime and quadratic field classes that permit operating field elements as integers.
 Additionally, the cryptographic primitives are implemented in constant-time concerning the number
@@ -15,6 +15,16 @@ the input or it possibly does from randomness as CSIDH does.
 It is worthing to mention, the library is constantly extended, and some signature schemes will be integrated into the **sibc** library.
 
 The **sibc** library aims to allow isogeny-contributors for building new primitives with a constant-time nature.
+
+
+> :warning: There is a new devastating attack against *SIDH* and *SIKE* by Castryck & Decru. Currently, there are two public implementations of the Castryck-Decru attack:
+> 
+> 1. [**Magma** code](https://homes.esat.kuleuven.be/~wcastryc/) from [Castryck-Decru preprint](https://eprint.iacr.org/2022/975), and
+> 2. [**Sagemath** code](https://github.com/jack4818/Castryck-Decru-SageMath) translation from the Magma code, by Giacomo Pope.
+>
+> :warning: The attack does extend to B-SIDH and B-SIKE.
+> 
+> :exclamation: The attack does not apply to CSIDH.
 
 ## Installation 
 
