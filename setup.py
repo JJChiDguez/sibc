@@ -10,7 +10,7 @@ except ImportError:
     bdist_deb = None
 
 
-__version__ = '1.0.3'
+__version__ = '1.0.4'
 
 if os.path.exists('requirements.txt'):
     with open("requirements.txt", "r") as obj:
